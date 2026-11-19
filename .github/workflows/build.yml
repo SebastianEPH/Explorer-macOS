@@ -1,0 +1,47 @@
+name: Compilar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compilar y probar
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Versión de Xcode
+        run: xcodebuild -version && swift --version
+
+      - name: Pruebas (Swift Package Manager)
+        run: swift test
+
+      - name: Compilar la app (Release, sin firmar)
+        run: |
+          xcodebuild \
+            -project Freeloader.xcodeproj \
+            -target Freeloader \
+            -configuration Release \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            DEVELOPMENT_TEAM="" \
+            build
+
+      - name: Empaquetar
+        run: |
+          cd build/Release
+          ditto -c -k --keepParent Freeloader.app "$GITHUB_WORKSPACE/Freeloader.zip"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Freeloader-${{ github.sha }}
+          path: Freeloader.zip
+          retention-days: 30
