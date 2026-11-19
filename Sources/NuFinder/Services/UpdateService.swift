@@ -66,16 +66,18 @@ final class UpdateService {
 
             // Un script espera a que esta app se cierre, cambia el paquete y la vuelve a abrir.
             state = .installing("Instalando y reiniciando…")
-            let target = Bundle.main.bundlePath
+            // Si la app cambió de nombre (p. ej. Freeloader.app → Explorer.app), se borra la vieja.
+            let current = Bundle.main.bundleURL
+            let target = current.deletingLastPathComponent().appendingPathComponent(newApp.lastPathComponent)
             let script = """
             while kill -0 \(ProcessInfo.processInfo.processIdentifier) 2>/dev/null; do sleep 0.2; done
-            rm -rf "$2" && mv "$1" "$2" && xattr -dr com.apple.quarantine "$2" 2>/dev/null
+            rm -rf "$4" "$2" && mv "$1" "$2" && xattr -dr com.apple.quarantine "$2" 2>/dev/null
             open "$2"
             rm -rf "$3"
             """
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/bin/sh")
-            process.arguments = ["-c", script, "sh", newApp.path, target, work.path]
+            process.arguments = ["-c", script, "sh", newApp.path, target.path, work.path, current.path]
             try process.run()
             NSApp.terminate(nil)
         } catch {

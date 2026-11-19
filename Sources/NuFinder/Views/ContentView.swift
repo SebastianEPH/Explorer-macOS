@@ -121,7 +121,7 @@ struct ContentView: View {
         } message: {
             Text("Enter comma-separated Finder tags. Leave the field empty to remove tags.")
         }
-        .alert("Freeloader", isPresented: Binding(
+        .alert("Explorer", isPresented: Binding(
             get: { browser.errorMessage != nil },
             set: { if !$0 { browser.errorMessage = nil } }
         )) {
@@ -349,7 +349,7 @@ private struct WorkspaceManagerView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Workspaces").font(.title2.bold())
-                    Text("Return to a complete Freeloader layout in one click.")
+                    Text("Return to a complete Explorer layout in one click.")
                         .foregroundStyle(.secondary)
                 }
                 Spacer()

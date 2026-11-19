@@ -45,7 +45,8 @@ app.build_configurations.each do |config|
   config.build_settings["PRODUCT_BUNDLE_IDENTIFIER"] = "com.miguelrodriguez.NuFinder"
   config.build_settings["INFOPLIST_FILE"] = "Config/App-Info.plist"
   config.build_settings["CODE_SIGN_ENTITLEMENTS"] = "Config/NuFinder.entitlements"
-  config.build_settings["PRODUCT_NAME"] = "Freeloader"
+  config.build_settings["PRODUCT_NAME"] = "Explorer"
+  config.build_settings["PRODUCT_MODULE_NAME"] = "Freeloader"
   config.build_settings["ASSETCATALOG_COMPILER_APPICON_NAME"] = "AppIcon"
 end
 

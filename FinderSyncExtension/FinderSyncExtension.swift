@@ -12,9 +12,9 @@ final class FinderSyncExtension: FIFinderSync {
     }
 
     override func menu(for menuKind: FIMenuKind) -> NSMenu? {
-        let menu = NSMenu(title: "Freeloader")
+        let menu = NSMenu(title: "Explorer")
         let open = NSMenuItem(
-            title: "Open in Freeloader",
+            title: "Open in Explorer",
             action: #selector(openInFreeloader),
             keyEquivalent: ""
         )

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Fork personal de [Freeloader](https://github.com/KopitarFan/Freeloader) (reemplazo de Finder para macOS, SwiftUI + AppKit, licencia MIT) para añadirle opciones propias sin perder las novedades del autor.
+Fork personal de [Freeloader](https://github.com/KopitarFan/Freeloader) (reemplazo de Finder para macOS, SwiftUI + AppKit, licencia MIT) para añadirle opciones propias sin perder las novedades del autor. La app se llama **Explorer** (`PRODUCT_NAME`, `CFBundleName`); el bundle id sigue siendo `com.miguelrodriguez.NuFinder` para conservar la configuración y el módulo Swift sigue siendo `Freeloader`.
 
 ## Reglas
 
@@ -18,7 +18,7 @@ Fork personal de [Freeloader](https://github.com/KopitarFan/Freeloader) (reempla
 ## Compilar
 
 - En este Mac **no hay Xcode completo** (solo Command Line Tools): `swift build` falla y SourceKit da errores falsos ("Cannot find … in scope", macros no encontradas). Ignóralos; la verdad la da el pipeline.
-- Pipeline `.github/workflows/build.yml` (macos-latest): `swift test` → regenerar proyecto → `xcodebuild` Release sin firmar → escribe `FLBuildNumber` = `run_number` en el Info.plist → firma ad hoc → sube `Freeloader.zip` como artefacto y, en `main`, lo publica como Release `build-N` (`--latest`).
+- Pipeline `.github/workflows/build.yml` (macos-latest): `swift test` → regenerar proyecto → `xcodebuild` Release sin firmar → escribe `FLBuildNumber` = `run_number` en el Info.plist → firma ad hoc → sube `Explorer.zip` como artefacto y, en `main`, lo publica como Release `build-N` (`--latest`).
 - Ver el resultado: `gh run list -R SebastianEPH/Freeloader -L 1` y `gh run watch <id> --exit-status`.
 
 ## Actualizaciones dentro de la app
@@ -30,7 +30,7 @@ Fork personal de [Freeloader](https://github.com/KopitarFan/Freeloader) (reempla
 ## Instalar a mano la última compilación
 
 ```bash
-gh release download -R SebastianEPH/Freeloader --pattern Freeloader.zip
-ditto -x -k Freeloader.zip . && rm -rf /Applications/Freeloader.app && mv Freeloader.app /Applications/
-xattr -dr com.apple.quarantine /Applications/Freeloader.app
+gh release download -R SebastianEPH/Freeloader --pattern Explorer.zip
+ditto -x -k Explorer.zip . && rm -rf /Applications/Explorer.app && mv Explorer.app /Applications/
+xattr -dr com.apple.quarantine /Applications/Explorer.app
 ```

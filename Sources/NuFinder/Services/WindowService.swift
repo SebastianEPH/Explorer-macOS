@@ -18,7 +18,7 @@ enum WindowService {
         let window = NSWindow(contentViewController: controller)
         let splitPane = UserDefaults.standard.bool(forKey: "showsSplitPane")
         window.setContentSize(NSSize(width: splitPane ? 1180 : 1040, height: 680))
-        window.title = "Freeloader"
+        window.title = "Explorer"
         window.representedURL = url
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
         window.center()

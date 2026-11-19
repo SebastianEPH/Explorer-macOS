@@ -48,15 +48,15 @@ jobs:
 
       - name: Número de compilación y paquete
         run: |
-          APP=build/Release/Freeloader.app
+          APP=build/Release/Explorer.app
           /usr/libexec/PlistBuddy -c "Add :FLBuildNumber string ${{ github.run_number }}" "$APP/Contents/Info.plist"
           codesign --force --deep --sign - "$APP"
-          ditto -c -k --keepParent "$APP" "$GITHUB_WORKSPACE/Freeloader.zip"
+          ditto -c -k --keepParent "$APP" "$GITHUB_WORKSPACE/Explorer.zip"
 
       - uses: actions/upload-artifact@v7
         with:
-          name: Freeloader-build-${{ github.run_number }}
-          path: Freeloader.zip
+          name: Explorer-build-${{ github.run_number }}
+          path: Explorer.zip
           retention-days: 30
 
       - name: Publicar Release
@@ -64,7 +64,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "build-${{ github.run_number }}" Freeloader.zip \
+          gh release create "build-${{ github.run_number }}" Explorer.zip \
             --title "Compilación ${{ github.run_number }}" \
             --notes "Compilado desde ${{ github.sha }}." \
             --target "${{ github.sha }}" \
