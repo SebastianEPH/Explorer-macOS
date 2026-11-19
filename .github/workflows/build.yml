@@ -10,6 +10,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write   # para publicar la compilación como Release
+
 jobs:
   build:
     name: Compilar y probar
@@ -24,6 +27,14 @@ jobs:
       - name: Pruebas (Swift Package Manager)
         run: swift test
 
+      # El proyecto de Xcode se genera desde Sources/, así incluye los archivos
+      # nuevos del fork sin tocar el .xcodeproj del autor original.
+      - name: Regenerar el proyecto de Xcode
+        run: |
+          gem install --user-install xcodeproj
+          export PATH="$(ruby -e 'print Gem.user_dir')/bin:$PATH"
+          ruby Scripts/generate_xcode_project.rb
+
       - name: Compilar la app (Release, sin firmar)
         run: |
           xcodebuild \
@@ -35,13 +46,26 @@ jobs:
             DEVELOPMENT_TEAM="" \
             build
 
-      - name: Empaquetar
+      - name: Número de compilación y paquete
         run: |
-          cd build/Release
-          ditto -c -k --keepParent Freeloader.app "$GITHUB_WORKSPACE/Freeloader.zip"
+          APP=build/Release/Freeloader.app
+          /usr/libexec/PlistBuddy -c "Add :FLBuildNumber string ${{ github.run_number }}" "$APP/Contents/Info.plist"
+          codesign --force --deep --sign - "$APP"
+          ditto -c -k --keepParent "$APP" "$GITHUB_WORKSPACE/Freeloader.zip"
 
       - uses: actions/upload-artifact@v7
         with:
-          name: Freeloader-${{ github.sha }}
+          name: Freeloader-build-${{ github.run_number }}
           path: Freeloader.zip
           retention-days: 30
+
+      - name: Publicar Release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "build-${{ github.run_number }}" Freeloader.zip \
+            --title "Compilación ${{ github.run_number }}" \
+            --notes "Compilado desde ${{ github.sha }}." \
+            --target "${{ github.sha }}" \
+            --latest

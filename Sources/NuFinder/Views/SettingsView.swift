@@ -39,6 +39,7 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            UpdatesSection()
         }
         .onChange(of: commandPaletteKey) { _, value in commandPaletteKey = sanitized(value, fallback: "p") }
         .onChange(of: terminalKey) { _, value in terminalKey = sanitized(value, fallback: "t") }
