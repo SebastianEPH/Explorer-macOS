@@ -33,39 +33,39 @@ final class UpdateService {
             request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
             let (data, response) = try await URLSession.shared.data(for: request)
             guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-                state = .failed("No hay compilaciones publicadas todavía.")
+                state = .failed(String(localized: "No builds have been published yet."))
                 return
             }
             let release = try JSONDecoder().decode(Release.self, from: data)
             guard let build = Int(release.tag_name.replacingOccurrences(of: "build-", with: "")),
                   let asset = release.assets.first(where: { $0.name.hasSuffix(".zip") }),
                   let url = URL(string: asset.browser_download_url) else {
-                state = .failed("La última versión publicada no tiene un .zip válido.")
+                state = .failed(String(localized: "The latest release has no valid .zip file."))
                 return
             }
             state = build > currentBuild ? .available(build: build, url: url) : .upToDate
         } catch {
-            state = .failed("No se pudo consultar GitHub: \(error.localizedDescription)")
+            state = .failed(String(localized: "Could not reach GitHub: \(error.localizedDescription)"))
         }
     }
 
     func install(from url: URL) async {
         do {
-            state = .installing("Descargando…")
+            state = .installing(String(localized: "Downloading…"))
             let (zip, _) = try await URLSession.shared.download(from: url)
             let work = FileManager.default.temporaryDirectory
                 .appendingPathComponent("FreeloaderUpdate-\(UUID().uuidString)")
             try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
 
-            state = .installing("Descomprimiendo…")
+            state = .installing(String(localized: "Unpacking…"))
             try run("/usr/bin/ditto", ["-x", "-k", zip.path, work.path])
             guard let newApp = try FileManager.default.contentsOfDirectory(at: work, includingPropertiesForKeys: nil)
                 .first(where: { $0.pathExtension == "app" }) else {
-                throw UpdateError("El .zip no contiene la app.")
+                throw UpdateError(String(localized: "The .zip file does not contain the app."))
             }
 
             // Un script espera a que esta app se cierre, cambia el paquete y la vuelve a abrir.
-            state = .installing("Instalando y reiniciando…")
+            state = .installing(String(localized: "Installing and restarting…"))
             // Si la app cambió de nombre (p. ej. Freeloader.app → Explorer.app), se borra la vieja.
             let current = Bundle.main.bundleURL
             let target = current.deletingLastPathComponent().appendingPathComponent(newApp.lastPathComponent)
@@ -81,7 +81,32 @@ final class UpdateService {
             try process.run()
             NSApp.terminate(nil)
         } catch {
-            state = .failed("No se pudo instalar: \(error.localizedDescription)")
+            state = .failed(String(localized: "Could not install: \(error.localizedDescription)"))
+        }
+    }
+
+    /// Menú Ayuda → «Buscar actualizaciones…»: consulta y pregunta con una alerta.
+    func checkFromMenu() async {
+        await check()
+        let alert = NSAlert()
+        switch state {
+        case .available(let build, let url):
+            alert.messageText = String(localized: "Build \(build) is available")
+            alert.informativeText = String(localized: "Explorer will download it, replace itself and restart. Your settings are kept.")
+            alert.addButton(withTitle: String(localized: "Install and Restart"))
+            alert.addButton(withTitle: String(localized: "Cancel"))
+            if alert.runModal() == .alertFirstButtonReturn { await install(from: url) }
+        case .upToDate:
+            alert.messageText = String(localized: "You have the latest version")
+            alert.informativeText = String(localized: "Installed build: \(currentBuild)")
+            alert.runModal()
+        case .failed(let message):
+            alert.alertStyle = .warning
+            alert.messageText = String(localized: "Could not check for updates")
+            alert.informativeText = message
+            alert.runModal()
+        default:
+            break
         }
     }
 
@@ -91,7 +116,7 @@ final class UpdateService {
         process.arguments = arguments
         try process.run()
         process.waitUntilExit()
-        guard process.terminationStatus == 0 else { throw UpdateError("\(tool) falló (\(process.terminationStatus)).") }
+        guard process.terminationStatus == 0 else { throw UpdateError(String(localized: "\(tool) failed (\(process.terminationStatus)).")) }
     }
 
     private struct Release: Decodable {
@@ -113,28 +138,28 @@ struct UpdatesSection: View {
     @State private var updates = UpdateService.shared
 
     var body: some View {
-        Section("Actualizaciones") {
-            LabeledContent("Compilación instalada", value: updates.currentBuild > 0 ? "\(updates.currentBuild)" : "local")
+        Section("Updates") {
+            LabeledContent("Installed build", value: updates.currentBuild > 0 ? "\(updates.currentBuild)" : String(localized: "local"))
             HStack {
                 switch updates.state {
                 case .available(let build, let url):
-                    Text("Nueva compilación \(build) disponible")
+                    Text("Build \(build) is available")
                     Spacer()
-                    Button("Instalar y reiniciar") { Task { await updates.install(from: url) } }
+                    Button("Install and Restart") { Task { await updates.install(from: url) } }
                 case .installing(let step):
                     ProgressView().controlSize(.small)
                     Text(step)
                 default:
-                    Button("Buscar actualizaciones") { Task { await updates.check() } }
+                    Button("Check for Updates") { Task { await updates.check() } }
                         .disabled(updates.state == .checking)
                     if updates.state == .checking { ProgressView().controlSize(.small) }
-                    if updates.state == .upToDate { Text("Ya tienes la última versión").foregroundStyle(.secondary) }
+                    if updates.state == .upToDate { Text("You have the latest version").foregroundStyle(.secondary) }
                 }
             }
             if case .failed(let message) = updates.state {
                 Text(message).font(.caption).foregroundStyle(.red)
             }
-            Text("Descarga la última compilación de github.com/\(UpdateService.repository). Tu configuración se conserva.")
+            Text("Downloads the latest build from github.com/\(UpdateService.repository). Your settings are kept.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

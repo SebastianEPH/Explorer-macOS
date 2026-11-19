@@ -196,6 +196,9 @@ struct FreeloaderApp: App {
                 Button("Enclosing Folder") { browser.goUp() }
                     .keyboardShortcut(.upArrow, modifiers: .command)
             }
+            CommandGroup(after: .help) {
+                Button("Check for Updates…") { Task { await UpdateService.shared.checkFromMenu() } }
+            }
             CommandMenu("Commands") {
                 Button("Command Palette…") { browser.showsCommandPalette = true }
                     .keyboardShortcut(shortcutKey(commandPaletteKey, fallback: "p"), modifiers: [.command, .shift])

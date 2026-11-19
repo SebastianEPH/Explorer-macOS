@@ -34,3 +34,11 @@ gh release download -R SebastianEPH/Freeloader --pattern Explorer.zip
 ditto -x -k Explorer.zip . && rm -rf /Applications/Explorer.app && mv Explorer.app /Applications/
 xattr -dr com.apple.quarantine /Applications/Explorer.app
 ```
+
+## Idioma y traducciones
+
+- Las claves de texto del código van **en inglés** (como el autor); las traducciones están en `Localization/<idioma>.lproj/Localizable.strings` (fuera de `Sources/` para que SwiftPM no las procese). El generador del proyecto las copia como carpetas en Resources.
+- Interpolaciones: `String` → `%@`, `Int` → `%lld`, `Int32` → `%d`. Textos fuera de SwiftUI (NSAlert, NSMenu): `String(localized:)`.
+- Texto nuevo en la interfaz → añade su línea en `es.lproj/Localizable.strings`.
+- Ajustes → Idioma (`Services/LanguageService.swift`) guarda `AppleLanguages` de la app y la reinicia.
+- Menú Ayuda → «Buscar actualizaciones…» (`UpdateService.checkFromMenu`).

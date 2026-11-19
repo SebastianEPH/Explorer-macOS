@@ -31,6 +31,15 @@ assets_group = project.main_group.new_group("Assets", "Assets")
 assets_ref = assets_group.new_file("Assets.xcassets")
 app.resources_build_phase.add_file_reference(assets_ref)
 
+# Traducciones del fork: carpetas *.lproj copiadas tal cual en Resources.
+localization_group = project.main_group.new_group("Localization", "Localization")
+Dir.glob(File.join(root, "Localization/*.lproj")).sort.each do |path|
+  ref = localization_group.new_reference(File.basename(path))
+  ref.last_known_file_type = "folder"
+  app.resources_build_phase.add_file_reference(ref)
+end
+project.root_object.known_regions = %w[en es Base]
+
 [app, extension].each do |target|
   target.build_configurations.each do |config|
     config.build_settings["SWIFT_VERSION"] = "6.0"
