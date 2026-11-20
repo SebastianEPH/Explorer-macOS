@@ -91,7 +91,7 @@ enum PermissionsService {
         case .fullDisk:
             open(kind)
         case .accessibility:
-            let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+            let key = "AXTrustedCheckOptionPrompt" // = kAXTrustedCheckOptionPrompt
             if !AXIsProcessTrustedWithOptions([key: true] as CFDictionary) { open(kind) }
         case .folders:
             // Leer cada carpeta hace que macOS muestre su aviso la primera vez.
