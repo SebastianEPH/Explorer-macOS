@@ -55,6 +55,9 @@ final class FileOperationManager: ObservableObject, @unchecked Sendable {
     private let historyKey = "fileOperationHistory"
 
     init() {
+        // Fork: no se guarda ni se restaura el historial de operaciones; se borra el antiguo.
+        UserDefaults.standard.removeObject(forKey: historyKey)
+        return
         guard let data = UserDefaults.standard.data(forKey: historyKey),
               let history = try? JSONDecoder().decode([FileOperation].self, from: data) else {
             return
@@ -254,6 +257,7 @@ final class FileOperationManager: ObservableObject, @unchecked Sendable {
     }
 
     private func persistHistory() {
+        return // Fork: sin historial guardado
         let history = Array(operations.filter { $0.finishedAt != nil }.prefix(50))
         if let data = try? JSONEncoder().encode(history) {
             UserDefaults.standard.set(data, forKey: historyKey)

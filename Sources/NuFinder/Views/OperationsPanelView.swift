@@ -39,7 +39,10 @@ struct OperationsPanelView: View {
             let finishedWithProblems = operations.operations.prefix(5).contains { $0.error != nil }
             guard !finishedWithProblems else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                if !isRunning { operations.showsDetails = false }
+                if !isRunning {
+                    operations.showsDetails = false
+                    operations.clearCompleted() // sin historial: solo se ve lo que está en curso
+                }
             }
         }
     }
