@@ -11,7 +11,10 @@ struct ColumnSortComparator: SortComparator, Hashable {
     func compare(_ lhs: FileItem, _ rhs: FileItem) -> ComparisonResult {
         let result: ComparisonResult
         switch field {
-        case .name, .created: result = lhs.name.localizedStandardCompare(rhs.name)
+        case .name: result = lhs.name.localizedStandardCompare(rhs.name)
+        case .created:
+            let l = lhs.created ?? .distantPast, r = rhs.created ?? .distantPast
+            result = l == r ? .orderedSame : (l < r ? .orderedAscending : .orderedDescending)
         case .kind: result = lhs.kind.localizedStandardCompare(rhs.kind)
         case .size: result = lhs.size == rhs.size ? .orderedSame : (lhs.size < rhs.size ? .orderedAscending : .orderedDescending)
         case .modified:
@@ -27,6 +30,11 @@ struct ColumnSortComparator: SortComparator, Hashable {
     }
 }
 
+/// Columna opcional «Fecha de creación» en la vista de lista (Ver → Columnas).
+enum ListColumnSettings {
+    static let showsCreatedKey = "list.showsCreatedColumn"
+}
+
 extension BrowserModel {
     /// La columna por la que se ordena (la primera de `sortCriteria`) para la tabla.
     var columnSortOrder: Binding<[ColumnSortComparator]> {
@@ -37,6 +45,8 @@ extension BrowserModel {
             set: { newValue in
                 guard let first = newValue.first else { return }
                 self.sortCriteria = [SortCriterion(field: first.field, ascending: first.order == .forward)]
+                // sortCriteria no reordena por sí solo: hay que volver a ordenar la lista.
+                self.sortedAgain()
             }
         )
     }

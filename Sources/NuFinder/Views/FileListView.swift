@@ -20,6 +20,7 @@ struct FileListView: View {
     @State private var imageResizeURLs: [URL] = []
     @State private var showsImageResize = false
     @AppStorage(ItemHitAreaSettings.compactKey) private var compactHitArea = true // Fork
+    @AppStorage(ListColumnSettings.showsCreatedKey) private var showsCreatedColumn = false // Fork
     @AppStorage(ItemHitAreaSettings.spacingKey) private var gridSpacing = ItemHitAreaSettings.defaultSpacing // Fork
 
     private static let byteFormatter: ByteCountFormatter = {
@@ -170,6 +171,24 @@ struct FileListView: View {
                             .contentShape(Rectangle())
                             .contextMenu { contextMenu(for: item) }
                     }
+                }
+                .width(min: 140, ideal: 170)
+            }
+
+            // Fork: columna «Fecha de creación» (Ver → Columnas)
+            if showsCreatedColumn {
+                TableColumn("Date Created", sortUsing: ColumnSortComparator(field: .created)) { item in
+                    Group {
+                        if let created = item.created {
+                            Text(created, format: .dateTime.year().month().day().hour().minute())
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text("—").foregroundStyle(.tertiary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .contextMenu { contextMenu(for: item) }
                 }
                 .width(min: 140, ideal: 170)
             }

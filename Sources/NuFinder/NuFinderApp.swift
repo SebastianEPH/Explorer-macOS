@@ -57,6 +57,7 @@ struct FreeloaderApp: App {
     @AppStorage("shortcut.commandPalette") private var commandPaletteKey = "p"
     @AppStorage("shortcut.terminal") private var terminalKey = "t"
     @AppStorage("previewPane.visible") private var previewVisible = true // Fork
+    @AppStorage(ListColumnSettings.showsCreatedKey) private var showsCreatedColumn = false // Fork
 
     var body: some Scene {
         WindowGroup {
@@ -179,6 +180,7 @@ struct FreeloaderApp: App {
                     Toggle("Kind", isOn: bind(\.showsKindColumn))
                     Toggle("Size", isOn: bind(\.showsSizeColumn))
                     Toggle("Date Modified", isOn: bind(\.showsModifiedColumn))
+                    Toggle("Date Created", isOn: $showsCreatedColumn)
                 }
                 Button(browser.showsHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files") {
                     browser.toggleHiddenFiles()
