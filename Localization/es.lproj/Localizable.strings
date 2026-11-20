@@ -266,3 +266,5 @@
 "Check Again" = "Volver a comprobar";
 "Open System Settings" = "Abrir Ajustes del Sistema";
 "macOS only lets you grant these yourself: accept the prompt or turn Explorer on in System Settings. Some changes need Explorer to restart." = "macOS solo permite que los concedas tú: acepta el aviso o activa Explorer en Ajustes del Sistema. Algunos cambios requieren reiniciar Explorer.";
+"Copy Explorer Path" = "Copiar ruta de Explorer";
+"If Explorer is not in the list, press + in System Settings, then ⌘⇧G, paste the path and choose Explorer." = "Si Explorer no aparece en la lista, pulsa + en Ajustes del Sistema, luego ⌘⇧G, pega la ruta y elige Explorer.";

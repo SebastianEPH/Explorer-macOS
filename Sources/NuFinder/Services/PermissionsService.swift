@@ -113,7 +113,26 @@ enum PermissionsService {
     }
 
     static func open(_ kind: PermissionKind) {
+        if kind == .fullDisk { touchProtectedFiles() }
         if let url = kind.settingsURL { NSWorkspace.shared.open(url) }
+    }
+
+    /// macOS solo pone una app en la lista de «Acceso total al disco» cuando ha intentado
+    /// leer algo protegido. Se intenta (sin efecto si no hay permiso) antes de abrir el panel.
+    private static func touchProtectedFiles() {
+        let library = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library")
+        for relative in ["Application Support/com.apple.TCC/TCC.db", "Safari/Bookmarks.plist",
+                         "Mail", "Messages", "Safari", "Cookies"] {
+            let url = library.appendingPathComponent(relative)
+            _ = try? FileHandle(forReadingFrom: url).readData(ofLength: 1)
+            _ = try? FileManager.default.contentsOfDirectory(atPath: url.path)
+        }
+    }
+
+    /// Para el botón «+» de Ajustes del Sistema cuando Explorer no aparece en la lista.
+    static func copyAppPath() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(Bundle.main.bundlePath, forType: .string)
     }
 
     private static func automationState(_ bundleID: String, ask: Bool) -> PermissionState {
@@ -172,7 +191,13 @@ struct PermissionsSection: View {
                     }
                 }
                 Button("Check Again") { refresh() }
+                Spacer()
+                Button("Copy Explorer Path") { PermissionsService.copyAppPath() }
+                    .help(Text(Bundle.main.bundlePath))
             }
+            Text("If Explorer is not in the list, press + in System Settings, then ⌘⇧G, paste the path and choose Explorer.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             Text("macOS only lets you grant these yourself: accept the prompt or turn Explorer on in System Settings. Some changes need Explorer to restart.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
