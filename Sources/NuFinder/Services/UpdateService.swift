@@ -183,7 +183,7 @@ struct UpdatesSection: View {
     }
 }
 
-/// Menú Ayuda: versión instalada, buscar actualizaciones y novedades en GitHub.
+/// Menú Ayuda: versión instalada, «Acerca de Explorer» y buscar actualizaciones.
 struct HelpVersionItems: View {
     private let updates = UpdateService.shared
 
@@ -193,8 +193,24 @@ struct HelpVersionItems: View {
              ? "Explorer \(updates.currentVersion) (build \(updates.currentBuild))"
              : "Explorer (local build)")
         Button("Check for Updates…") { Task { await updates.checkFromMenu() } }
-        Button("Release Notes on GitHub") {
-            NSWorkspace.shared.open(URL(string: "https://github.com/\(UpdateService.repository)/releases")!)
-        }
+        Button("About Explorer") { AboutPanel.show() }
+    }
+}
+
+@MainActor
+enum AboutPanel {
+    static func show() {
+        let updates = UpdateService.shared
+        let credits = NSAttributedString(
+            string: String(localized: "Fork of Freeloader by KopitarFan (MIT license).\ngithub.com/\(UpdateService.repository)"),
+            attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor]
+        )
+        NSApp.orderFrontStandardAboutPanel(options: [
+            .applicationName: "Explorer",
+            .applicationVersion: updates.currentBuild > 0 ? updates.currentVersion : String(localized: "local"),
+            .version: updates.currentBuild > 0 ? String(localized: "build \(updates.currentBuild)") : "",
+            .credits: credits
+        ])
+        NSApp.activate(ignoringOtherApps: true)
     }
 }

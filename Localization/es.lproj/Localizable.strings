@@ -234,4 +234,7 @@
 "Installed version: %@" = "Versión instalada: %@";
 "Explorer %@ (build %lld)" = "Explorer %@ (compilación %lld)";
 "Explorer (local build)" = "Explorer (compilación local)";
-"Release Notes on GitHub" = "Novedades en GitHub";
+"About Explorer" = "Acerca de Explorer";
+"Fork of Freeloader by KopitarFan (MIT license).\ngithub.com/%@" = "Fork de Freeloader, de KopitarFan (licencia MIT).\ngithub.com/%@";
+"build %lld" = "compilación %lld";
+"Could not open iTerm: %@" = "No se pudo abrir iTerm: %@";

@@ -48,3 +48,5 @@ xattr -dr com.apple.quarantine /Applications/Explorer.app
 
 - Formato **X.Y.Z**. `X.Y` está en el archivo `VERSION` (súbelo a mano para cambios grandes: `1.1`, `2.0`); `Z` = commits desde el último cambio de `VERSION`, así que vuelve a 0 al subirla. Lo calcula el pipeline (`fetch-depth: 0`) y lo escribe en `CFBundleShortVersionString`; `CFBundleVersion` y `FLBuildNumber` = número de ejecución.
 - Releases: etiqueta `vX.Y.Z`, título «Explorer X.Y.Z».
+- iTerm (`Services/ITermService.swift`): si la terminal elegida es iTerm, «Abrir terminal aquí» le pide por AppleScript (`osascript`) una ventana nueva y hace `cd`; abrir la carpeta con NSWorkspace solo ponía delante la ventana existente. Necesita `NSAppleEventsUsageDescription` en `App-Info.plist`.
+- Menú Ayuda (`HelpVersionItems`): versión instalada, «Acerca de Explorer» (`AboutPanel`) y «Buscar actualizaciones…». El usuario no quiere enlaces a GitHub ahí.

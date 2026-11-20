@@ -9,6 +9,8 @@
         <string>en</string>
         <string>es</string>
     </array>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Explorer controla iTerm para abrir una ventana nueva en la carpeta elegida.</string>
     <key>CFBundleDisplayName</key>
     <string>Explorer</string>
     <key>CFBundleName</key>

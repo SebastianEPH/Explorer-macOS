@@ -10,6 +10,7 @@ enum TerminalService {
         let application = preferred.flatMap {
             FileManager.default.fileExists(atPath: $0.path) ? $0 : nil
         } ?? URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app")
+        if ITermService.handles(application) { return ITermService.openWindow(at: url) }
         let configuration = NSWorkspace.OpenConfiguration()
         NSWorkspace.shared.open(
             [url],
