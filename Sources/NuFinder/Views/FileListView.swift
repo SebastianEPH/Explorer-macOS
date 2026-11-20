@@ -14,6 +14,8 @@ struct FileListView: View {
     @State private var marqueeAddsToSelection = false
     @State private var imageResizeURLs: [URL] = []
     @State private var showsImageResize = false
+    @AppStorage(ItemHitAreaSettings.compactKey) private var compactHitArea = true // Fork
+    @AppStorage(ItemHitAreaSettings.spacingKey) private var gridSpacing = ItemHitAreaSettings.defaultSpacing // Fork
 
     private static let byteFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
@@ -83,7 +85,7 @@ struct FileListView: View {
                     }
                     GitStatusBadge(url: item.url)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: compactHitArea ? nil : .infinity, alignment: .leading)
                 .padding(.horizontal, 5)
                 .padding(.vertical, 3)
                 .background {
@@ -260,9 +262,9 @@ struct FileListView: View {
             LazyVGrid(
                 columns: [GridItem(
                     .adaptive(minimum: browser.viewMode == .icons ? 105 : 220),
-                    spacing: 8
+                    spacing: gridSpacing
                 )],
-                spacing: 8
+                spacing: gridSpacing
             ) {
                 ForEach(browser.displayedItems) { item in
                     tile(for: item)
@@ -385,7 +387,7 @@ struct FileListView: View {
                 }
                 GitStatusBadge(url: item.url)
             }
-            .frame(maxWidth: .infinity, minHeight: 82)
+            .frame(maxWidth: compactHitArea ? 92 : .infinity, minHeight: 82)
         } else {
             HStack(spacing: 8) {
                 FileThumbnailView(item: item, size: 24)
@@ -395,9 +397,9 @@ struct FileListView: View {
                     Text(item.name).lineLimit(1)
                 }
                 GitStatusBadge(url: item.url)
-                Spacer()
+                if !compactHitArea { Spacer() }
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: compactHitArea ? nil : .infinity, alignment: .leading)
         }
     }
 

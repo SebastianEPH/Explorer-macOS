@@ -285,3 +285,10 @@
 "Copying" = "Copiando";
 "Pause" = "Pausar";
 "Resume" = "Reanudar";
+
+/* Fork: zona de clic */
+"Selection" = "Selección";
+"Compact click area (icon and name only)" = "Zona de clic compacta (solo icono y nombre)";
+"Space between icons" = "Espacio entre iconos";
+"%lld pt" = "%lld pt";
+"A smaller click area leaves more empty space to start a drag selection." = "Una zona de clic más pequeña deja más espacio libre para empezar una selección arrastrando.";
