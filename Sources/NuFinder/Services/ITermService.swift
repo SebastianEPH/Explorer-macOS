@@ -13,13 +13,24 @@ enum ITermService {
         let script = """
         on run argv
             set dirPath to item 1 of argv
+            -- No se activa iTerm antes de crear la ventana: «activate» saltaría al
+            -- escritorio de la ventana que ya existía (p. ej. una en pantalla completa).
+            -- Se crea la ventana, se elige como principal y después se activa,
+            -- así macOS va al escritorio de la ventana nueva.
             tell application "iTerm"
-                activate
                 set newWindow to (create window with default profile)
                 tell current session of newWindow
                     write text "cd " & quoted form of dirPath & " && clear"
                 end tell
+                select newWindow
+                activate
             end tell
+            try
+                tell application "System Events" to tell process "iTerm2"
+                    perform action "AXRaise" of window 1
+                    set frontmost to true
+                end tell
+            end try
             -- Si la ventana de iTerm de antes estaba en pantalla completa, la nueva también:
             -- se le quita (necesita el permiso de Accesibilidad; sin él, se ignora).
             try
