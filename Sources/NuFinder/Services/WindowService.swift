@@ -21,6 +21,8 @@ enum WindowService {
         window.title = "Explorer"
         window.representedURL = url
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        // Ventana nueva siempre aislada, aunque macOS tenga «Preferir pestañas: siempre».
+        window.tabbingMode = .disallowed
         window.center()
         window.makeKeyAndOrderFront(nil)
     }
