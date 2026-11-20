@@ -12,6 +12,11 @@ struct FileListView: View {
     @State private var marqueeBaseSelection: Set<URL> = []
     @State private var isMarqueeSelecting = false
     @State private var marqueeAddsToSelection = false
+    // Fork: desplazamiento automático al seleccionar arrastrando
+    @State private var autoScroller = MarqueeAutoScroller()
+    @State private var contentTileFrames: [URL: CGRect] = [:]
+    @State private var marqueeStartInContent: CGPoint = .zero
+    @State private var marqueePointer: CGPoint = .zero
     @State private var imageResizeURLs: [URL] = []
     @State private var showsImageResize = false
     @AppStorage(ItemHitAreaSettings.compactKey) private var compactHitArea = true // Fork
@@ -271,9 +276,13 @@ struct FileListView: View {
                 }
             }
             .padding(10)
+            .background(ScrollViewFinder(scroller: autoScroller))
         }
         .coordinateSpace(name: "fileTilePane")
-        .onPreferenceChange(TileFramePreferenceKey.self) { tileFrames = $0 }
+        .onPreferenceChange(TileFramePreferenceKey.self) { frames in
+            tileFrames = frames
+            if isMarqueeSelecting { rememberContentFrames(frames) }
+        }
         .simultaneousGesture(blankAreaTapGesture)
         .simultaneousGesture(marqueeSelectionGesture)
         .overlay(alignment: .topLeading) {
@@ -446,29 +455,64 @@ struct FileListView: View {
                     marqueeBaseSelection = browser.selection
                     marqueeAddsToSelection =
                         NSApp.currentEvent?.modifierFlags.contains(.command) == true
+                    // Fork: la selección se calcula en coordenadas del contenido para seguir
+                    // funcionando mientras la vista se desplaza sola.
+                    contentTileFrames = [:]
+                    rememberContentFrames(tileFrames)
+                    marqueeStartInContent = CGPoint(x: value.startLocation.x,
+                                                    y: value.startLocation.y + autoScroller.offsetY)
+                    autoScroller.onScroll = { updateMarquee() }
                 }
 
-                let rect = CGRect(
-                    x: min(value.startLocation.x, value.location.x),
-                    y: min(value.startLocation.y, value.location.y),
-                    width: abs(value.location.x - value.startLocation.x),
-                    height: abs(value.location.y - value.startLocation.y)
-                )
-                marqueeRect = rect
-                let enclosed = Set(tileFrames.compactMap { url, frame in
-                    frame.intersects(rect) ? url : nil
-                })
-                browser.selection = marqueeAddsToSelection
-                    ? marqueeBaseSelection.union(enclosed)
-                    : enclosed
+                marqueePointer = value.location
+                updateMarquee()
+                autoScroller.update(pointerY: value.location.y)
             }
             .onEnded { _ in
+                autoScroller.stop()
+                autoScroller.onScroll = nil
+                contentTileFrames = [:]
                 marqueeRect = nil
                 marqueeBaseSelection.removeAll()
                 isMarqueeSelecting = false
                 marqueeAddsToSelection = false
                 browser.endMarqueeSelection()
             }
+    }
+
+    /// Fork: guarda los marcos de los iconos en coordenadas del contenido.
+    private func rememberContentFrames(_ frames: [URL: CGRect]) {
+        let offset = autoScroller.offsetY
+        for (url, frame) in frames {
+            contentTileFrames[url] = frame.offsetBy(dx: 0, dy: offset)
+        }
+    }
+
+    /// Fork: recalcula el rectángulo de selección (también mientras se desplaza sola).
+    private func updateMarquee() {
+        guard isMarqueeSelecting else { return }
+        let offset = autoScroller.offsetY
+        rememberContentFrames(tileFrames)
+        let current = CGPoint(x: marqueePointer.x, y: marqueePointer.y + offset)
+        let rect = CGRect(
+            x: min(marqueeStartInContent.x, current.x),
+            y: min(marqueeStartInContent.y, current.y),
+            width: abs(current.x - marqueeStartInContent.x),
+            height: abs(current.y - marqueeStartInContent.y)
+        )
+        let visible = rect.offsetBy(dx: 0, dy: -offset)
+        let height = autoScroller.viewportHeight
+        let clipped = height > 0
+            ? visible.intersection(CGRect(x: -10_000, y: 0, width: 20_000, height: height))
+            : visible
+        marqueeRect = clipped.isNull ? .zero : clipped
+        let shown = Set(browser.displayedItems.map(\.url))
+        let enclosed = Set(contentTileFrames.compactMap { url, frame in
+            shown.contains(url) && frame.intersects(rect) ? url : nil
+        })
+        browser.selection = marqueeAddsToSelection
+            ? marqueeBaseSelection.union(enclosed)
+            : enclosed
     }
 
     private var blankAreaTapGesture: some Gesture {
