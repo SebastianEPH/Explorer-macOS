@@ -131,7 +131,7 @@ struct ContentView: View {
             Text(browser.errorMessage ?? "")
         }
         .sheet(isPresented: $operations.showsDetails) {
-            TransferDetailsView()
+            OperationsPanelView() // Fork: panel rehecho
                 .environmentObject(operations)
         }
         .sheet(item: $browser.itemForInfo) { item in
