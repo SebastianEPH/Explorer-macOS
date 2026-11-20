@@ -50,7 +50,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 @main
 struct FreeloaderApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @StateObject private var browser = BrowserModel()
+    @StateObject private var mainBrowser = BrowserModel()
+    @ObservedObject private var keyFocus = KeyWindowFocus.shared // Fork: menús → ventana activa
     @StateObject private var operations = FileOperationManager()
     @StateObject private var paneFocus = PaneFocusCoordinator()
     @AppStorage("shortcut.commandPalette") private var commandPaletteKey = "p"
@@ -59,11 +60,12 @@ struct FreeloaderApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(browser)
+                .environmentObject(mainBrowser)
                 .environmentObject(operations)
                 .environmentObject(paneFocus)
                 .frame(minWidth: 820, minHeight: 480)
-                .onOpenURL { browser.handleDeepLink($0) }
+                .background(KeyWindowReader(focus: paneFocus, browser: mainBrowser))
+                .onOpenURL { mainBrowser.handleDeepLink($0) }
         }
         .commands {
             CommandGroup(replacing: .undoRedo) {
@@ -112,7 +114,7 @@ struct FreeloaderApp: App {
                 .keyboardShortcut("f", modifiers: [.command, .option])
                 .disabled(activeBrowser.searchText.isEmpty)
             }
-            CommandGroup(after: .newItem) {
+            CommandGroup(replacing: .newItem) {
                 Button("New Window") { WindowService.open(at: browser.currentURL) }
                     .keyboardShortcut("n")
                 Button("New Tab") { browser.newTab() }
@@ -164,16 +166,16 @@ struct FreeloaderApp: App {
                     .disabled(browser.selection.isEmpty)
             }
             CommandGroup(after: .toolbar) {
-                Toggle("Folder Tree in Sidebar", isOn: $browser.showsTree)
-                Picker("View Mode", selection: $browser.viewMode) {
+                Toggle("Folder Tree in Sidebar", isOn: bind(\.showsTree))
+                Picker("View Mode", selection: bind(\.viewMode)) {
                     ForEach(FileViewMode.allCases) { mode in
                         Text(mode.rawValue).tag(mode)
                     }
                 }
                 Menu("Columns") {
-                    Toggle("Kind", isOn: $browser.showsKindColumn)
-                    Toggle("Size", isOn: $browser.showsSizeColumn)
-                    Toggle("Date Modified", isOn: $browser.showsModifiedColumn)
+                    Toggle("Kind", isOn: bind(\.showsKindColumn))
+                    Toggle("Size", isOn: bind(\.showsSizeColumn))
+                    Toggle("Date Modified", isOn: bind(\.showsModifiedColumn))
                 }
                 Button(browser.showsHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files") {
                     browser.toggleHiddenFiles()
@@ -215,7 +217,17 @@ struct FreeloaderApp: App {
     }
 
     private var activeBrowser: BrowserModel {
-        paneFocus.activeBrowser ?? browser
+        browser
+    }
+
+    /// Fork: el BrowserModel de la ventana activa (cada ventana tiene el suyo).
+    private var browser: BrowserModel {
+        keyFocus.browser ?? paneFocus.activeBrowser ?? mainBrowser
+    }
+
+    private func bind<Value>(_ keyPath: ReferenceWritableKeyPath<BrowserModel, Value>) -> Binding<Value> {
+        let model = browser
+        return Binding(get: { model[keyPath: keyPath] }, set: { model[keyPath: keyPath] = $0 })
     }
 
     @MainActor

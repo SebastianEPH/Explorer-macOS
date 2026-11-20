@@ -1,0 +1,84 @@
+import AppKit
+import Combine
+import SwiftUI
+
+/// Fork: cada ventana tiene su propio BrowserModel. Esto recuerda cuál es la ventana
+/// activa para que los menús (⌘T, ⌘C, Ver, Ir…) actúen sobre ella y no sobre la primera.
+@MainActor
+final class KeyWindowFocus: ObservableObject {
+    static let shared = KeyWindowFocus()
+
+    private struct Entry {
+        let focus: PaneFocusCoordinator
+        let browser: BrowserModel
+    }
+
+    private let entries = NSMapTable<NSWindow, AnyObject>.weakToStrongObjects()
+    private var focusSubscription: AnyCancellable?
+    private var browserSubscription: AnyCancellable?
+    @Published private(set) var browser: BrowserModel?
+
+    private init() {
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            guard let window = note.object as? NSWindow else { return }
+            Task { @MainActor in self?.windowBecameKey(window) }
+        }
+    }
+
+    func register(_ window: NSWindow, focus: PaneFocusCoordinator, browser: BrowserModel) {
+        entries.setObject(Box(Entry(focus: focus, browser: browser)), forKey: window)
+        if window.isKeyWindow || self.browser == nil { windowBecameKey(window) }
+    }
+
+    private func windowBecameKey(_ window: NSWindow) {
+        guard let entry = (entries.object(forKey: window) as? Box<Entry>)?.value else { return }
+        focusSubscription = entry.focus.$activeBrowser.sink { [weak self] active in
+            self?.follow(active ?? entry.browser)
+        }
+    }
+
+    private func follow(_ model: BrowserModel) {
+        guard model !== browser else { return }
+        browser = model
+        browserSubscription = model.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }
+    }
+
+    private final class Box<T> {
+        let value: T
+        init(_ value: T) { self.value = value }
+    }
+}
+
+/// Se pone de fondo en la raíz de cada ventana para registrarla.
+struct KeyWindowReader: NSViewRepresentable {
+    let focus: PaneFocusCoordinator
+    let browser: BrowserModel
+
+    func makeNSView(context: Context) -> NSView { ReaderView(focus: focus, browser: browser) }
+    func updateNSView(_ nsView: NSView, context: Context) {}
+
+    private final class ReaderView: NSView {
+        let focus: PaneFocusCoordinator
+        let browser: BrowserModel
+
+        init(focus: PaneFocusCoordinator, browser: BrowserModel) {
+            self.focus = focus
+            self.browser = browser
+            super.init(frame: .zero)
+        }
+
+        required init?(coder: NSCoder) { fatalError() }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard let window else { return }
+            MainActor.assumeIsolated {
+                KeyWindowFocus.shared.register(window, focus: focus, browser: browser)
+            }
+        }
+    }
+}

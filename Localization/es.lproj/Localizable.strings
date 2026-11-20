@@ -248,3 +248,21 @@
 "Show in sidebar" = "Mostrar en la barra lateral";
 "Default" = "Predeterminado";
 "Icon" = "Icono";
+
+/* Fork: Ajustes → Permisos */
+"Permissions" = "Permisos";
+"Full Disk Access" = "Acceso total al disco";
+"Accessibility" = "Accesibilidad";
+"Desktop, Documents and Downloads" = "Escritorio, Documentos y Descargas";
+"Automation: System Events" = "Automatización: System Events";
+"Automation: iTerm" = "Automatización: iTerm";
+"Browse every folder without asking (Library, other volumes, protected files)." = "Abrir cualquier carpeta sin preguntar (Librería, otros discos, archivos protegidos).";
+"Bring the new iTerm window to the front and take it out of full screen." = "Traer al frente la ventana nueva de iTerm y sacarla de pantalla completa.";
+"Open your personal folders. Not needed if Full Disk Access is on." = "Abrir tus carpetas personales. No hace falta con Acceso total al disco.";
+"Control windows through System Events." = "Controlar ventanas mediante System Events.";
+"Open a new iTerm window in the current folder." = "Abrir una ventana nueva de iTerm en la carpeta actual.";
+"Request" = "Solicitar";
+"Request All" = "Solicitar todos";
+"Check Again" = "Volver a comprobar";
+"Open System Settings" = "Abrir Ajustes del Sistema";
+"macOS only lets you grant these yourself: accept the prompt or turn Explorer on in System Settings. Some changes need Explorer to restart." = "macOS solo permite que los concedas tú: acepta el aviso o activa Explorer en Ajustes del Sistema. Algunos cambios requieren reiniciar Explorer.";

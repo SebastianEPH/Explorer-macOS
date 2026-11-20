@@ -14,6 +14,7 @@ enum WindowService {
             .environmentObject(operations)
             .environmentObject(paneFocus)
             .frame(minWidth: 820, minHeight: 480)
+            .background(KeyWindowReader(focus: paneFocus, browser: browser))
         let controller = NSHostingController(rootView: root)
         let window = NSWindow(contentViewController: controller)
         let splitPane = UserDefaults.standard.bool(forKey: "showsSplitPane")

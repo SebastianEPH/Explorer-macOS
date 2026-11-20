@@ -40,6 +40,7 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
             FavoritesSection()
+            PermissionsSection()
             FinderRedirectSection()
             LanguageSection()
             UpdatesSection()

@@ -43,6 +43,8 @@ xattr -dr com.apple.quarantine /Applications/Explorer.app
 - Ajustes → Idioma (`Services/LanguageService.swift`) guarda `AppleLanguages` de la app y la reinicia.
 - Menú Ayuda → «Buscar actualizaciones…» (`UpdateService.checkFromMenu`).
 - Ajustes → Favoritos (`Services/FavoritesSettings.swift`): mostrar/ocultar (también los de fábrica), nombre, icono, orden, añadir y quitar. Guarda en UserDefaults y avisa con `FavoritesSettings.didChange`; `BrowserModel.favorites` pasa por `FavoritesSettings.visible`.
+- Ajustes → Permisos (`Services/PermissionsService.swift`): estado y botón «Solicitar» de Acceso total al disco, Accesibilidad, carpetas personales y Automatización (System Events, iTerm). macOS no deja concederlos desde la app: muestra el aviso del sistema o abre el panel de Ajustes del Sistema.
+- Ventanas (`Services/KeyWindowFocus.swift`): cada ventana tiene su propio `BrowserModel`; «Nueva ventana» reemplaza a la de SwiftUI (que compartía el mismo modelo) y los menús actúan sobre la ventana activa (`browser` en `NuFinderApp` es calculado).
 - Ajustes → Finder (`Services/FinderRedirectService.swift`): con Finder cerrado (`QuitMenuItem`), si Finder arranca o pasa al frente (clic en el Dock) Explorer lo cierra y abre una ventana en la carpeta personal. Ignora los primeros 15 s tras abrir Explorer (al iniciar sesión macOS arranca Finder). Se registra al inicio de sesión con `SMAppService.mainApp`.
 
 ## Versiones
