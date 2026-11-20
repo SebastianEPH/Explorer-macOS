@@ -107,6 +107,7 @@ final class BrowserModel: ObservableObject {
     private let spotlight = SpotlightSearchService()
     private var favoriteViewPreferences: [String: FolderViewPreference] = [:]
     private var favoritesSettingsObserver: NSObjectProtocol? // Fork: Ajustes → Favoritos
+    private var clipboardObserver: NSObjectProtocol? // Fork: portapapeles compartido
 
     var canUndo: Bool { !undoActions.isEmpty }
     var canReopenClosedTab: Bool { !closedTabs.isEmpty }
@@ -151,6 +152,9 @@ final class BrowserModel: ObservableObject {
         favoritesSettingsObserver = NotificationCenter.default.addObserver(
             forName: FavoritesSettings.didChange, object: nil, queue: .main
         ) { [weak self] _ in Task { @MainActor in self?.reloadFavoritesFromSettings() } }
+        clipboardObserver = NotificationCenter.default.addObserver(
+            forName: SharedClipboard.didChange, object: nil, queue: .main
+        ) { [weak self] _ in Task { @MainActor in self?.objectWillChange.send() } }
         navigate(to: currentURL, addingHistory: false)
     }
 
