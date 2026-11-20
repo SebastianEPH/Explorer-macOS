@@ -3,6 +3,7 @@ import AppKit
 /// iTerm ignora «abrir carpeta» si ya está abierto (solo se pone delante).
 /// Con AppleScript se le pide siempre una ventana nueva en esa carpeta.
 /// La primera vez macOS pregunta si Explorer puede controlar iTerm.
+/// Con el permiso de Accesibilidad, además, la ventana nueva nunca sale en pantalla completa.
 enum ITermService {
     static func handles(_ application: URL) -> Bool {
         application.lastPathComponent.lowercased().hasPrefix("iterm")
@@ -19,6 +20,14 @@ enum ITermService {
                     write text "cd " & quoted form of dirPath & " && clear"
                 end tell
             end tell
+            -- Si la ventana de iTerm de antes estaba en pantalla completa, la nueva también:
+            -- se le quita (necesita el permiso de Accesibilidad; sin él, se ignora).
+            try
+                delay 0.6
+                tell application "System Events" to tell process "iTerm2"
+                    set value of attribute "AXFullScreen" of window 1 to false
+                end tell
+            end try
         end run
         """
         let process = Process()
