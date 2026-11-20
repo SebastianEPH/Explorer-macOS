@@ -39,6 +39,7 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            FavoritesSection()
             FinderRedirectSection()
             LanguageSection()
             UpdatesSection()
@@ -46,7 +47,7 @@ struct SettingsView: View {
         .onChange(of: commandPaletteKey) { _, value in commandPaletteKey = sanitized(value, fallback: "p") }
         .onChange(of: terminalKey) { _, value in terminalKey = sanitized(value, fallback: "t") }
         .padding(20)
-        .frame(width: 420)
+        .frame(width: 520)
     }
 
     private func sanitized(_ value: String, fallback: String) -> String {

@@ -102,6 +102,7 @@ final class BrowserModel: ObservableObject {
     private var selectionAnchor: URL?
     private let spotlight = SpotlightSearchService()
     private var favoriteViewPreferences: [String: FolderViewPreference] = [:]
+    private var favoritesSettingsObserver: NSObjectProtocol? // Fork: Ajustes → Favoritos
 
     var canUndo: Bool { !undoActions.isEmpty }
     var canReopenClosedTab: Bool { !closedTabs.isEmpty }
@@ -143,6 +144,9 @@ final class BrowserModel: ObservableObject {
            let decoded = try? JSONDecoder().decode([String: FolderViewPreference].self, from: data) {
             favoriteViewPreferences = decoded
         }
+        favoritesSettingsObserver = NotificationCenter.default.addObserver(
+            forName: FavoritesSettings.didChange, object: nil, queue: .main
+        ) { [weak self] _ in Task { @MainActor in self?.reloadFavoritesFromSettings() } }
         navigate(to: currentURL, addingHistory: false)
     }
 
@@ -1217,7 +1221,14 @@ final class BrowserModel: ObservableObject {
                 ordered.append(remaining.remove(at: index))
             }
         }
-        return ordered + remaining
+        return FavoritesSettings.visible(ordered + remaining)
+    }
+
+    /// Fork: Ajustes → Favoritos cambió la lista guardada.
+    private func reloadFavoritesFromSettings() {
+        customFavorites = defaults.stringArray(forKey: "customFavoritePaths")?.map(Self.storedDirectoryURL) ?? []
+        favoriteOrderPaths = defaults.stringArray(forKey: "favoriteOrderPaths") ?? []
+        objectWillChange.send()
     }
 
     func moveFavorites(from source: IndexSet, to destination: Int) {

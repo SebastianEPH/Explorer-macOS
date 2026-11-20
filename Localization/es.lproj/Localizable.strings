@@ -238,3 +238,13 @@
 "Fork of Freeloader by KopitarFan (MIT license).\ngithub.com/%@" = "Fork de Freeloader, de KopitarFan (licencia MIT).\ngithub.com/%@";
 "build %lld" = "compilación %lld";
 "Could not open iTerm: %@" = "No se pudo abrir iTerm: %@";
+
+/* Fork: Ajustes → Favoritos */
+"Add Folder…" = "Añadir carpeta…";
+"Restore Defaults" = "Restaurar valores de fábrica";
+"Changes appear in the sidebar right away. Folders are never moved or deleted." = "Los cambios se ven al momento en la barra lateral. Las carpetas nunca se mueven ni se borran.";
+"Restore the default Favorites?" = "¿Restaurar los Favoritos de fábrica?";
+"Names, icons, order and hidden items are reset. Added folders stay." = "Se restauran nombres, iconos, orden y elementos ocultos. Las carpetas añadidas se conservan.";
+"Show in sidebar" = "Mostrar en la barra lateral";
+"Default" = "Predeterminado";
+"Icon" = "Icono";
