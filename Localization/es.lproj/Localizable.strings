@@ -139,7 +139,7 @@
 "Open Image Gallery" = "Abrir galería de imágenes";
 "Open in New Tab" = "Abrir en una pestaña nueva";
 "Open in New Window" = "Abrir en una ventana nueva";
-"Open in Terminal" = "Abrir en Terminal";
+"Open in Terminal" = "Abrir terminal aquí";
 "Open Parent in Terminal" = "Abrir carpeta superior en Terminal";
 "Open Quick Look" = "Abrir Vista rápida";
 "Open Terminal (⌘⌥)" = "Abrir Terminal (⌘⌥)";
@@ -205,7 +205,7 @@
 "Update Saved View" = "Actualizar vista guardada";
 "Use Spotlight Index" = "Usar el índice de Spotlight";
 "Use the workspace toolbar menu to save your current layout." = "Usa el menú de espacios de trabajo de la barra para guardar tu distribución actual.";
-"Used by the toolbar and Open in Terminal actions." = "La usan la barra de herramientas y «Abrir en Terminal».";
+"Used by the toolbar and Open in Terminal actions." = "La usan la barra de herramientas y «Abrir terminal aquí».";
 "UTF-8 value" = "Valor UTF-8";
 "View and Sort Saved" = "Vista y orden guardados";
 "View As" = "Ver como";
