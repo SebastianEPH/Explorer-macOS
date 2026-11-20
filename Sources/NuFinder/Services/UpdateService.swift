@@ -14,7 +14,7 @@ final class UpdateService {
         case idle
         case checking
         case upToDate
-        case available(build: Int, url: URL)
+        case available(version: String, url: URL)
         case installing(String)
         case failed(String)
     }
@@ -24,6 +24,22 @@ final class UpdateService {
     /// Número de compilación que el pipeline escribe en `FLBuildNumber` (0 si se compiló a mano).
     var currentBuild: Int {
         Int(Bundle.main.object(forInfoDictionaryKey: "FLBuildNumber") as? String ?? "") ?? 0
+    }
+
+    /// Versión X.Y.Z que pone el pipeline; una compilación local no cuenta como publicada.
+    var currentVersion: String {
+        currentBuild > 0 ? (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0") : "0"
+    }
+
+    /// Compara versiones número a número (1.0.10 > 1.0.9).
+    static func isNewer(_ candidate: String, than current: String) -> Bool {
+        let a = candidate.split(separator: ".").map { Int($0) ?? 0 }
+        let b = current.split(separator: ".").map { Int($0) ?? 0 }
+        for i in 0..<max(a.count, b.count) {
+            let x = i < a.count ? a[i] : 0, y = i < b.count ? b[i] : 0
+            if x != y { return x > y }
+        }
+        return false
     }
 
     func check() async {
@@ -37,13 +53,14 @@ final class UpdateService {
                 return
             }
             let release = try JSONDecoder().decode(Release.self, from: data)
-            guard let build = Int(release.tag_name.replacingOccurrences(of: "build-", with: "")),
+            let version = release.tag_name.hasPrefix("v") ? String(release.tag_name.dropFirst()) : release.tag_name
+            guard version.first?.isNumber == true,
                   let asset = release.assets.first(where: { $0.name.hasSuffix(".zip") }),
                   let url = URL(string: asset.browser_download_url) else {
                 state = .failed(String(localized: "The latest release has no valid .zip file."))
                 return
             }
-            state = build > currentBuild ? .available(build: build, url: url) : .upToDate
+            state = Self.isNewer(version, than: currentVersion) ? .available(version: version, url: url) : .upToDate
         } catch {
             state = .failed(String(localized: "Could not reach GitHub: \(error.localizedDescription)"))
         }
@@ -90,15 +107,15 @@ final class UpdateService {
         await check()
         let alert = NSAlert()
         switch state {
-        case .available(let build, let url):
-            alert.messageText = String(localized: "Build \(build) is available")
+        case .available(let version, let url):
+            alert.messageText = String(localized: "Version \(version) is available")
             alert.informativeText = String(localized: "Explorer will download it, replace itself and restart. Your settings are kept.")
             alert.addButton(withTitle: String(localized: "Install and Restart"))
             alert.addButton(withTitle: String(localized: "Cancel"))
             if alert.runModal() == .alertFirstButtonReturn { await install(from: url) }
         case .upToDate:
             alert.messageText = String(localized: "You have the latest version")
-            alert.informativeText = String(localized: "Installed build: \(currentBuild)")
+            alert.informativeText = String(localized: "Installed version: \(currentVersion)")
             alert.runModal()
         case .failed(let message):
             alert.alertStyle = .warning
@@ -139,11 +156,11 @@ struct UpdatesSection: View {
 
     var body: some View {
         Section("Updates") {
-            LabeledContent("Installed build", value: updates.currentBuild > 0 ? "\(updates.currentBuild)" : String(localized: "local"))
+            LabeledContent("Installed version", value: updates.currentBuild > 0 ? updates.currentVersion : String(localized: "local"))
             HStack {
                 switch updates.state {
-                case .available(let build, let url):
-                    Text("Build \(build) is available")
+                case .available(let version, let url):
+                    Text("Version \(version) is available")
                     Spacer()
                     Button("Install and Restart") { Task { await updates.install(from: url) } }
                 case .installing(let step):

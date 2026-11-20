@@ -227,3 +227,8 @@
 /* Fork: favoritos desde el clic derecho */
 "Add to Favorites" = "Añadir a Favoritos";
 "Only folders can be added to Favorites." = "Solo se pueden añadir carpetas a Favoritos.";
+
+/* Fork: versiones */
+"Installed version" = "Versión instalada";
+"Version %@ is available" = "Nueva versión %@ disponible";
+"Installed version: %@" = "Versión instalada: %@";

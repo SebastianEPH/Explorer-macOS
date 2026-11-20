@@ -20,6 +20,17 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # historial completo para calcular la versión
+
+      # Versión X.Y.Z: X.Y del archivo VERSION; Z = commits desde el último cambio de VERSION.
+      - name: Calcular versión
+        run: |
+          BASE=$(tr -d '[:space:]' < VERSION)
+          SINCE=$(git log -1 --format=%H -- VERSION)
+          PATCH=$(git rev-list --count "$SINCE"..HEAD)
+          echo "VERSION=$BASE.$PATCH" >> "$GITHUB_ENV"
+          echo "Versión: $BASE.$PATCH"
 
       - name: Versión de Xcode
         run: xcodebuild -version && swift --version
@@ -52,7 +63,10 @@ jobs:
           SIGN_P12_PASSWORD: ${{ secrets.SIGN_P12_PASSWORD }}
         run: |
           APP=build/Release/Explorer.app
-          /usr/libexec/PlistBuddy -c "Add :FLBuildNumber string ${{ github.run_number }}" "$APP/Contents/Info.plist"
+          PLIST="$APP/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :FLBuildNumber string ${{ github.run_number }}" "$PLIST"
           # Firma con el certificado propio «Explorer Firma» (secreto SIGN_P12): la firma es
           # la misma en todas las compilaciones y macOS conserva los permisos al actualizar.
           # En pull requests no hay secretos: se firma ad hoc.
@@ -78,7 +92,7 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: Explorer-build-${{ github.run_number }}
+          name: Explorer-${{ env.VERSION }}
           path: Explorer.zip
           retention-days: 30
 
@@ -87,8 +101,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "build-${{ github.run_number }}" Explorer.zip \
-            --title "Compilación ${{ github.run_number }}" \
-            --notes "Compilado desde ${{ github.sha }}." \
+          gh release create "v$VERSION" Explorer.zip \
+            --title "Explorer $VERSION" \
+            --notes "Compilación ${{ github.run_number }}, desde ${{ github.sha }}." \
             --target "${{ github.sha }}" \
             --latest

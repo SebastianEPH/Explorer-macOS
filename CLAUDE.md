@@ -18,12 +18,12 @@ Fork personal de [Freeloader](https://github.com/KopitarFan/Freeloader) (reempla
 ## Compilar
 
 - En este Mac **no hay Xcode completo** (solo Command Line Tools): `swift build` falla y SourceKit da errores falsos ("Cannot find … in scope", macros no encontradas). Ignóralos; la verdad la da el pipeline.
-- Pipeline `.github/workflows/build.yml` (macos-latest): `swift test` → regenerar proyecto → `xcodebuild` Release sin firmar → escribe `FLBuildNumber` = `run_number` en el Info.plist → firma con el certificado propio «Explorer Firma» (secretos `SIGN_P12` y `SIGN_P12_PASSWORD`; copia en el llavero de inicio de sesión del Mac, válido hasta 2036) para que macOS conserve los permisos al actualizar; ad hoc en pull requests → sube `Explorer.zip` como artefacto y, en `main`, lo publica como Release `build-N` (`--latest`).
+- Pipeline `.github/workflows/build.yml` (macos-latest): `swift test` → regenerar proyecto → `xcodebuild` Release sin firmar → escribe `FLBuildNumber` = `run_number` en el Info.plist → firma con el certificado propio «Explorer Firma» (secretos `SIGN_P12` y `SIGN_P12_PASSWORD`; copia en el llavero de inicio de sesión del Mac, válido hasta 2036) para que macOS conserve los permisos al actualizar; ad hoc en pull requests → sube `Explorer.zip` como artefacto y, en `main`, lo publica como Release `vX.Y.Z` (`--latest`).
 - Ver el resultado: `gh run list -R SebastianEPH/Freeloader -L 1` y `gh run watch <id> --exit-status`.
 
 ## Actualizaciones dentro de la app
 
-- `Sources/NuFinder/Services/UpdateService.swift` + sección «Actualizaciones» en `SettingsView`: consulta `releases/latest` del fork, compara `build-N` con `FLBuildNumber`, descarga el zip, y un script `sh` espera a que la app se cierre, reemplaza el `.app`, quita la cuarentena y la vuelve a abrir.
+- `Sources/NuFinder/Services/UpdateService.swift` + sección «Actualizaciones» en `SettingsView`: consulta `releases/latest` del fork, compara la versión de la Release (`vX.Y.Z`) con `CFBundleShortVersionString` (número a número), descarga el zip, y un script `sh` espera a que la app se cierre, reemplaza el `.app`, quita la cuarentena y la vuelve a abrir.
 - Si cambias el nombre de las Releases o del zip, cambia ambos lados (workflow y `UpdateService`).
 - Compilaciones locales no tienen `FLBuildNumber` (se muestran como «local», build 0): cualquier Release se ofrece como actualización.
 
@@ -43,3 +43,8 @@ xattr -dr com.apple.quarantine /Applications/Explorer.app
 - Ajustes → Idioma (`Services/LanguageService.swift`) guarda `AppleLanguages` de la app y la reinicia.
 - Menú Ayuda → «Buscar actualizaciones…» (`UpdateService.checkFromMenu`).
 - Ajustes → Finder (`Services/FinderRedirectService.swift`): con Finder cerrado (`QuitMenuItem`), si Finder arranca o pasa al frente (clic en el Dock) Explorer lo cierra y abre una ventana en la carpeta personal. Ignora los primeros 15 s tras abrir Explorer (al iniciar sesión macOS arranca Finder). Se registra al inicio de sesión con `SMAppService.mainApp`.
+
+## Versiones
+
+- Formato **X.Y.Z**. `X.Y` está en el archivo `VERSION` (súbelo a mano para cambios grandes: `1.1`, `2.0`); `Z` = commits desde el último cambio de `VERSION`, así que vuelve a 0 al subirla. Lo calcula el pipeline (`fetch-depth: 0`) y lo escribe en `CFBundleShortVersionString`; `CFBundleVersion` y `FLBuildNumber` = número de ejecución.
+- Releases: etiqueta `vX.Y.Z`, título «Explorer X.Y.Z». Las antiguas `build-N` (hasta la 10) son de antes de este esquema.
