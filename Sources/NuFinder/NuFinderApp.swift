@@ -52,7 +52,7 @@ struct FreeloaderApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var mainBrowser = BrowserModel()
     @ObservedObject private var keyFocus = KeyWindowFocus.shared // Fork: menús → ventana activa
-    @StateObject private var operations = FileOperationManager()
+    @StateObject private var mainOperations = FileOperationManager()
     @StateObject private var paneFocus = PaneFocusCoordinator()
     @AppStorage("shortcut.commandPalette") private var commandPaletteKey = "p"
     @AppStorage("shortcut.terminal") private var terminalKey = "t"
@@ -62,10 +62,10 @@ struct FreeloaderApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(mainBrowser)
-                .environmentObject(operations)
+                .environmentObject(mainOperations)
                 .environmentObject(paneFocus)
                 .frame(minWidth: 820, minHeight: 480)
-                .background(KeyWindowReader(focus: paneFocus, browser: mainBrowser))
+                .background(KeyWindowReader(focus: paneFocus, browser: mainBrowser, operations: mainOperations))
                 .onOpenURL { mainBrowser.handleDeepLink($0) }
         }
         .commands {
@@ -226,6 +226,11 @@ struct FreeloaderApp: App {
     /// Fork: el BrowserModel de la ventana activa (cada ventana tiene el suyo).
     private var browser: BrowserModel {
         keyFocus.browser ?? paneFocus.activeBrowser ?? mainBrowser
+    }
+
+    /// Fork: las operaciones de archivo (y su ventana de progreso) de la ventana activa.
+    private var operations: FileOperationManager {
+        keyFocus.operations ?? mainOperations
     }
 
     private func bind<Value>(_ keyPath: ReferenceWritableKeyPath<BrowserModel, Value>) -> Binding<Value> {

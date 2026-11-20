@@ -10,7 +10,7 @@ struct TransferDetailsView: View {
                 Text("File Operations").font(.title2.bold())
                 Picker("When an item exists", selection: $operations.conflictPolicy) {
                     ForEach(ConflictPolicy.allCases) { policy in
-                        Text(policy.rawValue).tag(policy)
+                        Text(LocalizedStringKey(policy.rawValue)).tag(policy)
                     }
                 }
                 .frame(width: 190)
@@ -32,7 +32,7 @@ struct TransferDetailsView: View {
                 List(operations.operations) { operation in
                     VStack(alignment: .leading, spacing: 7) {
                         HStack {
-                            Text(operation.isMove ? "Moving" : "Copying")
+                            Text(operation.isMove ? LocalizedStringKey("Moving") : LocalizedStringKey("Copying"))
                                 .font(.headline)
                             Text(operation.sourceNames.joined(separator: ", "))
                                 .lineLimit(1)

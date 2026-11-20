@@ -271,3 +271,17 @@
 "Paste into Folder" = "Pegar en la carpeta";
 "Preview Pane" = "Vista previa";
 "Close Preview (View → Preview Pane to show it again)" = "Cerrar vista previa (Ver → Vista previa para volver a mostrarla)";
+
+/* Fork: archivos repetidos */
+"Ask" = "Preguntar";
+"Keep Both" = "Conservar ambos";
+"Replace" = "Reemplazar";
+"Skip" = "Omitir";
+"Stop" = "Detener";
+"Apply to all" = "Aplicar a todos";
+"What do you want to do?" = "¿Qué quieres hacer?";
+"“%@” already exists in “%@”." = "«%1$@» ya existe en «%2$@».";
+"Moving" = "Moviendo";
+"Copying" = "Copiando";
+"Pause" = "Pausar";
+"Resume" = "Reanudar";

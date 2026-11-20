@@ -1,6 +1,7 @@
 import Foundation
 
 enum ConflictPolicy: String, CaseIterable, Identifiable {
+    case ask = "Ask" // Fork: por defecto se pregunta (ConflictPrompt)
     case keepBoth = "Keep Both"
     case replace = "Replace"
     case skip = "Skip"
@@ -43,7 +44,7 @@ struct FileOperation: Identifiable, Sendable, Codable {
 final class FileOperationManager: ObservableObject, @unchecked Sendable {
     @Published var operations: [FileOperation] = []
     @Published var showsDetails = false
-    @Published var conflictPolicy: ConflictPolicy = .keepBoth
+    @Published var conflictPolicy: ConflictPolicy = .ask
     @Published var maxConcurrentOperations = 2
 
     private var cancelled: Set<UUID> = []
@@ -113,6 +114,7 @@ final class FileOperationManager: ObservableObject, @unchecked Sendable {
         update(id) { $0.isQueued = false }
         defer { activeCount = max(0, activeCount - 1) }
 
+        var answeredPolicy: ConflictPolicy? // Fork: «Aplicar a todos» de ConflictPrompt
         do {
             for source in sources {
                 while paused.contains(id) && !cancelled.contains(id) {
@@ -125,10 +127,23 @@ final class FileOperationManager: ObservableObject, @unchecked Sendable {
                 }
 
                 update(id) { $0.currentItem = source.lastPathComponent }
+                var policy = overridePolicy ?? conflictPolicy
+                if policy == .ask {
+                    if let answeredPolicy {
+                        policy = answeredPolicy
+                    } else if FileManager.default.fileExists(atPath: destination.appendingPathComponent(source.lastPathComponent).path) {
+                        guard let answer = ConflictPrompt.ask(for: source, in: destination) else {
+                            cancelled.insert(id)
+                            break
+                        }
+                        policy = answer.policy
+                        if answer.applyToAll { answeredPolicy = answer.policy }
+                    }
+                }
                 let resolution = try resolveTarget(
                     for: source,
                     in: destination,
-                    policy: overridePolicy ?? conflictPolicy
+                    policy: policy
                 )
                 guard let target = resolution else { continue }
                 let bytes = await Task.detached { Self.totalBytes(of: [source]) }.value
@@ -262,7 +277,7 @@ final class FileOperationManager: ObservableObject, @unchecked Sendable {
             var trashedURL: NSURL?
             try FileManager.default.trashItem(at: candidate, resultingItemURL: &trashedURL)
             return candidate
-        case .keepBoth:
+        case .keepBoth, .ask:
             return Self.uniqueDestination(for: source, in: directory)
         }
     }
