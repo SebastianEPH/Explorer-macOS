@@ -46,11 +46,34 @@ jobs:
             DEVELOPMENT_TEAM="" \
             build
 
-      - name: Número de compilación y paquete
+      - name: Número de compilación, firma y paquete
+        env:
+          SIGN_P12: ${{ secrets.SIGN_P12 }}
+          SIGN_P12_PASSWORD: ${{ secrets.SIGN_P12_PASSWORD }}
         run: |
           APP=build/Release/Explorer.app
           /usr/libexec/PlistBuddy -c "Add :FLBuildNumber string ${{ github.run_number }}" "$APP/Contents/Info.plist"
-          codesign --force --deep --sign - "$APP"
+          # Firma con el certificado propio «Explorer Firma» (secreto SIGN_P12): la firma es
+          # la misma en todas las compilaciones y macOS conserva los permisos al actualizar.
+          # En pull requests no hay secretos: se firma ad hoc.
+          if [ -n "$SIGN_P12" ]; then
+            KC="$RUNNER_TEMP/firma.keychain-db"
+            security create-keychain -p "" "$KC"
+            security set-keychain-settings "$KC"
+            security unlock-keychain -p "" "$KC"
+            echo "$SIGN_P12" | base64 --decode > "$RUNNER_TEMP/firma.p12"
+            security import "$RUNNER_TEMP/firma.p12" -k "$KC" -P "$SIGN_P12_PASSWORD" -T /usr/bin/codesign
+            security set-key-partition-list -S apple-tool:,apple: -s -k "" "$KC" >/dev/null
+            security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+            security find-certificate -c "Explorer Firma" -p "$KC" > "$RUNNER_TEMP/firma.pem"
+            sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain "$RUNNER_TEMP/firma.pem"
+            rm -f "$RUNNER_TEMP/firma.p12"
+            codesign --force --deep --keychain "$KC" --sign "Explorer Firma" "$APP"
+          else
+            codesign --force --deep --sign - "$APP"
+          fi
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -d -r- "$APP"
           ditto -c -k --keepParent "$APP" "$GITHUB_WORKSPACE/Explorer.zip"
 
       - uses: actions/upload-artifact@v7

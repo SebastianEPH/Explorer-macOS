@@ -18,7 +18,7 @@ Fork personal de [Freeloader](https://github.com/KopitarFan/Freeloader) (reempla
 ## Compilar
 
 - En este Mac **no hay Xcode completo** (solo Command Line Tools): `swift build` falla y SourceKit da errores falsos ("Cannot find … in scope", macros no encontradas). Ignóralos; la verdad la da el pipeline.
-- Pipeline `.github/workflows/build.yml` (macos-latest): `swift test` → regenerar proyecto → `xcodebuild` Release sin firmar → escribe `FLBuildNumber` = `run_number` en el Info.plist → firma ad hoc → sube `Explorer.zip` como artefacto y, en `main`, lo publica como Release `build-N` (`--latest`).
+- Pipeline `.github/workflows/build.yml` (macos-latest): `swift test` → regenerar proyecto → `xcodebuild` Release sin firmar → escribe `FLBuildNumber` = `run_number` en el Info.plist → firma con el certificado propio «Explorer Firma» (secretos `SIGN_P12` y `SIGN_P12_PASSWORD`; copia en el llavero de inicio de sesión del Mac, válido hasta 2036) para que macOS conserve los permisos al actualizar; ad hoc en pull requests → sube `Explorer.zip` como artefacto y, en `main`, lo publica como Release `build-N` (`--latest`).
 - Ver el resultado: `gh run list -R SebastianEPH/Freeloader -L 1` y `gh run watch <id> --exit-status`.
 
 ## Actualizaciones dentro de la app
