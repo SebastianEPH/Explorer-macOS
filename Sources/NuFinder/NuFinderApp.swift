@@ -56,6 +56,7 @@ struct FreeloaderApp: App {
     @StateObject private var paneFocus = PaneFocusCoordinator()
     @AppStorage("shortcut.commandPalette") private var commandPaletteKey = "p"
     @AppStorage("shortcut.terminal") private var terminalKey = "t"
+    @AppStorage("previewPane.visible") private var previewVisible = true // Fork
 
     var body: some Scene {
         WindowGroup {
@@ -167,6 +168,8 @@ struct FreeloaderApp: App {
             }
             CommandGroup(after: .toolbar) {
                 Toggle("Folder Tree in Sidebar", isOn: bind(\.showsTree))
+                Toggle("Preview Pane", isOn: $previewVisible)
+                    .keyboardShortcut("p", modifiers: [.command, .option])
                 Picker("View Mode", selection: bind(\.viewMode)) {
                     ForEach(FileViewMode.allCases) { mode in
                         Text(mode.rawValue).tag(mode)

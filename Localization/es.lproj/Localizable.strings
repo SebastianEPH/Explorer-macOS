@@ -269,3 +269,5 @@
 "Copy Explorer Path" = "Copiar ruta de Explorer";
 "If Explorer is not in the list, press + in System Settings, then ⌘⇧G, paste the path and choose Explorer." = "Si Explorer no aparece en la lista, pulsa + en Ajustes del Sistema, luego ⌘⇧G, pega la ruta y elige Explorer.";
 "Paste into Folder" = "Pegar en la carpeta";
+"Preview Pane" = "Vista previa";
+"Close Preview (View → Preview Pane to show it again)" = "Cerrar vista previa (Ver → Vista previa para volver a mostrarla)";

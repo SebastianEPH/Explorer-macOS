@@ -8,6 +8,7 @@ struct ImagePreviewPane: View {
     @State private var preview: NSImage?
     @State private var textPreview: String?
     @State private var metadata: [String] = []
+    @AppStorage("previewPane.visible") private var previewVisible = true // Fork
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -15,13 +16,14 @@ struct ImagePreviewPane: View {
                 Text("Preview")
                     .font(.headline)
                 Spacer()
+                // Fork: cerrar la vista previa (se vuelve a mostrar en Ver → Vista previa).
                 Button {
-                    QuickLookService.shared.show([item.url])
+                    previewVisible = false
                 } label: {
-                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    Image(systemName: "xmark")
                 }
                 .buttonStyle(.borderless)
-                .help("Open Quick Look")
+                .help("Close Preview (View → Preview Pane to show it again)")
             }
 
             if let textPreview {

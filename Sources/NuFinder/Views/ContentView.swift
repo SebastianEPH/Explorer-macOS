@@ -5,6 +5,7 @@ struct ContentView: View {
     @EnvironmentObject private var browser: BrowserModel
     @EnvironmentObject private var operations: FileOperationManager
     @EnvironmentObject private var paneFocus: PaneFocusCoordinator
+    @AppStorage("previewPane.visible") private var previewVisible = true // Fork
     @StateObject private var secondaryBrowser = BrowserModel(
         initialURL: FileManager.default.homeDirectoryForCurrentUser,
         restoresSession: false
@@ -227,7 +228,7 @@ struct ContentView: View {
         let previewURL = model.isMarqueeSelecting
             ? model.marqueePreviewURL
             : selectedURL
-        guard let url = previewURL,
+        guard previewVisible, let url = previewURL,
               let item = model.displayedItems.first(where: { $0.url == url }),
               !item.isDirectory,
               !isArchive(item.url) else {
