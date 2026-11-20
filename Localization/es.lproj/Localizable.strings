@@ -223,3 +223,7 @@
 "Finder" = "Finder";
 "Open Explorer when clicking Finder in the Dock" = "Abrir Explorer al pulsar Finder en el Dock";
 "Finder is closed; clicking its Dock icon opens Explorer instead. Explorer opens at login so it can catch the click." = "Finder se cierra y, al pulsar su icono del Dock, se abre Explorer. Explorer se abre al iniciar sesión para poder detectarlo.";
+
+/* Fork: favoritos desde el clic derecho */
+"Add to Favorites" = "Añadir a Favoritos";
+"Only folders can be added to Favorites." = "Solo se pueden añadir carpetas a Favoritos.";

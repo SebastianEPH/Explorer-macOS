@@ -617,6 +617,7 @@ struct FileListView: View {
             }
         }
         if item.isDirectory {
+            FavoriteMenuItem(url: item.url)
             Button("Open in Terminal") { TerminalService.open(at: item.url) }
         } else {
             Button("Open Parent in Terminal") {
