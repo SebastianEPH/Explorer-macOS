@@ -294,3 +294,7 @@
 "A smaller click area leaves more empty space to start a drag selection." = "Una zona de clic más pequeña deja más espacio libre para empezar una selección arrastrando.";
 "Paused" = "En pausa";
 "Close when finished" = "Cerrar al terminar";
+"Already in destination" = "Ya está en el destino";
+"New (being pasted)" = "Nuevo (el que pegas)";
+"Double-click to open" = "Doble clic para abrir";
+"Newer" = "Más reciente";
