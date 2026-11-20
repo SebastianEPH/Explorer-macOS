@@ -232,3 +232,6 @@
 "Installed version" = "Versión instalada";
 "Version %@ is available" = "Nueva versión %@ disponible";
 "Installed version: %@" = "Versión instalada: %@";
+"Explorer %@ (build %lld)" = "Explorer %@ (compilación %lld)";
+"Explorer (local build)" = "Explorer (compilación local)";
+"Release Notes on GitHub" = "Novedades en GitHub";

@@ -182,3 +182,19 @@ struct UpdatesSection: View {
         }
     }
 }
+
+/// Menú Ayuda: versión instalada, buscar actualizaciones y novedades en GitHub.
+struct HelpVersionItems: View {
+    private let updates = UpdateService.shared
+
+    var body: some View {
+        Divider()
+        Text(updates.currentBuild > 0
+             ? "Explorer \(updates.currentVersion) (build \(updates.currentBuild))"
+             : "Explorer (local build)")
+        Button("Check for Updates…") { Task { await updates.checkFromMenu() } }
+        Button("Release Notes on GitHub") {
+            NSWorkspace.shared.open(URL(string: "https://github.com/\(UpdateService.repository)/releases")!)
+        }
+    }
+}

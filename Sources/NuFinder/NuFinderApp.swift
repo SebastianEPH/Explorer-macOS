@@ -198,7 +198,7 @@ struct FreeloaderApp: App {
                     .keyboardShortcut(.upArrow, modifiers: .command)
             }
             CommandGroup(after: .help) {
-                Button("Check for Updates…") { Task { await UpdateService.shared.checkFromMenu() } }
+                HelpVersionItems()
             }
             CommandMenu("Commands") {
                 Button("Command Palette…") { browser.showsCommandPalette = true }
