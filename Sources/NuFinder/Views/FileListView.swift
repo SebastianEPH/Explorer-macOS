@@ -106,6 +106,10 @@ struct FileListView: View {
                         .padding(8)
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
                 }
+                // Fork: con la zona compacta solo se arrastra desde el icono y el nombre,
+                // pero el clic derecho (Cortar, Copiar…) funciona en toda la celda.
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
                 .dropDestination(for: FileDragPayload.self) { payloads, _ in
                     guard item.isDirectory else { return false }
                     moveDroppedItems(payloads.flatMap(\.urls), to: item.url)

@@ -91,4 +91,24 @@ struct ForkTests {
         FavoritesSettings.setTitle("", home)
         #expect(FavoritesSettings.visible(locations).first?.title == "Home")
     }
+
+    @Test @MainActor func cuttingTwoFilesKeepsBothAndPastesBoth() async throws {
+        let root = try makeFolder()
+        let target = root.appendingPathComponent("destino", isDirectory: true)
+        try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root); SharedClipboard.urls = [] }
+        let browser = try await loadedBrowser(at: root)
+        browser.selection = [root.appendingPathComponent("a.txt"), root.appendingPathComponent("b.txt")]
+        browser.cutSelection()
+        #expect(SharedClipboard.urls.count == 2)
+        #expect(SharedClipboard.isCut)
+        let other = try await loadedBrowser(at: target)
+        let operations = FileOperationManager()
+        operations.conflictPolicy = .keepBoth
+        await other.paste(into: target, operations: operations)
+        #expect(FileManager.default.fileExists(atPath: target.appendingPathComponent("a.txt").path))
+        #expect(FileManager.default.fileExists(atPath: target.appendingPathComponent("b.txt").path))
+        #expect(!FileManager.default.fileExists(atPath: root.appendingPathComponent("a.txt").path))
+        #expect(SharedClipboard.urls.isEmpty)
+    }
 }
