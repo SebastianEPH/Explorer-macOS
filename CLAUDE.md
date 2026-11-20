@@ -47,4 +47,4 @@ xattr -dr com.apple.quarantine /Applications/Explorer.app
 ## Versiones
 
 - Formato **X.Y.Z**. `X.Y` está en el archivo `VERSION` (súbelo a mano para cambios grandes: `1.1`, `2.0`); `Z` = commits desde el último cambio de `VERSION`, así que vuelve a 0 al subirla. Lo calcula el pipeline (`fetch-depth: 0`) y lo escribe en `CFBundleShortVersionString`; `CFBundleVersion` y `FLBuildNumber` = número de ejecución.
-- Releases: etiqueta `vX.Y.Z`, título «Explorer X.Y.Z». Las antiguas `build-N` (hasta la 10) son de antes de este esquema.
+- Releases: etiqueta `vX.Y.Z`, título «Explorer X.Y.Z».
