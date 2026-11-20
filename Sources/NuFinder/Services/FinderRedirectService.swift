@@ -9,31 +9,38 @@ import SwiftUI
 enum FinderRedirectService {
     static let enabledKey = "finderRedirect.enabled"
     private static let finderID = "com.apple.finder"
-    private static var observer: NSObjectProtocol?
+    private static var observers: [NSObjectProtocol] = []
     private static let startedAt = Date()
+    private static var redirecting = false
 
     static var isEnabled: Bool { UserDefaults.standard.bool(forKey: enabledKey) }
 
     static func start() {
-        guard observer == nil else { return }
-        observer = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didLaunchApplicationNotification,
-            object: nil,
-            queue: .main
-        ) { note in
-            let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
-            guard app?.bundleIdentifier == finderID else { return }
-            MainActor.assumeIsolated { redirect(app) }
+        guard observers.isEmpty else { return }
+        // Arrancar (Finder estaba cerrado) o pasar al frente (ya estaba abierto):
+        // las dos cosas pasan al pulsar su icono del Dock.
+        for name in [NSWorkspace.didLaunchApplicationNotification, NSWorkspace.didActivateApplicationNotification] {
+            observers.append(NSWorkspace.shared.notificationCenter.addObserver(
+                forName: name,
+                object: nil,
+                queue: .main
+            ) { note in
+                let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+                guard app?.bundleIdentifier == "com.apple.finder" else { return }
+                MainActor.assumeIsolated { redirect(app) }
+            })
         }
     }
 
     private static func redirect(_ finder: NSRunningApplication?) {
         // Al iniciar sesión macOS arranca Finder por su cuenta: eso no es un clic.
-        guard isEnabled, Date().timeIntervalSince(startedAt) > 15 else { return }
+        guard isEnabled, Date().timeIntervalSince(startedAt) > 15, !redirecting else { return }
+        redirecting = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             finder?.terminate()
             WindowService.open(at: FileManager.default.homeDirectoryForCurrentUser)
             NSApp.activate(ignoringOtherApps: true)
+            redirecting = false
         }
     }
 

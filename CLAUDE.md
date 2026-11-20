@@ -42,4 +42,4 @@ xattr -dr com.apple.quarantine /Applications/Explorer.app
 - Texto nuevo en la interfaz → añade su línea en `es.lproj/Localizable.strings`.
 - Ajustes → Idioma (`Services/LanguageService.swift`) guarda `AppleLanguages` de la app y la reinicia.
 - Menú Ayuda → «Buscar actualizaciones…» (`UpdateService.checkFromMenu`).
-- Ajustes → Finder (`Services/FinderRedirectService.swift`): con Finder cerrado (`QuitMenuItem`), si Finder arranca (clic en el Dock) Explorer lo cierra y abre una ventana en la carpeta personal. Ignora los primeros 15 s tras abrir Explorer (al iniciar sesión macOS arranca Finder). Se registra al inicio de sesión con `SMAppService.mainApp`.
+- Ajustes → Finder (`Services/FinderRedirectService.swift`): con Finder cerrado (`QuitMenuItem`), si Finder arranca o pasa al frente (clic en el Dock) Explorer lo cierra y abre una ventana en la carpeta personal. Ignora los primeros 15 s tras abrir Explorer (al iniciar sesión macOS arranca Finder). Se registra al inicio de sesión con `SMAppService.mainApp`.
