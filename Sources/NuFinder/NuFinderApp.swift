@@ -4,6 +4,7 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
+        FinderRedirectService.start()
         // A SwiftPM executable reaches didFinishLaunching before SwiftUI has
         // necessarily installed its WindowGroup. Activate on the next run-loop
         // turn so `swift run Freeloader` reliably comes in front of Terminal.

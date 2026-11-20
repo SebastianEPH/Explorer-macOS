@@ -39,6 +39,7 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            FinderRedirectSection()
             LanguageSection()
             UpdatesSection()
         }
