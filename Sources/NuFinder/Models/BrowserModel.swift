@@ -891,7 +891,7 @@ final class BrowserModel: ObservableObject {
         let move = clipboardIsCut
         guard !sources.isEmpty else { return }
         await transfer(sources: sources, destination: destination, move: move, operations: operations)
-        if move {
+        if move && clipboard == sources { // Fork: no borrar lo que se cortó mientras se movía
             clipboard.removeAll()
             clipboardIsCut = false
             cutItems.removeAll()

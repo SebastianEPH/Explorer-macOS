@@ -633,6 +633,11 @@ struct FileListView: View {
             browser.selection.insert(item.url)
             browser.copySelection()
         }
+        // Fork: pegar también desde el clic derecho sobre un elemento (en carpetas, dentro de ella).
+        Button(item.isDirectory ? "Paste into Folder" : "Paste") {
+            Task { await browser.paste(into: item.isDirectory ? item.url : browser.currentURL, operations: operationManager) }
+        }
+        .disabled(!browser.canPaste)
         Button("Duplicate") {
             if !browser.selection.contains(item.url) { browser.selection = [item.url] }
             Task { await browser.duplicateSelection(using: operationManager) }
