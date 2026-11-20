@@ -67,8 +67,8 @@ struct FileListView: View {
     }
 
     private var listView: some View {
-        Table(browser.displayedItems, selection: $browser.selection) {
-            TableColumn("Name") { item in
+        Table(browser.displayedItems, selection: $browser.selection, sortOrder: browser.columnSortOrder) { // Fork: ordenar con clic en la columna
+            TableColumn("Name", sortUsing: ColumnSortComparator(field: .name)) { item in
                 HStack(spacing: 8) {
                     FileThumbnailView(item: item, size: 22)
                     if browser.renameTarget == item.url {
@@ -128,7 +128,7 @@ struct FileListView: View {
             .width(min: 220, ideal: 360)
 
             if browser.showsKindColumn {
-                TableColumn("Kind") { item in
+                TableColumn("Kind", sortUsing: ColumnSortComparator(field: .kind)) { item in
                     Text(item.kind)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -139,7 +139,7 @@ struct FileListView: View {
             }
 
             if browser.showsSizeColumn {
-                TableColumn("Size") { item in
+                TableColumn("Size", sortUsing: ColumnSortComparator(field: .size)) { item in
                     Group {
                         if item.isDirectory {
                             FolderSizeText(item: item)
@@ -156,7 +156,7 @@ struct FileListView: View {
             }
 
             if browser.showsModifiedColumn {
-                TableColumn("Date Modified") { item in
+                TableColumn("Date Modified", sortUsing: ColumnSortComparator(field: .modified)) { item in
                     if let modified = item.modified {
                         Text(modified, format: .dateTime.year().month().day().hour().minute())
                             .foregroundStyle(.secondary)
