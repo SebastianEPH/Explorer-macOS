@@ -90,8 +90,12 @@ final class BrowserModel: ObservableObject {
 
     private var history: [URL] = []
     private var historyIndex = -1
-    private var clipboard: [URL] = []
-    private var clipboardIsCut = false
+    private var clipboard: [URL] { // Fork: compartido entre ventanas
+        get { SharedClipboard.urls } set { SharedClipboard.urls = newValue }
+    }
+    private var clipboardIsCut: Bool {
+        get { SharedClipboard.isCut } set { SharedClipboard.isCut = newValue }
+    }
     private let watcher = DirectoryWatcher()
     private var undoActions: [() -> Void] = []
     private let persistsSession: Bool
