@@ -5,6 +5,7 @@ import SwiftUI
 /// - `customFavoritePaths` y `favoriteOrderPaths` (las mismas claves que usa BrowserModel)
 /// - `favorites.hiddenPaths`, `favorites.titles`, `favorites.icons` (propias del fork)
 /// Al cambiar algo se avisa con `didChange` y cada BrowserModel vuelve a leer la lista.
+@MainActor
 enum FavoritesSettings {
     static let didChange = Notification.Name("FavoritesSettings.didChange")
 
