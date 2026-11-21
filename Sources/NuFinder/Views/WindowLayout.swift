@@ -41,9 +41,17 @@ struct CompactTabs: View {
     @EnvironmentObject private var browser: BrowserModel
     @AppStorage(LayoutSettings.tabBarKey) private var mode = "always"
     @State private var width: CGFloat = 300
+    @AppStorage("toolbar.showsWorkspaces") private var showsWorkspaces = true
+    @AppStorage("toolbar.showsSplit") private var showsSplit = true
+    @AppStorage("toolbar.showsTerminal") private var showsTerminal = true
+    @AppStorage("toolbar.showsOperations") private var showsOperations = true
 
-    /// Ancho aproximado de los botones de la derecha y márgenes.
-    static let buttonsWidth: CGFloat = 200
+    /// Espacio que ocupan los botones visibles de la derecha (unos 40 pt cada uno y un margen para que no se escondan en «»»).
+    static func buttonsWidth(visible: Int) -> CGFloat { 22 + 40 * CGFloat(visible) }
+
+    private var buttonsWidth: CGFloat {
+        Self.buttonsWidth(visible: [showsWorkspaces, showsSplit, showsTerminal, showsOperations].filter { $0 }.count)
+    }
 
     var body: some View {
         Group {
@@ -54,8 +62,9 @@ struct CompactTabs: View {
             }
         }
         .frame(width: width)
+        .id(buttonsWidth) // vuelve a medir al mostrar u ocultar botones
         .background(ToolbarSpaceReader { available in
-            let target = max(120, available - Self.buttonsWidth)
+            let target = max(120, available - buttonsWidth)
             if abs(target - width) > 2 { width = target }
         })
     }
