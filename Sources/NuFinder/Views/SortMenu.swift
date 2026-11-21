@@ -42,6 +42,7 @@ struct SortMenu: View {
             )
         }
         .help("Multi-Criteria Sort")
+        .hoverLift() // Fork
     }
 
     private func fieldBinding(_ index: Int) -> Binding<SortField> {

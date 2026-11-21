@@ -278,6 +278,7 @@ struct ContentView: View {
             }
             .menuStyle(.borderlessButton)
             .help("Workspaces")
+            .hoverLift() // Fork
             }
             if toolbarShowsSplit {
                 Button {
@@ -542,6 +543,7 @@ struct FreeloaderToolbarIcon: View {
                 }
             }
             .scaleEffect(isHovering ? 1.06 : 1)
+            .brightness(isHovering ? 0.08 : 0) // Fork: más visible al pasar el ratón
             .rotationEffect(.degrees(isHovering ? -1.5 : 0))
             .animation(.spring(response: 0.22, dampingFraction: 0.68), value: isHovering)
             .onHover { isHovering = $0 }

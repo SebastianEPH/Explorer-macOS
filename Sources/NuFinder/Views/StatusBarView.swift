@@ -108,7 +108,7 @@ struct StatusBarContent: View {
                             in: RoundedRectangle(cornerRadius: 4))
                 .foregroundStyle(binding.wrappedValue == mode ? Color.accentColor : .secondary)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(HoverPressButtonStyle(cornerRadius: 4, padding: 0))
         .help(Text(LocalizedStringKey(mode.rawValue)))
     }
 }

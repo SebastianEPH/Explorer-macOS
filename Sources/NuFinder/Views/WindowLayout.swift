@@ -171,7 +171,7 @@ struct PathButtonsBar: View {
                 Image(systemName: copied ? "checkmark" : "doc.on.doc")
                     .foregroundStyle(copied ? Color.green : Color.secondary)
             }
-            .buttonStyle(.borderless)
+            .buttonStyle(HoverPressButtonStyle())
             .help(Text("Copy path"))
         }
     }

@@ -37,7 +37,7 @@ struct BreadcrumbView: View {
                         )
                         .lineLimit(1)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(HoverPressButtonStyle()) // Fork: efecto al pasar el ratón y al pulsar
                     .contextMenu {
                         Button("Open in New Tab") { browser.newTab(at: url) }
                         Button("Open in New Window") { WindowService.open(at: url) }

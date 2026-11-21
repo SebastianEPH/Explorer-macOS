@@ -20,6 +20,7 @@ struct AddressBarRow: View {
                 .menuIndicator(.hidden)
                 .fixedSize()
                 .disabled(!browser.canGoBack)
+                .hoverLift() // Fork
                 .help("Back; open the menu for history")
 
                 Menu {
@@ -35,6 +36,7 @@ struct AddressBarRow: View {
                 .menuIndicator(.hidden)
                 .fixedSize()
                 .disabled(!browser.canGoForward)
+                .hoverLift() // Fork
                 .help("Forward; open the menu for history")
 
                 Button {
@@ -61,6 +63,7 @@ struct AddressBarRow: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(.tint)
                 .help("Go to Path")
+                .hoverLift() // Fork
                 }
                 viewModeMenu
                 SortMenu()
@@ -105,6 +108,7 @@ struct AddressBarRow: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
+        .hoverLift() // Fork
         .help("View Mode: \(String(localized: String.LocalizationValue(browser.viewMode.rawValue)))")
     }
 

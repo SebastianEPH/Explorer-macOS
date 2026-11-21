@@ -27,6 +27,7 @@ struct TabBarView: View {
                         tab.id == browser.activeTabID ? Color.accentColor.opacity(0.18) : .clear,
                         in: RoundedRectangle(cornerRadius: 7)
                     )
+                    .hoverHighlight() // Fork
                     .contentShape(Rectangle())
                     .onTapGesture { browser.selectTab(tab.id) }
                     .contextMenu {
@@ -48,8 +49,8 @@ struct TabBarView: View {
                 } label: {
                     Image(systemName: "plus")
                 }
-                .buttonStyle(.plain)
-                .padding(7)
+                .buttonStyle(HoverPressButtonStyle(padding: 4)) // Fork
+                .padding(3)
                 .help("New Tab")
             }
             .padding(.horizontal, 8)
