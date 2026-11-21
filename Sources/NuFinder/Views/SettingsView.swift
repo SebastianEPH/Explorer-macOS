@@ -55,7 +55,7 @@ struct SettingsView: View {
         }
         .onChange(of: commandPaletteKey) { _, value in commandPaletteKey = sanitized(value, fallback: "p") }
         .onChange(of: terminalKey) { _, value in terminalKey = sanitized(value, fallback: "t") }
-        .frame(width: 560, height: 520)
+        .frame(minWidth: 680, idealWidth: 760, minHeight: 600, idealHeight: 720)
     }
 
     private func sanitized(_ value: String, fallback: String) -> String {
