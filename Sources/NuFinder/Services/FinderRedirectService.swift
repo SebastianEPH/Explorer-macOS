@@ -73,6 +73,7 @@ struct FinderRedirectSection: View {
         Section("Finder") {
             Toggle("Open Explorer when clicking Finder in the Dock", isOn: $enabled)
                 .onChange(of: enabled) { _, value in FinderRedirectService.setEnabled(value) }
+            FinderRedirectPreview(enabled: enabled) // Fork
             Text("Finder is closed; clicking its Dock icon opens Explorer instead. Explorer opens at login so it can catch the click.")
                 .font(.caption)
                 .foregroundStyle(.secondary)

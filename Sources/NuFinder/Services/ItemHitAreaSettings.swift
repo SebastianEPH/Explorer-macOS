@@ -17,6 +17,7 @@ struct ItemHitAreaSection: View {
 
     var body: some View {
         Section("Selection") {
+            HitAreaPreview(compact: compact, spacing: spacing)
             Toggle("Compact click area (icon and name only)", isOn: $compact)
             LabeledContent("Space between icons") {
                 HStack {

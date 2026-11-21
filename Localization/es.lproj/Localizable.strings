@@ -314,3 +314,26 @@
 "General" = "General";
 "Files" = "Archivos";
 "System" = "Sistema";
+
+/* Fork: vistas previas de Ajustes */
+"Preview: top right of the window" = "Vista previa: arriba a la derecha de la ventana";
+"Shows two folders side by side." = "Muestra dos carpetas una al lado de la otra.";
+"Opens the current folder in the terminal." = "Abre la carpeta actual en la terminal.";
+"Progress of copies and moves in progress." = "Progreso de las copias y movimientos en curso.";
+"Command Palette" = "Paleta de comandos";
+"Search for any action by name." = "Busca cualquier acción por su nombre.";
+"Preview: a folder inside a Git repository" = "Vista previa: una carpeta dentro de un repositorio Git";
+"M = modified · A = added · D = deleted" = "M = modificado · A = añadido · D = borrado";
+"Preview: blue = area that selects the file when clicked" = "Vista previa: azul = zona que selecciona el archivo al hacer clic";
+"Right-click on a file or folder" = "Clic derecho sobre un archivo o carpeta";
+"Right-click on empty space" = "Clic derecho sobre el espacio vacío";
+"(empty menu)" = "(menú vacío)";
+"%lld of %lld options" = "%lld de %lld opciones";
+"Preview: what happens when you click Finder in the Dock" = "Vista previa: qué pasa al hacer clic en Finder en el Dock";
+"Folders only" = "Solo en carpetas";
+"Only on app bundles and packages" = "Solo en apps y paquetes";
+"Only on images" = "Solo en imágenes";
+"Only on ZIP and other archives" = "Solo en ZIP y otros comprimidos";
+"Only with two files selected" = "Solo con dos archivos seleccionados";
+"Only while hidden files are hidden" = "Solo mientras los archivos ocultos están ocultos";
+"Open Terminal" = "Abrir terminal";

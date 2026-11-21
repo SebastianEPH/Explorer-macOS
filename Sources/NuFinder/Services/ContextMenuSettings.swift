@@ -88,6 +88,11 @@ struct ContextMenuSection: View {
 
     var body: some View {
         Section {
+            HStack(alignment: .top, spacing: 20) {
+                ContextMenuPreview(title: "Right-click on a file or folder", options: ContextMenuOption.allCases.filter { !$0.isBackground }, hidden: hidden)
+                ContextMenuPreview(title: "Right-click on empty space", options: ContextMenuOption.allCases.filter(\.isBackground), hidden: hidden)
+            }
+            .frame(maxWidth: .infinity)
             Button("Show All Options") { hidden = "" }
                 .disabled(hidden.isEmpty)
         } footer: {
@@ -103,10 +108,13 @@ struct ContextMenuSection: View {
 
     private func toggles(_ options: [ContextMenuOption]) -> some View {
         ForEach(options) { option in
-            Toggle(option.title, isOn: Binding(
+            Toggle(isOn: Binding(
                 get: { ContextMenuSettings.isVisible(option, in: hidden) },
                 set: { hidden = ContextMenuSettings.setting(option, visible: $0, in: hidden) }
-            ))
+            )) {
+                Label(option.title, systemImage: option.symbol)
+                if let condition = option.condition { Text(condition) }
+            }
         }
     }
 }

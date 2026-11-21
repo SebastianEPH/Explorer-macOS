@@ -13,29 +13,31 @@ struct SettingsView: View {
     var body: some View {
         TabView { // Fork: Ajustes en pestañas
         Form {
-            Picker("Terminal application", selection: $terminalPath) {
+            Picker(selection: $terminalPath) {
                 ForEach(TerminalService.installedApplications, id: \.path) { application in
-                    Text(application.deletingPathExtension().lastPathComponent)
+                    Label { Text(application.deletingPathExtension().lastPathComponent) } icon: { AppIconView(path: application.path) } // Fork
                         .tag(application.path)
                 }
-            }
+            } label: { Label("Terminal application", systemImage: "terminal") }
             Text("Used by the toolbar and Open in Terminal actions.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Section("Toolbar") {
-                Toggle("Split Pane", isOn: $toolbarShowsSplit)
-                Toggle("Terminal", isOn: $toolbarShowsTerminal)
-                Toggle("File Operations", isOn: $toolbarShowsOperations)
+                ToolbarPreview(split: toolbarShowsSplit, terminal: toolbarShowsTerminal, operations: toolbarShowsOperations) // Fork
+                Toggle(isOn: $toolbarShowsSplit) { Label("Split Pane", systemImage: "rectangle.split.2x1"); Text("Shows two folders side by side.") }
+                Toggle(isOn: $toolbarShowsTerminal) { Label("Terminal", systemImage: "terminal"); Text("Opens the current folder in the terminal.") }
+                Toggle(isOn: $toolbarShowsOperations) { Label("File Operations", systemImage: "arrow.left.arrow.right.circle"); Text("Progress of copies and moves in progress.") }
             }
             Section("Keyboard Shortcuts") {
-                TextField("Command Palette (⌘⇧)", text: $commandPaletteKey)
-                TextField("Open Terminal (⌘⌥)", text: $terminalKey)
+                LabeledContent { HStack { KeyCapsView(keys: ["⌘", "⇧", commandPaletteKey]); TextField("", text: $commandPaletteKey).frame(width: 40) } } label: { Label("Command Palette", systemImage: "command"); Text("Search for any action by name.") } // Fork
+                LabeledContent { HStack { KeyCapsView(keys: ["⌘", "⌥", terminalKey]); TextField("", text: $terminalKey).frame(width: 40) } } label: { Label("Open Terminal", systemImage: "terminal"); Text("Opens the current folder in the terminal.") }
                 Text("Enter a single letter. Changes apply immediately.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Section("Folders") {
-                Toggle("Show Git status badges", isOn: $gitStatusEnabled)
+                Toggle(isOn: $gitStatusEnabled) { Label("Show Git status badges", systemImage: "arrow.triangle.branch") }
+                GitBadgePreview(enabled: gitStatusEnabled) // Fork
                 Text("Disabled by default to avoid running Git in every folder.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -55,7 +57,7 @@ struct SettingsView: View {
         }
         .onChange(of: commandPaletteKey) { _, value in commandPaletteKey = sanitized(value, fallback: "p") }
         .onChange(of: terminalKey) { _, value in terminalKey = sanitized(value, fallback: "t") }
-        .frame(minWidth: 680, idealWidth: 760, minHeight: 600, idealHeight: 720)
+        .frame(minWidth: 780, minHeight: 720)
     }
 
     private func sanitized(_ value: String, fallback: String) -> String {
