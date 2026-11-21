@@ -244,6 +244,7 @@ struct AppearanceSection: View {
             Toggle(isOn: $showsLocations) {
                 Label("Show “Locations” (disks and servers)", systemImage: "externaldrive")
             }
+            SidebarExtrasToggles()
         }
     }
 

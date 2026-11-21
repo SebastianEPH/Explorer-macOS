@@ -96,6 +96,7 @@ struct SidebarView: View {
                         .buttonStyle(.plain)
                     }
                     }
+                    SidebarExtrasSection() // Fork: Papelera, Aplicaciones, iCloud Drive
                     if browser.showsTree {
                         Section("Folders") {
                             FolderTreeNode(

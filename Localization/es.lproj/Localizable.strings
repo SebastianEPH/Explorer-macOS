@@ -421,3 +421,19 @@
 "Folders count only after calculating their size." = "Las carpetas solo suman cuando ya se calculó su tamaño.";
 "Free space on the disk" = "Espacio libre en el disco";
 "View buttons (List, Compact, Icons)" = "Botones de vista (Lista, Compacta, Iconos)";
+
+/* Fork: barra lateral, sección Más */
+"More" = "Más";
+"Trash" = "Papelera";
+"iCloud Drive" = "iCloud Drive";
+"Empty the Trash?" = "¿Vaciar la Papelera?";
+"The items will be deleted permanently. This can’t be undone." = "Los elementos se borrarán para siempre. No se puede deshacer.";
+"Empty Trash" = "Vaciar Papelera";
+"Empty Trash…" = "Vaciar Papelera…";
+"Couldn’t empty the Trash: %@. Explorer may need Full Disk Access (Settings → System)." = "No se pudo vaciar la Papelera: %@. Puede que Explorer necesite Acceso total al disco (Ajustes → Sistema).";
+"Right-click it to empty the Trash." = "Haz clic derecho sobre ella para vaciarla.";
+"Only appears if iCloud Drive is turned on on this Mac." = "Solo aparece si iCloud Drive está activado en este Mac.";
+"Applications" = "Aplicaciones";
+"Explorer needs Full Disk Access to show the Trash" = "Explorer necesita Acceso total al disco para mostrar la Papelera";
+"macOS protects the Trash. Turn on Explorer in Privacy & Security → Full Disk Access, then reopen Explorer." = "macOS protege la Papelera. Activa Explorer en Privacidad y seguridad → Acceso total al disco y vuelve a abrir Explorer.";
+"Open Settings" = "Abrir Ajustes";
