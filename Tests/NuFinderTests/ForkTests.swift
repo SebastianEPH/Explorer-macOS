@@ -166,6 +166,13 @@ struct ForkTests {
         #expect(ContextMenuOption.paste.title(in: .file) == "Paste")
     }
 
+    @Test func rightClickSelectsLikeWindows() {
+        let a = URL(filePath: "/tmp/a"), b = URL(filePath: "/tmp/b"), c = URL(filePath: "/tmp/c")
+        #expect(RightClickSelection.selection(afterRightClickOn: b, current: [a]) == [b])
+        #expect(RightClickSelection.selection(afterRightClickOn: b, current: []) == [b])
+        #expect(RightClickSelection.selection(afterRightClickOn: b, current: [a, b, c]) == [a, b, c])
+    }
+
     @Test func behaviorSettingsDefaultToOriginal() {
         let defaults = UserDefaults(suiteName: "ForkTests.\(UUID().uuidString)")!
         #expect(BehaviorSettings.restoresTabs(defaults))

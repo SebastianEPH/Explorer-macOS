@@ -24,6 +24,7 @@ struct FileListView: View {
     @AppStorage(ItemHitAreaSettings.spacingKey) private var gridSpacing = ItemHitAreaSettings.defaultSpacing // Fork
     @AppStorage(ContextMenuSettings.hiddenKey) private var hiddenMenuOptions = "" // Fork
     @AppStorage(ContextMenuSettings.orderKey) private var menuOrder = "" // Fork
+    @State private var hoveredURL: URL? // Fork: preselección al pasar el ratón
     @AppStorage(BehaviorSettings.iconSizeKey) private var iconSize = BehaviorSettings.defaultIconSize // Fork
     private func menu(_ option: ContextMenuOption, _ item: FileItem? = nil) -> Bool { ContextMenuSettings.isVisible(option, scope: item.map(ContextMenuScope.of) ?? .background, in: hiddenMenuOptions) } // Fork
 
@@ -114,6 +115,8 @@ struct FileListView: View {
                 // pero el clic derecho (Cortar, Copiar…) funciona en toda la celda.
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
+                .onRightMouseDown { selectForContextMenu(item.url) } // Fork
+                .onHover { trackHover(item.url, $0) } // Fork
                 .dropDestination(for: FileDragPayload.self) { payloads, _ in
                     guard item.isDirectory else { return false }
                     moveDroppedItems(payloads.flatMap(\.urls), to: item.url)
@@ -316,6 +319,8 @@ struct FileListView: View {
         tileLabel(for: item)
             .padding(7)
             .background(selectionColor(for: item.url), in: RoundedRectangle(cornerRadius: 7))
+            .onRightMouseDown { selectForContextMenu(item.url) } // Fork
+            .onHover { trackHover(item.url, $0) } // Fork
             .modifier(TileFrameReporter(url: item.url))
             .contentShape(Rectangle())
             .accessibilityElement(children: .combine)
@@ -378,7 +383,18 @@ struct FileListView: View {
         if browser.selection.contains(url) {
             return Color.accentColor.opacity(0.22)
         }
+        if hoveredURL == url { return Color.accentColor.opacity(0.08) } // Fork: preselección
         return .clear
+    }
+
+    // Fork: clic derecho como en Windows y preselección al pasar el ratón.
+    private func selectForContextMenu(_ url: URL) {
+        let next = RightClickSelection.selection(afterRightClickOn: url, current: browser.selection)
+        if next != browser.selection { browser.selection = next }
+    }
+
+    private func trackHover(_ url: URL, _ inside: Bool) {
+        if inside { hoveredURL = url } else if hoveredURL == url { hoveredURL = nil }
     }
 
     private func select(_ url: URL) {
