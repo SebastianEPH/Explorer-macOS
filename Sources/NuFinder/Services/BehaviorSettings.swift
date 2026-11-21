@@ -68,7 +68,8 @@ enum BehaviorSettings {
 
 enum AppearanceSettings {
     static let themeKey = "appearance.theme"          // "", "light", "dark"
-    static let toolbarColorKey = "appearance.toolbarColor"
+    static let toolbarColorKey = "appearance.toolbarColor"          // modo claro (y oscuro si no hay otro)
+    static let toolbarColorDarkKey = "appearance.toolbarColorDark"  // "" = igual que el claro
 
     @MainActor
     static func apply() {
@@ -89,9 +90,33 @@ enum AppearanceSettings {
         ("graphite", "Graphite", Color(red: 0.38, green: 0.38, blue: 0.42))
     ]
 
+    /// Color guardado para el modo actual: un color de la lista o "#RRGGBB".
+    static func toolbarColorID(light: String, dark: String, scheme: ColorScheme) -> String {
+        scheme == .dark && !dark.isEmpty ? dark : light
+    }
+
+    /// Color base: uno de la lista, uno propio en "#RRGGBB" o el morado original.
+    static func toolbarBase(_ id: String) -> Color {
+        if let custom = color(hex: id) { return custom }
+        return toolbarColors.first { $0.id == id }?.color ?? toolbarColors[0].color
+    }
+
+    /// Tono oscuro para la sombra y el número de los botones.
+    static func toolbarDeep(_ id: String) -> Color { toolbarBase(id).mix(with: .black, by: 0.5) }
+
+    static func color(hex: String) -> Color? {
+        guard hex.hasPrefix("#"), hex.count == 7, let value = UInt32(hex.dropFirst(), radix: 16) else { return nil }
+        return Color(red: Double((value >> 16) & 0xFF) / 255, green: Double((value >> 8) & 0xFF) / 255, blue: Double(value & 0xFF) / 255)
+    }
+
+    static func hex(_ color: Color) -> String {
+        let ns = NSColor(color).usingColorSpace(.sRGB) ?? .purple
+        return String(format: "#%02X%02X%02X", Int(round(ns.redComponent * 255)), Int(round(ns.greenComponent * 255)), Int(round(ns.blueComponent * 255)))
+    }
+
     /// Colores del degradado de los botones de la barra (el original es morado).
     static func toolbarGradient(_ id: String, active: Bool) -> [Color] {
-        let base = toolbarColors.first { $0.id == id }?.color ?? toolbarColors[0].color
+        let base = toolbarBase(id)
         return active ? [base.mix(with: .white, by: 0.12), base.mix(with: .black, by: 0.40)]
                       : [base, base.mix(with: .black, by: 0.50)]
     }
@@ -201,6 +226,7 @@ struct FileBehaviorSection: View {
 struct AppearanceSection: View {
     @AppStorage(AppearanceSettings.themeKey) private var theme = ""
     @AppStorage(AppearanceSettings.toolbarColorKey) private var toolbarColor = ""
+    @AppStorage(AppearanceSettings.toolbarColorDarkKey) private var toolbarColorDark = ""
     @AppStorage(BehaviorSettings.showsLocationsKey) private var showsLocations = true
 
     var body: some View {
@@ -220,31 +246,37 @@ struct AppearanceSection: View {
             .frame(maxWidth: .infinity)
         }
         Section("Toolbar Buttons") {
-            LabeledContent {
-                HStack(spacing: 8) {
-                    ForEach(AppearanceSettings.toolbarColors, id: \.id) { choice in
-                        Button { toolbarColor = choice.id } label: {
-                            Circle().fill(choice.color).frame(width: 20, height: 20)
-                                .overlay(Circle().strokeBorder(.primary, lineWidth: toolbarColor == choice.id ? 2 : 0))
-                        }
-                        .buttonStyle(.plain)
-                        .help(Text(choice.name))
-                    }
-                }
-            } label: { Label("Color", systemImage: "paintbrush") }
-            SettingsPreviewBox(title: "Preview: top right of the window") {
-                HStack(spacing: 8) {
-                    ForEach(["square.stack.3d.up", "rectangle.split.2x1", "terminal", "arrow.left.arrow.right.circle"], id: \.self) {
-                        FreeloaderToolbarIcon(systemName: $0)
-                    }
+            ToolbarColorRow(title: "Light mode", symbol: "sun.max", value: $toolbarColor, allowsSame: false)
+            ToolbarColorRow(title: "Dark mode", symbol: "moon", value: $toolbarColorDark, allowsSame: true)
+            SettingsPreviewBox(title: "Preview: the purple buttons of the window, in light and dark mode") {
+                HStack(spacing: 12) {
+                    toolbarSample(.light)
+                    toolbarSample(.dark)
                 }
             }
+            Text("These colors are used by the toolbar buttons, the up button, sorting, the gallery and the badges.")
+                .font(.caption).foregroundStyle(.secondary)
         }
         Section("Sidebar") {
             Toggle(isOn: $showsLocations) {
                 Label("Show “Locations” (disks and servers)", systemImage: "externaldrive")
             }
             SidebarExtrasToggles()
+        }
+    }
+
+    private func toolbarSample(_ scheme: ColorScheme) -> some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 8) {
+                ForEach(["arrow.up", "square.stack.3d.up", "rectangle.split.2x1", "terminal", "arrow.left.arrow.right.circle"], id: \.self) {
+                    FreeloaderToolbarIcon(systemName: $0, badge: $0 == "arrow.left.arrow.right.circle" ? 2 : 0)
+                }
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity)
+            .background(scheme == .dark ? Color(white: 0.17) : Color(white: 0.96), in: RoundedRectangle(cornerRadius: 8))
+            .environment(\.colorScheme, scheme)
+            Text(scheme == .dark ? "Dark mode" : "Light mode").font(.caption).foregroundStyle(.secondary)
         }
     }
 
@@ -313,5 +345,47 @@ struct ViewModePreview: View {
         Image(systemName: name.contains(".") ? "doc.fill" : "folder.fill")
             .font(.system(size: size))
             .foregroundStyle(name.contains(".") ? Color.secondary : Color.accentColor)
+    }
+}
+
+/// Fila para elegir el color de los botones: colores de la lista o uno propio.
+struct ToolbarColorRow: View {
+    let title: LocalizedStringKey
+    let symbol: String
+    @Binding var value: String
+    let allowsSame: Bool
+
+    var body: some View {
+        LabeledContent {
+            HStack(spacing: 7) {
+                if allowsSame {
+                    Button { value = "" } label: {
+                        Text("Same").font(.caption)
+                            .padding(.horizontal, 6).frame(height: 20)
+                            .overlay(Capsule().strokeBorder(.primary, lineWidth: value.isEmpty ? 2 : 0.5))
+                    }
+                    .buttonStyle(.plain)
+                    .help(Text("Same color as light mode"))
+                }
+                ForEach(AppearanceSettings.toolbarColors, id: \.id) { choice in
+                    let selected = !(allowsSame && value.isEmpty) && value == choice.id
+                    Button { value = choice.id.isEmpty && allowsSame ? "purple" : choice.id } label: {
+                        Circle().fill(choice.color).frame(width: 20, height: 20)
+                            .overlay(Circle().strokeBorder(.primary, lineWidth: selected || (allowsSame && choice.id.isEmpty && value == "purple") ? 2 : 0))
+                    }
+                    .buttonStyle(.plain)
+                    .help(Text(choice.name))
+                }
+                ColorPicker("", selection: Binding(
+                    get: { AppearanceSettings.toolbarBase(value) },
+                    set: { value = AppearanceSettings.hex($0) }
+                ), supportsOpacity: false)
+                .labelsHidden()
+                .help(Text("Any color"))
+                .overlay(alignment: .bottom) {
+                    if value.hasPrefix("#") { Circle().fill(.primary).frame(width: 4, height: 4).offset(y: 6) }
+                }
+            }
+        } label: { Label(title, systemImage: symbol) }
     }
 }

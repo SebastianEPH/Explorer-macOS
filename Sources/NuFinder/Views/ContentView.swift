@@ -487,7 +487,10 @@ struct FreeloaderToolbarIcon: View {
     var isActive = false
     var badge = 0
 
-    @AppStorage(AppearanceSettings.toolbarColorKey) private var toolbarColor = "" // Fork
+    @AppStorage(AppearanceSettings.toolbarColorKey) private var toolbarColorLight = "" // Fork
+    @AppStorage(AppearanceSettings.toolbarColorDarkKey) private var toolbarColorDark = "" // Fork
+    @Environment(\.colorScheme) private var colorScheme // Fork
+    private var toolbarColor: String { AppearanceSettings.toolbarColorID(light: toolbarColorLight, dark: toolbarColorDark, scheme: colorScheme) } // Fork
     @State private var isHovering = false
 
     var body: some View {
@@ -510,7 +513,7 @@ struct FreeloaderToolbarIcon: View {
                             .stroke(.white.opacity(0.24), lineWidth: 0.7)
                     }
                     .shadow(
-                        color: Color(red: 0.26, green: 0.09, blue: 0.31).opacity(isHovering ? 0.38 : 0.22),
+                        color: AppearanceSettings.toolbarDeep(toolbarColor).opacity(isHovering ? 0.38 : 0.22), // Fork
                         radius: isHovering ? 5 : 2,
                         y: isHovering ? 2 : 1
                     )
@@ -519,7 +522,7 @@ struct FreeloaderToolbarIcon: View {
                 if badge > 0 {
                     Text(badge > 9 ? "9+" : "\(badge)")
                         .font(.system(size: 7, weight: .black, design: .rounded))
-                        .foregroundStyle(Color(red: 0.26, green: 0.09, blue: 0.31))
+                        .foregroundStyle(AppearanceSettings.toolbarDeep(toolbarColor)) // Fork
                         .padding(.horizontal, 3)
                         .frame(minWidth: 12, minHeight: 12)
                         .background(.white, in: Capsule())

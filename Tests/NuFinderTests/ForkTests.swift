@@ -179,6 +179,14 @@ struct ForkTests {
         #expect(TableMarquee.selection(rows: [], base: [1], additive: false).isEmpty)
     }
 
+    @Test func toolbarColorPerAppearance() {
+        #expect(AppearanceSettings.toolbarColorID(light: "blue", dark: "", scheme: .dark) == "blue")
+        #expect(AppearanceSettings.toolbarColorID(light: "blue", dark: "#112233", scheme: .dark) == "#112233")
+        #expect(AppearanceSettings.toolbarColorID(light: "blue", dark: "#112233", scheme: .light) == "blue")
+        #expect(AppearanceSettings.hex(AppearanceSettings.color(hex: "#3366CC")!) == "#3366CC")
+        #expect(AppearanceSettings.color(hex: "blue") == nil)
+    }
+
     @Test func behaviorSettingsDefaultToOriginal() {
         let defaults = UserDefaults(suiteName: "ForkTests.\(UUID().uuidString)")!
         #expect(BehaviorSettings.restoresTabs(defaults))

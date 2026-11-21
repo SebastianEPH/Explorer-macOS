@@ -554,3 +554,10 @@
 "%@ across %lld items." = "%1$@ en %2$lld elementos.";
 "%@ — Page %lld" = "%1$@ — Página %2$lld";
 "untitled folder" = "carpeta sin título";
+"Light mode" = "Modo claro";
+"Dark mode" = "Modo oscuro";
+"Same" = "Igual";
+"Same color as light mode" = "El mismo color que en modo claro";
+"Any color" = "Cualquier color";
+"Preview: the purple buttons of the window, in light and dark mode" = "Vista previa: los botones morados de la ventana, en modo claro y oscuro";
+"These colors are used by the toolbar buttons, the up button, sorting, the gallery and the badges." = "Estos colores se usan en los botones de la barra, el botón de subir, ordenar, la galería y los contadores.";
