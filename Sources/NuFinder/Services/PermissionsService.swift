@@ -6,7 +6,7 @@ import SwiftUI
 /// macOS no deja concederlos desde la app: «Solicitar» muestra el aviso del sistema
 /// o abre el panel correspondiente de Ajustes del Sistema para que el usuario los active.
 enum PermissionKind: String, CaseIterable, Identifiable {
-    case fullDisk, accessibility, folders, systemEvents, iTerm
+    case fullDisk, accessibility, folders, volumes, appManagement, finder, systemEvents, iTerm
 
     var id: String { rawValue }
 
@@ -15,6 +15,9 @@ enum PermissionKind: String, CaseIterable, Identifiable {
         case .fullDisk: "Full Disk Access"
         case .accessibility: "Accessibility"
         case .folders: "Desktop, Documents and Downloads"
+        case .volumes: "External and Network Drives"
+        case .appManagement: "App Management"
+        case .finder: "Automation: Finder"
         case .systemEvents: "Automation: System Events"
         case .iTerm: "Automation: iTerm"
         }
@@ -25,6 +28,9 @@ enum PermissionKind: String, CaseIterable, Identifiable {
         case .fullDisk: "Browse every folder without asking (Library, other volumes, protected files)."
         case .accessibility: "Bring the new iTerm window to the front and take it out of full screen."
         case .folders: "Open your personal folders. Not needed if Full Disk Access is on."
+        case .volumes: "Open USB drives, disks and network shares without being asked each time."
+        case .appManagement: "Let Explorer replace itself in Applications when it updates."
+        case .finder: "Close Finder and ask it for things when Explorer replaces it."
         case .systemEvents: "Control windows through System Events."
         case .iTerm: "Open a new iTerm window in the current folder."
         }
@@ -36,7 +42,9 @@ enum PermissionKind: String, CaseIterable, Identifiable {
         case .fullDisk: return URL(string: base + "Privacy_AllFiles")
         case .accessibility: return URL(string: base + "Privacy_Accessibility")
         case .folders: return URL(string: base + "Privacy_FilesAndFolders")
-        case .systemEvents, .iTerm: return URL(string: base + "Privacy_Automation")
+        case .volumes: return URL(string: base + "Privacy_FilesAndFolders")
+        case .appManagement: return URL(string: base + "Privacy_AppBundles")
+        case .finder, .systemEvents, .iTerm: return URL(string: base + "Privacy_Automation")
         }
     }
 }
@@ -64,7 +72,8 @@ enum PermissionState {
 enum PermissionsService {
     private static let bundleIDs: [PermissionKind: String] = [
         .systemEvents: "com.apple.systemevents",
-        .iTerm: "com.googlecode.iterm2"
+        .iTerm: "com.googlecode.iterm2",
+        .finder: "com.apple.finder"
     ]
 
     /// Comprueba sin mostrar avisos (puede tardar: llamar fuera del hilo principal).
@@ -78,9 +87,11 @@ enum PermissionsService {
                 ? .granted : .denied
         case .accessibility:
             return AXIsProcessTrusted() ? .granted : .denied
-        case .folders:
+        case .folders, .volumes:
             return state(of: .fullDisk) == .granted ? .granted : .unknown
-        case .systemEvents, .iTerm:
+        case .appManagement:
+            return .unknown // macOS no deja consultarlo
+        case .finder, .systemEvents, .iTerm:
             return automationState(bundleIDs[kind]!, ask: false)
         }
     }
@@ -88,8 +99,14 @@ enum PermissionsService {
     /// Pide el permiso: aviso del sistema si existe, y si no, abre Ajustes del Sistema.
     static func request(_ kind: PermissionKind) {
         switch kind {
-        case .fullDisk:
+        case .fullDisk, .appManagement:
             open(kind)
+        case .volumes:
+            // Leer cada volumen hace que macOS muestre su aviso (externos y de red).
+            let volumes = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: nil, options: [.skipHiddenVolumes]) ?? []
+            for volume in volumes where volume.path != "/" {
+                _ = try? FileManager.default.contentsOfDirectory(atPath: volume.path)
+            }
         case .accessibility:
             let key = "AXTrustedCheckOptionPrompt" // = kAXTrustedCheckOptionPrompt
             if !AXIsProcessTrustedWithOptions([key: true] as CFDictionary) { open(kind) }
@@ -99,7 +116,7 @@ enum PermissionsService {
             for name in ["Desktop", "Documents", "Downloads"] {
                 _ = try? FileManager.default.contentsOfDirectory(atPath: home.appendingPathComponent(name).path)
             }
-        case .systemEvents, .iTerm:
+        case .finder, .systemEvents, .iTerm:
             let id = bundleIDs[kind]!
             if NSRunningApplication.runningApplications(withBundleIdentifier: id).isEmpty,
                let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) {
@@ -115,6 +132,10 @@ enum PermissionsService {
     static func open(_ kind: PermissionKind) {
         if kind == .fullDisk { touchProtectedFiles() }
         if let url = kind.settingsURL { NSWorkspace.shared.open(url) }
+        // En las listas que no muestran a Explorer hasta que lo añades a mano, ayuda a arrastrarlo.
+        if [.fullDisk, .accessibility, .appManagement].contains(kind) {
+            DispatchQueue.main.async { PermissionDragHelper.show(for: kind) }
+        }
     }
 
     /// macOS solo pone una app en la lista de «Acceso total al disco» cuando ha intentado
@@ -195,7 +216,7 @@ struct PermissionsSection: View {
                 Button("Copy Explorer Path") { PermissionsService.copyAppPath() }
                     .help(Text(Bundle.main.bundlePath))
             }
-            Text("If Explorer is not in the list, press + in System Settings, then ⌘⇧G, paste the path and choose Explorer.")
+            Text("If Explorer is not in the list, drag its icon from the small window that appears into the list in System Settings.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text("macOS only lets you grant these yourself: accept the prompt or turn Explorer on in System Settings. Some changes need Explorer to restart.")
@@ -214,5 +235,58 @@ struct PermissionsSection: View {
             for kind in PermissionKind.allCases { result[kind] = PermissionsService.state(of: kind) }
             DispatchQueue.main.async { states = result }
         }
+    }
+}
+
+/// Fork: ventanita flotante con el icono de Explorer para arrastrarlo a la lista de Ajustes del Sistema
+/// (Acceso total al disco, Accesibilidad, Gestión de apps), porque macOS a veces no lo muestra en ella.
+@MainActor
+enum PermissionDragHelper {
+    private static var panel: NSPanel?
+
+    static func show(for kind: PermissionKind) {
+        panel?.close()
+        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 300, height: 250),
+                            styleMask: [.titled, .closable, .utilityWindow, .nonactivatingPanel],
+                            backing: .buffered, defer: false)
+        panel.title = String(localized: "Add Explorer")
+        panel.level = .floating
+        panel.isReleasedWhenClosed = false
+        panel.hidesOnDeactivate = false
+        panel.contentView = NSHostingView(rootView: PermissionDragView(kind: kind) { panel.close() })
+        if let screen = NSScreen.main {
+            let frame = screen.visibleFrame
+            panel.setFrameOrigin(NSPoint(x: frame.maxX - 330, y: frame.minY + 40))
+        }
+        panel.orderFrontRegardless()
+        self.panel = panel
+    }
+}
+
+private struct PermissionDragView: View {
+    let kind: PermissionKind
+    let close: () -> Void
+    @State private var copied = false
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Text("Drag Explorer into the “\(Text(kind.title))” list")
+                .font(.headline).multilineTextAlignment(.center)
+            Image(nsImage: NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath))
+                .resizable().frame(width: 64, height: 64)
+                .onDrag { NSItemProvider(object: Bundle.main.bundleURL as NSURL) }
+                .help(Text("Drag to the list in System Settings"))
+            Text("Then turn on its switch. If it asks, reopen Explorer.")
+                .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            HStack {
+                Button(copied ? "Copied" : "Copy Path") {
+                    PermissionsService.copyAppPath(); copied = true
+                }
+                Spacer()
+                Button("Done", action: close).keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(16)
+        .frame(width: 300)
     }
 }

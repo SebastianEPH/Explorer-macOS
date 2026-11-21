@@ -437,3 +437,18 @@
 "Explorer needs Full Disk Access to show the Trash" = "Explorer necesita Acceso total al disco para mostrar la Papelera";
 "macOS protects the Trash. Turn on Explorer in Privacy & Security → Full Disk Access, then reopen Explorer." = "macOS protege la Papelera. Activa Explorer en Privacidad y seguridad → Acceso total al disco y vuelve a abrir Explorer.";
 "Open Settings" = "Abrir Ajustes";
+
+/* Fork: más permisos y ayuda para arrastrar */
+"External and Network Drives" = "Discos externos y de red";
+"App Management" = "Gestión de apps";
+"Automation: Finder" = "Automatización: Finder";
+"Open USB drives, disks and network shares without being asked each time." = "Abrir USB, discos y carpetas de red sin que pregunte cada vez.";
+"Let Explorer replace itself in Applications when it updates." = "Permite que Explorer se reemplace en Aplicaciones al actualizarse.";
+"Close Finder and ask it for things when Explorer replaces it." = "Cerrar Finder y pedirle cosas cuando Explorer lo reemplaza.";
+"If Explorer is not in the list, drag its icon from the small window that appears into the list in System Settings." = "Si Explorer no aparece en la lista, arrastra su icono desde la ventanita que aparece hasta la lista de Ajustes del Sistema.";
+"Add Explorer" = "Añadir Explorer";
+"Drag Explorer into the “%@” list" = "Arrastra Explorer a la lista «%@»";
+"Drag to the list in System Settings" = "Arrástralo a la lista de Ajustes del Sistema";
+"Then turn on its switch. If it asks, reopen Explorer." = "Después activa su interruptor. Si lo pide, vuelve a abrir Explorer.";
+"Copied" = "Copiado";
+"Done" = "Listo";

@@ -9,6 +9,16 @@
         <string>en</string>
         <string>es</string>
     </array>
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>Explorer muestra y gestiona los archivos de tu Escritorio.</string>
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>Explorer muestra y gestiona los archivos de Documentos.</string>
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>Explorer muestra y gestiona los archivos de Descargas.</string>
+    <key>NSRemovableVolumesUsageDescription</key>
+    <string>Explorer muestra y gestiona los archivos de discos externos y USB.</string>
+    <key>NSNetworkVolumesUsageDescription</key>
+    <string>Explorer muestra y gestiona los archivos de unidades de red.</string>
     <key>NSAppleEventsUsageDescription</key>
     <string>Explorer controla iTerm para abrir una ventana nueva en la carpeta elegida.</string>
     <key>CFBundleDisplayName</key>
