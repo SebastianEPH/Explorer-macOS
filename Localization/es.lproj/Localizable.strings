@@ -583,3 +583,5 @@
 "Send the selected files by AirDrop, or open the AirDrop window" = "Envía por AirDrop los archivos seleccionados, o abre la ventana de AirDrop";
 "They appear inside “Locations”. Cloud folders are found automatically." = "Aparecen dentro de «Ubicaciones». Las carpetas de nubes se detectan solas.";
 "Save and restore the open folders and the split pane." = "Guardan y recuperan las carpetas abiertas y el panel dividido.";
+"Calculate folder sizes automatically" = "Calcular el tamaño de las carpetas automáticamente";
+"Off: the Size column shows “—” for folders; right-click → Calculate Size when you need it." = "Desactivado: la columna Tamaño muestra «—» en las carpetas; clic derecho → Calcular tamaño cuando lo necesites.";

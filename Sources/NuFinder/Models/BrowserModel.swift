@@ -377,7 +377,7 @@ final class BrowserModel: ObservableObject {
             try? await Task.sleep(for: .milliseconds(35))
             guard !Task.isCancelled else { return }
 
-            let result = await Task.detached(priority: .userInitiated) {
+            let result = await BackgroundWork.run { // Fork: fuera del grupo de hilos de Swift
                 Result {
                     let urls = try FileManager.default.contentsOfDirectory(
                         at: directory,
@@ -387,9 +387,9 @@ final class BrowserModel: ObservableObject {
                         includingPropertiesForKeys: [],
                         options: includesHidden ? [] : [.skipsHiddenFiles]
                     )
-                    return urls.compactMap(FileItem.load)
+                    return FastDirectoryLoader.items(urls) // Fork: rápido en carpetas con muchos archivos
                 }
-            }.value
+            }
 
             guard !Task.isCancelled, let self, self.currentURL == directory else { return }
             self.isLoading = false

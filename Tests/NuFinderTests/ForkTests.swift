@@ -206,6 +206,38 @@ struct ForkTests {
         #expect(defaults.object(forKey: TextPredictionSettings.key) as? Bool == false)
     }
 
+    @Test func folderSizeQueueSumsAndCancels() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("ForkTests-size-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root.appendingPathComponent("sub"), withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try Data(count: 1000).write(to: root.appendingPathComponent("a.bin"))
+        try Data(count: 500).write(to: root.appendingPathComponent("sub/b.bin"))
+        #expect(FolderSizeQueue.totalBytes(of: root) { false } == 1500)
+        for i in 0..<250 { try Data().write(to: root.appendingPathComponent("f\(i)")) }
+        #expect(FolderSizeQueue.totalBytes(of: root) { true } == nil)
+    }
+
+    @Test func backgroundWorkReturnsResult() async {
+        let value = await BackgroundWork.run { 21 * 2 }
+        #expect(value == 42)
+    }
+
+    @Test func fastLoaderMatchesOriginal() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("ForkTests-fast-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root.appendingPathComponent("carpeta"), withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        for i in 0..<300 { try Data(count: i).write(to: root.appendingPathComponent("f\(i).\(i % 3 == 0 ? "txt" : "png")")) }
+        try Data().write(to: root.appendingPathComponent("sin-extension"))
+        let urls = try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: [])
+        let fast = Dictionary(uniqueKeysWithValues: FastDirectoryLoader.items(urls).map { ($0.url, $0) })
+        let original = urls.compactMap(FileItem.load)
+        #expect(fast.count == original.count)
+        for item in original {
+            let other = try #require(fast[item.url])
+            #expect(other.isDirectory == item.isDirectory && other.size == item.size && other.kind == item.kind && other.modified == item.modified)
+        }
+    }
+
     @Test func behaviorSettingsDefaultToOriginal() {
         let defaults = UserDefaults(suiteName: "ForkTests.\(UUID().uuidString)")!
         #expect(BehaviorSettings.restoresTabs(defaults))

@@ -196,6 +196,7 @@ struct FileBehaviorSection: View {
     @AppStorage(ListColumnSettings.showsCreatedKey) private var showsCreated = false
     @AppStorage("previewPane.visible") private var previewVisible = true
     @AppStorage("operations.autoClose") private var autoClose = true
+    @AppStorage(FolderSizeQueue.autoKey) private var autoFolderSizes = true
 
     var body: some View {
         Section("Opening and Deleting") {
@@ -215,6 +216,10 @@ struct FileBehaviorSection: View {
             Toggle(isOn: $previewVisible) {
                 Label("Image preview pane", systemImage: "sidebar.right")
                 Text("Panel on the right that shows the selected image.")
+            }
+            Toggle(isOn: $autoFolderSizes) {
+                Label("Calculate folder sizes automatically", systemImage: "scalemass")
+                Text("Off: the Size column shows “—” for folders; right-click → Calculate Size when you need it.")
             }
             Toggle(isOn: $autoClose) {
                 Label("Close the operations panel when done", systemImage: "arrow.left.arrow.right.circle")

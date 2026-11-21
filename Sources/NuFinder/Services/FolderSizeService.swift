@@ -24,13 +24,18 @@ final class FolderSizeService: ObservableObject {
         calculating.insert(item.url)
         let url = item.url
         let modified = item.modified
-        Task {
-            let bytes = await Task.detached(priority: .utility) {
-                FileOperationManager.totalBytes(of: [url])
-            }.value
-            entries[url] = Entry(bytes: bytes, modified: modified)
-            calculating.remove(url)
+        // Fork: cola propia (máx. 2 a la vez, cancelable) para no bloquear la apertura de carpetas.
+        FolderSizeQueue.shared.calculate(url) { [weak self] bytes in
+            self?.entries[url] = Entry(bytes: bytes, modified: modified)
+            self?.calculating.remove(url)
         }
+    }
+
+    /// Fork: deja de calcular una carpeta que ya no se ve.
+    func cancel(_ item: FileItem) {
+        guard calculating.contains(item.url) else { return }
+        FolderSizeQueue.shared.cancel(item.url)
+        calculating.remove(item.url)
     }
 
     func invalidate(_ url: URL) {
