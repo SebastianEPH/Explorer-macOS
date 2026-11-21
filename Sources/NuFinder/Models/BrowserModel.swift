@@ -49,7 +49,7 @@ final class BrowserModel: ObservableObject {
     @Published var serverAddress = "smb://"
     @Published private(set) var isConnectingToServer = false
     @Published private(set) var recentServers: [String] = []
-    @Published var showsHiddenFiles = false
+    @Published var showsHiddenFiles = BehaviorSettings.showsHiddenByDefault // Fork
     @Published var itemForInfo: FileItem?
     @Published var renameTarget: URL?
     @Published var sortCriteria = [SortCriterion(field: .name, ascending: true)]
@@ -76,7 +76,7 @@ final class BrowserModel: ObservableObject {
     @Published private(set) var searchResults: [FileItem] = []
     @Published private(set) var isSearching = false
     @Published private(set) var savedSearches: [String] = []
-    @Published var viewMode: FileViewMode = .list
+    @Published var viewMode: FileViewMode = BehaviorSettings.defaultViewMode // Fork
     @Published var showsKindColumn = true
     @Published var showsSizeColumn = true
     @Published var showsModifiedColumn = true
@@ -115,8 +115,8 @@ final class BrowserModel: ObservableObject {
     init(initialURL: URL? = nil, restoresSession: Bool = true, defaults: UserDefaults = .standard) {
         self.defaults = defaults
         persistsSession = restoresSession
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        let restored = restoresSession ? defaults.stringArray(forKey: "openTabPaths")?
+        let home = BehaviorSettings.startURL(defaults) ?? FileManager.default.homeDirectoryForCurrentUser // Fork
+        let restored = restoresSession && BehaviorSettings.restoresTabs(defaults) ? defaults.stringArray(forKey: "openTabPaths")?
             .filter(Self.isRestorableSessionPath)
             .map(Self.storedDirectoryURL) ?? [] : []
         let initialURLs = initialURL.map { [$0] } ?? (restored.isEmpty ? [home] : restored)
@@ -291,7 +291,7 @@ final class BrowserModel: ObservableObject {
     }
 
     func newTab(at url: URL? = nil) {
-        let destination = (url ?? currentURL).standardizedFileURL
+        let destination = (url ?? BehaviorSettings.newTabURL ?? currentURL).standardizedFileURL // Fork
         let tab = BrowserTab(id: UUID(), url: destination, history: [destination], historyIndex: 0)
         tabs.append(tab)
         persistTabs()
@@ -870,7 +870,7 @@ final class BrowserModel: ObservableObject {
     }
 
     func open(_ item: FileItem) {
-        if item.isDirectory { navigate(to: item.url) }
+        if item.isDirectory { if BehaviorSettings.foldersOpenInNewTab { newTab(at: item.url) } else { navigate(to: item.url) } } // Fork
         else { NSWorkspace.shared.open(item.url) }
     }
 
@@ -1160,6 +1160,7 @@ final class BrowserModel: ObservableObject {
     func moveSelectionToTrash() {
         let urls = Array(selection)
         guard !urls.isEmpty else { return }
+        guard BehaviorSettings.confirmTrash(count: urls.count) else { return } // Fork
 
         NSWorkspace.shared.recycle(urls) { [weak self] trashedURLs, error in
             Task { @MainActor in

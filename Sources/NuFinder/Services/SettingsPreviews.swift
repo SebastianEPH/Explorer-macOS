@@ -146,39 +146,62 @@ struct HitAreaPreview: View {
     }
 }
 
-/// Menú contextual dibujado con las opciones que quedarán visibles.
+/// Menú contextual dibujado tal como aparecerá, junto al elemento al que se le hace clic.
 struct ContextMenuPreview: View {
-    let title: LocalizedStringKey
-    let options: [ContextMenuOption]
+    let scope: ContextMenuScope
     let hidden: String
 
     var body: some View {
-        let visible = options.filter { ContextMenuSettings.isVisible($0, in: hidden) }
+        let options = scope.options
+        let visible = options.filter { ContextMenuSettings.isVisible($0, scope: scope, in: hidden) }
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-            VStack(alignment: .leading, spacing: 0) {
-                if visible.isEmpty {
-                    Text("(empty menu)").font(.callout).foregroundStyle(.secondary).padding(8)
-                }
-                ForEach(visible) { option in
-                    HStack(spacing: 6) {
-                        Image(systemName: option.symbol).frame(width: 16).foregroundStyle(.secondary)
-                        Text(option.title).font(.system(size: 12))
-                        Spacer(minLength: 0)
-                        if option.hasSubmenu { Image(systemName: "chevron.right").font(.system(size: 9)) }
+            Label("Preview", systemImage: "eye").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+            ZStack(alignment: .topLeading) {
+                Color(nsColor: .textBackgroundColor)
+                if scope != .background {
+                    VStack(spacing: 2) {
+                        Image(systemName: scope.symbol).font(.system(size: 34))
+                            .foregroundStyle(scope == .folder ? Color.accentColor : .secondary)
+                        Text(verbatim: scope.example).font(.caption)
+                            .padding(.horizontal, 4)
+                            .background(Color.accentColor.opacity(0.25), in: RoundedRectangle(cornerRadius: 3))
                     }
-                    .foregroundStyle(option == .trash ? Color.red : Color.primary)
-                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .padding(10)
                 }
+                Image(systemName: "cursorarrow").font(.system(size: 14)).offset(x: 42, y: 34)
+                menu(visible).offset(x: 50, y: 44)
             }
-            .padding(.vertical, 4)
-            .frame(width: 230, alignment: .leading)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.separator))
-            .shadow(radius: 4, y: 2)
+            .frame(width: 290, height: CGFloat(max(visible.count, 1)) * 21 + 80, alignment: .topLeading)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.separator))
             Text("\(visible.count) of \(options.count) options").font(.caption2).foregroundStyle(.secondary)
         }
         .animation(.default, value: hidden)
+        .animation(.default, value: scope)
+    }
+
+    private func menu(_ visible: [ContextMenuOption]) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if visible.isEmpty {
+                Text("(empty menu)").font(.callout).foregroundStyle(.secondary).padding(8)
+            }
+            ForEach(Array(visible.enumerated()), id: \.element) { index, option in
+                if index > 0, option.startsGroup { Divider().padding(.vertical, 2) }
+                HStack(spacing: 6) {
+                    Image(systemName: option.symbol).frame(width: 16).foregroundStyle(.secondary)
+                    Text(option.title).font(.system(size: 12))
+                    Spacer(minLength: 0)
+                    if option.hasSubmenu { Image(systemName: "chevron.right").font(.system(size: 9)) }
+                }
+                .foregroundStyle(option == .trash ? Color.red : Color.primary)
+                .padding(.horizontal, 8).frame(height: 19)
+            }
+        }
+        .padding(.vertical, 4)
+        .frame(width: 225, alignment: .leading)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.separator))
+        .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
     }
 }
 
@@ -252,6 +275,11 @@ extension ContextMenuOption {
         }
     }
 
+    /// Donde el menú real pone una línea separadora antes de esta opción.
+    var startsGroup: Bool {
+        [.cut, .trash, .newFolder, .bgOpenInTerminal, .bgPaste, .bgHiddenFiles].contains(self)
+    }
+
     var hasSubmenu: Bool {
         [.openWith, .imageActions, .checksums, .newFromTemplate, .bgNewFromTemplate, .bgPasteAs, .bgViewAs].contains(self)
     }
@@ -259,10 +287,7 @@ extension ContextMenuOption {
     /// Cuándo aparece, para las opciones que no salen siempre.
     var condition: LocalizedStringKey? {
         switch self {
-        case .openInNewTab, .openInNewWindow, .favorite: "Folders only"
         case .showPackageContents: "Only on app bundles and packages"
-        case .imageActions: "Only on images"
-        case .extract: "Only on ZIP and other archives"
         case .compare: "Only with two files selected"
         case .bgRevealHidden: "Only while hidden files are hidden"
         default: nil

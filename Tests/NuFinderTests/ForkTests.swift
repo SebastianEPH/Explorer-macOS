@@ -113,17 +113,30 @@ struct ForkTests {
         #expect(SharedClipboard.urls.isEmpty)
     }
 
-    @Test func contextMenuOptionsCanBeHiddenAndRestored() {
+    @Test func contextMenuIsConfiguredPerType() {
         var stored = ""
-        #expect(ContextMenuOption.allCases.allSatisfy { ContextMenuSettings.isVisible($0, in: stored) })
-        stored = ContextMenuSettings.setting(.checksums, visible: false, in: stored)
-        stored = ContextMenuSettings.setting(.bgReload, visible: false, in: stored)
-        #expect(!ContextMenuSettings.isVisible(.checksums, in: stored))
-        #expect(!ContextMenuSettings.isVisible(.bgReload, in: stored))
-        #expect(ContextMenuSettings.isVisible(.open, in: stored))
-        stored = ContextMenuSettings.setting(.checksums, visible: true, in: stored)
-        #expect(ContextMenuSettings.isVisible(.checksums, in: stored))
-        #expect(stored == "bgReload")
-        #expect(Set(ContextMenuOption.allCases.map(\.rawValue)).count == ContextMenuOption.allCases.count)
+        #expect(ContextMenuScope.allCases.allSatisfy { scope in scope.options.allSatisfy { ContextMenuSettings.isVisible($0, scope: scope, in: stored) } })
+        stored = ContextMenuSettings.setting(.copy, scope: .folder, visible: false, in: stored)
+        #expect(!ContextMenuSettings.isVisible(.copy, scope: .folder, in: stored))
+        #expect(ContextMenuSettings.isVisible(.copy, scope: .file, in: stored))
+        // Formato antiguo (sin tipo): oculto en todos; al mostrarlo en uno, los demás siguen ocultos.
+        stored = ContextMenuSettings.setting(.checksums, scope: .file, visible: true, in: "checksums")
+        #expect(ContextMenuSettings.isVisible(.checksums, scope: .file, in: stored))
+        #expect(!ContextMenuSettings.isVisible(.checksums, scope: .folder, in: stored))
+        #expect(!ContextMenuSettings.isVisible(.checksums, scope: .image, in: stored))
+        stored = ContextMenuSettings.resetting(.folder, in: stored)
+        #expect(ContextMenuSettings.isVisible(.checksums, scope: .folder, in: stored))
+        #expect(!ContextMenuSettings.isVisible(.checksums, scope: .archive, in: stored))
+        #expect(ContextMenuScope.folder.options.contains(.favorite) && !ContextMenuScope.file.options.contains(.favorite))
+        #expect(ContextMenuScope.image.options.contains(.imageActions) && ContextMenuScope.archive.options.contains(.extract))
+    }
+
+    @Test func behaviorSettingsDefaultToOriginal() {
+        let defaults = UserDefaults(suiteName: "ForkTests.\(UUID().uuidString)")!
+        #expect(BehaviorSettings.restoresTabs(defaults))
+        #expect(BehaviorSettings.startURL(defaults) == nil)
+        defaults.set("downloads", forKey: BehaviorSettings.startFolderKey)
+        #expect(BehaviorSettings.startURL(defaults)?.lastPathComponent == "Downloads")
+        #expect(BehaviorSettings.folderURL("/no/existe") == nil)
     }
 }

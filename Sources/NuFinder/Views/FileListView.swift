@@ -23,7 +23,8 @@ struct FileListView: View {
     @AppStorage(ListColumnSettings.showsCreatedKey) private var showsCreatedColumn = false // Fork
     @AppStorage(ItemHitAreaSettings.spacingKey) private var gridSpacing = ItemHitAreaSettings.defaultSpacing // Fork
     @AppStorage(ContextMenuSettings.hiddenKey) private var hiddenMenuOptions = "" // Fork
-    private func menu(_ option: ContextMenuOption) -> Bool { ContextMenuSettings.isVisible(option, in: hiddenMenuOptions) } // Fork
+    @AppStorage(BehaviorSettings.iconSizeKey) private var iconSize = BehaviorSettings.defaultIconSize // Fork
+    private func menu(_ option: ContextMenuOption, _ item: FileItem? = nil) -> Bool { ContextMenuSettings.isVisible(option, scope: item.map(ContextMenuScope.of) ?? .background, in: hiddenMenuOptions) } // Fork
 
     private static let byteFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
@@ -315,7 +316,7 @@ struct FileListView: View {
         ScrollView {
             LazyVGrid(
                 columns: [GridItem(
-                    .adaptive(minimum: browser.viewMode == .icons ? 105 : 220),
+                    .adaptive(minimum: browser.viewMode == .icons ? iconSize + 49 : 220),
                     spacing: gridSpacing
                 )],
                 spacing: gridSpacing
@@ -456,7 +457,7 @@ struct FileListView: View {
     private func tileLabel(for item: FileItem) -> some View {
         if browser.viewMode == .icons {
             VStack(spacing: 7) {
-                FileThumbnailView(item: item, size: 56)
+                FileThumbnailView(item: item, size: iconSize)
                 if browser.renameTarget == item.url {
                     RenameField(item: item)
                         .multilineTextAlignment(.center)
@@ -467,7 +468,7 @@ struct FileListView: View {
                 }
                 GitStatusBadge(url: item.url)
             }
-            .frame(maxWidth: compactHitArea ? 92 : .infinity, minHeight: 82)
+            .frame(maxWidth: compactHitArea ? iconSize + 36 : .infinity, minHeight: iconSize + 26)
         } else {
             HStack(spacing: 8) {
                 FileThumbnailView(item: item, size: 24)
@@ -666,40 +667,40 @@ struct FileListView: View {
 
     @ViewBuilder
     private func contextMenu(for item: FileItem) -> some View {
-        if menu(.open) {
+        if menu(.open, item) {
             Button("Open") { browser.open(item) }
         }
         if item.isDirectory {
-            if menu(.openInNewTab) {
+            if menu(.openInNewTab, item) {
                 Button("Open in New Tab") { browser.newTab(at: item.url) }
             }
-            if menu(.openInNewWindow) {
+            if menu(.openInNewWindow, item) {
                 Button("Open in New Window") { WindowService.open(at: item.url) }
             }
-            if menu(.showPackageContents) {
+            if menu(.showPackageContents, item) {
                 if item.isPackage {
                     Button("Show Package Contents") { browser.navigate(to: item.url) }
                 }
             }
         }
-        if menu(.quickLook) {
+        if menu(.quickLook, item) {
             Button("Quick Look") {
                 QuickLookService.shared.show(browser.selection.isEmpty ? [item.url] : Array(browser.selection))
             }
         }
-        if menu(.getInfo) {
+        if menu(.getInfo, item) {
             Button("Get Info") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.showInfoForSelection()
             }
         }
-        if menu(.revealInFinder) {
+        if menu(.revealInFinder, item) {
             Button("Reveal in Finder") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.revealSelectionInFinder()
             }
         }
-        if menu(.openWith) {
+        if menu(.openWith, item) {
             Menu("Open With") {
                 ForEach(FileActionService.openWithApplications(for: item.url), id: \.self) { application in
                     Button(application.deletingPathExtension().lastPathComponent) {
@@ -726,10 +727,10 @@ struct FileListView: View {
                 }
             }
         }
-        if menu(.share) {
+        if menu(.share, item) {
             ShareLink(items: browser.selection.isEmpty ? [item.url] : Array(browser.selection))
         }
-        if menu(.imageActions) {
+        if menu(.imageActions, item) {
             if item.isImage {
                 Menu("Image Actions") {
                     Button("Rotate Left") {
@@ -754,52 +755,52 @@ struct FileListView: View {
             }
         }
         if item.isDirectory {
-            if menu(.favorite) {
+            if menu(.favorite, item) {
                 FavoriteMenuItem(url: item.url)
             }
-            if menu(.openInTerminal) {
+            if menu(.openInTerminal, item) {
                 Button("Open in Terminal") { TerminalService.open(at: item.url) }
             }
         } else {
-            if menu(.openInTerminal) {
+            if menu(.openInTerminal, item) {
                 Button("Open Parent in Terminal") {
                     TerminalService.open(at: item.url.deletingLastPathComponent())
                 }
             }
         }
         Divider()
-        if menu(.cut) {
+        if menu(.cut, item) {
             Button("Cut") {
                 browser.selection.insert(item.url)
                 browser.cutSelection()
             }
         }
-        if menu(.copy) {
+        if menu(.copy, item) {
             Button("Copy") {
                 browser.selection.insert(item.url)
                 browser.copySelection()
             }
         }
         // Fork: pegar también desde el clic derecho sobre un elemento (en carpetas, dentro de ella).
-        if menu(.paste) {
+        if menu(.paste, item) {
             Button(item.isDirectory ? "Paste into Folder" : "Paste") {
                 Task { await browser.paste(into: item.isDirectory ? item.url : browser.currentURL, operations: operationManager) }
             }
             .disabled(!browser.canPaste)
         }
-        if menu(.duplicate) {
+        if menu(.duplicate, item) {
             Button("Duplicate") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 Task { await browser.duplicateSelection(using: operationManager) }
             }
         }
-        if menu(.compress) {
+        if menu(.compress, item) {
             Button("Compress to ZIP") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.createArchiveFromSelection()
             }
         }
-        if menu(.extract) {
+        if menu(.extract, item) {
             if ArchiveService.isArchive(item.url) {
                 Button("Extract Here") {
                     browser.selection = [item.url]
@@ -807,17 +808,17 @@ struct FileListView: View {
                 }
             }
         }
-        if menu(.copyPath) {
+        if menu(.copyPath, item) {
             Button("Copy Path") {
                 FileActionService.copyPaths(browser.selection.isEmpty ? [item.url] : Array(browser.selection))
             }
         }
-        if menu(.copyFilename) {
+        if menu(.copyFilename, item) {
             Button("Copy Filename") {
                 FileActionService.copyNames(browser.selection.isEmpty ? [item.url] : Array(browser.selection))
             }
         }
-        if menu(.copyFileURL) {
+        if menu(.copyFileURL, item) {
             Button("Copy File URL") {
                 FileActionService.copyPaths(
                     browser.selection.isEmpty ? [item.url] : Array(browser.selection),
@@ -825,13 +826,13 @@ struct FileListView: View {
                 )
             }
         }
-        if menu(.calculateSize) {
+        if menu(.calculateSize, item) {
             Button("Calculate Size") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.calculateSelectedSizes()
             }
         }
-        if menu(.checksums) {
+        if menu(.checksums, item) {
             Menu("Calculate Checksums") {
                 ForEach(ChecksumAlgorithm.allCases) { algorithm in
                     Button(algorithm.rawValue) {
@@ -846,32 +847,32 @@ struct FileListView: View {
                 }
             }
         }
-        if menu(.batchRename) {
+        if menu(.batchRename, item) {
             Button("Batch Rename…") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.showsBatchRenamePrompt = true
             }
         }
-        if menu(.symbolicLink) {
+        if menu(.symbolicLink, item) {
             Button("Create Symbolic Link") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.createSymbolicLinks()
             }
         }
-        if menu(.alias) {
+        if menu(.alias, item) {
             Button("Create Alias") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.createAliases()
             }
         }
-        if menu(.tags) {
+        if menu(.tags, item) {
             Button("Tags…") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.tagText = ""
                 browser.showsTagPrompt = true
             }
         }
-        if menu(.compare) {
+        if menu(.compare, item) {
             if browser.selection.count == 2 && browser.selection.allSatisfy({
                 (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true
             }) {
@@ -881,14 +882,14 @@ struct FileListView: View {
                 }
             }
         }
-        if menu(.rename) {
+        if menu(.rename, item) {
             Button("Rename") {
                 browser.selection = [item.url]
                 browser.renameTarget = item.url
             }
         }
         Divider()
-        if menu(.trash) {
+        if menu(.trash, item) {
             Button("Move to Trash", role: .destructive) {
                 if !browser.selection.contains(item.url) {
                     browser.selection = [item.url]
@@ -897,13 +898,13 @@ struct FileListView: View {
             }
         }
         Divider()
-        if menu(.newFolder) {
+        if menu(.newFolder, item) {
             Button("New Folder…") { browser.showsNewFolderPrompt = true }
         }
-        if menu(.newFile) {
+        if menu(.newFile, item) {
             Button("New File…") { browser.requestNewFile() }
         }
-        if menu(.newFromTemplate) {
+        if menu(.newFromTemplate, item) {
             Menu("New from Template") {
                 ForEach(TemplateService.templates) { template in
                     Button(template.name) { browser.createFile(from: template) }

@@ -486,6 +486,7 @@ struct FreeloaderToolbarIcon: View {
     var isActive = false
     var badge = 0
 
+    @AppStorage(AppearanceSettings.toolbarColorKey) private var toolbarColor = "" // Fork
     @State private var isHovering = false
 
     var body: some View {
@@ -498,11 +499,7 @@ struct FreeloaderToolbarIcon: View {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(
                         LinearGradient(
-                            colors: isActive
-                                ? [Color(red: 0.60, green: 0.28, blue: 0.67),
-                                   Color(red: 0.35, green: 0.13, blue: 0.41)]
-                                : [Color(red: 0.50, green: 0.22, blue: 0.56),
-                                   Color(red: 0.26, green: 0.09, blue: 0.31)],
+                            colors: AppearanceSettings.toolbarGradient(toolbarColor, active: isActive), // Fork
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )

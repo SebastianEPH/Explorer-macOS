@@ -3,6 +3,7 @@ import SwiftUI
 struct SidebarView: View {
     @EnvironmentObject private var browser: BrowserModel
     @EnvironmentObject private var operations: FileOperationManager
+    @AppStorage(BehaviorSettings.showsLocationsKey) private var showsLocations = true // Fork
     @State private var springOpenTask: Task<Void, Never>?
     @State private var volumes: [MountedVolume] = []
     @State private var pendingEject: MountedVolume?
@@ -55,6 +56,7 @@ struct SidebarView: View {
                             browser.addFavorite(url) || added
                         }
                     } isTargeted: { _ in }
+                    if showsLocations { // Fork
                     Section("Locations") {
                         ForEach(volumes) { volume in
                             HStack(spacing: 8) {
@@ -92,6 +94,7 @@ struct SidebarView: View {
                             Label("Connect to Server…", systemImage: "network.badge.shield.half.filled")
                         }
                         .buttonStyle(.plain)
+                    }
                     }
                     if browser.showsTree {
                         Section("Folders") {
