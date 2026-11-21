@@ -149,6 +149,16 @@ struct ForkTests {
         #expect(stored.isEmpty)
     }
 
+    @Test func statusBarSelectionSize() {
+        let root = URL(filePath: "/tmp")
+        let file = FileItem(url: root.appendingPathComponent("a"), name: "a", isDirectory: false, isSymbolicLink: false, size: 1000, modified: nil, created: nil, kind: "")
+        let folder = FileItem(url: root.appendingPathComponent("b"), name: "b", isDirectory: true, isSymbolicLink: false, size: 0, modified: nil, created: nil, kind: "")
+        let pending = StatusBarSettings.selectionBytes([file, folder]) { _ in nil }
+        #expect(pending.bytes == 1000 && pending.pendingFolders == 1)
+        let known = StatusBarSettings.selectionBytes([file, folder]) { _ in 500 }
+        #expect(known.bytes == 1500 && known.pendingFolders == 0)
+    }
+
     @Test func behaviorSettingsDefaultToOriginal() {
         let defaults = UserDefaults(suiteName: "ForkTests.\(UUID().uuidString)")!
         #expect(BehaviorSettings.restoresTabs(defaults))

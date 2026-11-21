@@ -183,6 +183,7 @@ struct ContentView: View {
                 }
             }
             .animation(.easeInOut(duration: 0.16), value: previewItem(in: model)?.url)
+            StatusBarView() // Fork: barra de estado
         }
         .background {
             PaneInteractionMonitor {

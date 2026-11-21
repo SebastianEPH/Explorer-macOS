@@ -403,3 +403,21 @@
 "Drag to move" = "Arrastra para mover";
 "Move up" = "Subir";
 "Move down" = "Bajar";
+
+/* Fork: barra de estado */
+"%lld items" = "%lld elementos";
+"%lld folders, %lld files" = "%lld carpetas, %lld archivos";
+"%lld selected" = "%lld seleccionados";
+"%lld folders" = "%lld carpetas";
+"%@ available" = "%@ disponibles";
+"Status Bar" = "Barra de estado";
+"Show the status bar below the files" = "Mostrar la barra de estado debajo de los archivos";
+"Like Windows: item count, selection and size at the bottom of the window." = "Como en Windows: cantidad de elementos, selección y tamaño en la parte de abajo de la ventana.";
+"Preview: bottom of the window, with 3 items selected" = "Vista previa: parte de abajo de la ventana, con 3 elementos seleccionados";
+"Number of items" = "Cantidad de elementos";
+"Folders and files separately" = "Carpetas y archivos por separado";
+"Number of selected items" = "Cantidad de seleccionados";
+"Size of the selection" = "Tamaño de lo seleccionado";
+"Folders count only after calculating their size." = "Las carpetas solo suman cuando ya se calculó su tamaño.";
+"Free space on the disk" = "Espacio libre en el disco";
+"View buttons (List, Compact, Icons)" = "Botones de vista (Lista, Compacta, Iconos)";
