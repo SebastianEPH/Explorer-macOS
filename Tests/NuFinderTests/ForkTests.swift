@@ -131,6 +131,24 @@ struct ForkTests {
         #expect(ContextMenuScope.image.options.contains(.imageActions) && ContextMenuScope.archive.options.contains(.extract))
     }
 
+    @Test func contextMenuOrderPerType() {
+        #expect(ContextMenuSettings.order(.file, in: "") == ContextMenuScope.file.options)
+        var moved = ContextMenuScope.folder.options
+        moved.swapAt(0, moved.count - 1)
+        var stored = ContextMenuSettings.setting(moved, for: .folder, in: "")
+        #expect(ContextMenuSettings.order(.folder, in: stored) == moved)
+        #expect(ContextMenuSettings.order(.file, in: stored) == ContextMenuScope.file.options)
+        // Una opción que falta en el orden guardado vuelve a su sitio original.
+        stored = "file=trash,open"
+        let order = ContextMenuSettings.order(.file, in: stored)
+        #expect(order.count == ContextMenuScope.file.options.count)
+        #expect(order.first == .trash)
+        #expect(Set(order) == Set(ContextMenuScope.file.options))
+        #expect(order.firstIndex(of: .newFolder)! < order.firstIndex(of: .open)!) // va tras su vecina (Papelera)
+        stored = ContextMenuSettings.setting(nil, for: .file, in: stored)
+        #expect(stored.isEmpty)
+    }
+
     @Test func behaviorSettingsDefaultToOriginal() {
         let defaults = UserDefaults(suiteName: "ForkTests.\(UUID().uuidString)")!
         #expect(BehaviorSettings.restoresTabs(defaults))

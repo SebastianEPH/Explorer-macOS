@@ -23,6 +23,7 @@ struct FileListView: View {
     @AppStorage(ListColumnSettings.showsCreatedKey) private var showsCreatedColumn = false // Fork
     @AppStorage(ItemHitAreaSettings.spacingKey) private var gridSpacing = ItemHitAreaSettings.defaultSpacing // Fork
     @AppStorage(ContextMenuSettings.hiddenKey) private var hiddenMenuOptions = "" // Fork
+    @AppStorage(ContextMenuSettings.orderKey) private var menuOrder = "" // Fork
     @AppStorage(BehaviorSettings.iconSizeKey) private var iconSize = BehaviorSettings.defaultIconSize // Fork
     private func menu(_ option: ContextMenuOption, _ item: FileItem? = nil) -> Bool { ContextMenuSettings.isVisible(option, scope: item.map(ContextMenuScope.of) ?? .background, in: hiddenMenuOptions) } // Fork
 
@@ -214,80 +215,11 @@ struct FileListView: View {
             return .handled
         }
         .contextMenu {
-            if menu(.bgNewFolder) {
-                Button("New Folder…") { browser.showsNewFolderPrompt = true }
-            }
-            if menu(.bgNewFile) {
-                Button("New File…") { browser.requestNewFile() }
-            }
-            if menu(.bgNewFromTemplate) {
-                Menu("New from Template") {
-                    ForEach(TemplateService.templates) { template in
-                        Button(template.name) { browser.createFile(from: template) }
-                    }
-                }
-            }
-            Divider()
-            if menu(.bgOpenInTerminal) {
-                Button("Open in Terminal") { TerminalService.open(at: browser.currentURL) }
-            }
-            if menu(.bgRevealInFinder) {
-                Button("Reveal in Finder") {
-                    NSWorkspace.shared.activateFileViewerSelecting([browser.currentURL])
-                }
-            }
-            if menu(.bgCopyFolderPath) {
-                Button("Copy Folder Path") {
-                    FileActionService.copyPaths([browser.currentURL])
-                }
-            }
-            Divider()
-            if menu(.bgPaste) {
-                Button("Paste") {
-                    // The menu action uses the same real move/copy pipeline as ⌘V.
-                    Task {
-                        await browser.paste(into: browser.currentURL, operations: operationManager)
-                    }
-                }
-                .disabled(!browser.canPaste)
-            }
-            if menu(.bgPasteAs) {
-                Menu("Paste As") {
-                    Button("Alias") { browser.pasteAsLinks(into: browser.currentURL, symbolic: false) }
-                    Button("Symbolic Link") { browser.pasteAsLinks(into: browser.currentURL, symbolic: true) }
-                }
-                .disabled(!browser.canPaste)
-            }
-            Divider()
-            if menu(.bgHiddenFiles) {
-                Button(browser.showsHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files") {
-                    browser.toggleHiddenFiles()
-                }
-            }
-            if menu(.bgRevealHidden) {
-                if !browser.showsHiddenFiles {
-                    Button("Reveal Hidden Files for 30 Seconds") {
-                        browser.showHiddenFilesTemporarily()
-                    }
-                }
-            }
-            if menu(.bgViewAs) {
-                Menu("View As") {
-                    ForEach(FileViewMode.allCases) { mode in
-                        Button {
-                            browser.viewMode = mode
-                        } label: {
-                            if browser.viewMode == mode {
-                                Label(mode.rawValue, systemImage: "checkmark")
-                            } else {
-                                Text(mode.rawValue)
-                            }
-                        }
-                    }
-                }
-            }
-            if menu(.bgReload) {
-                Button("Reload") { browser.reload() }
+            // Fork: el orden y lo visible vienen de Ajustes → Menú contextual.
+            let options = ContextMenuSettings.order(.background, in: menuOrder).filter { menu($0) }
+            ForEach(Array(options.enumerated()), id: \.element) { index, option in
+                if index > 0 && option.startsGroup { Divider() }
+                backgroundMenuEntry(option)
             }
         }
         .dropDestination(for: FileDragPayload.self) { payloads, _ in
@@ -350,62 +282,11 @@ struct FileListView: View {
             return true
         }
         .contextMenu {
-            if menu(.bgNewFolder) {
-                Button("New Folder…") { browser.showsNewFolderPrompt = true }
-            }
-            if menu(.bgNewFile) {
-                Button("New File…") { browser.requestNewFile() }
-            }
-            if menu(.bgNewFromTemplate) {
-                Menu("New from Template") {
-                    ForEach(TemplateService.templates) { template in
-                        Button(template.name) { browser.createFile(from: template) }
-                    }
-                }
-            }
-            Divider()
-            if menu(.bgOpenInTerminal) {
-                Button("Open in Terminal") { TerminalService.open(at: browser.currentURL) }
-            }
-            if menu(.bgRevealInFinder) {
-                Button("Reveal in Finder") {
-                    NSWorkspace.shared.activateFileViewerSelecting([browser.currentURL])
-                }
-            }
-            if menu(.bgCopyFolderPath) {
-                Button("Copy Folder Path") { FileActionService.copyPaths([browser.currentURL]) }
-            }
-            Divider()
-            if menu(.bgPaste) {
-                Button("Paste") {
-                    Task {
-                        await browser.paste(into: browser.currentURL, operations: operationManager)
-                    }
-                }
-                .disabled(!browser.canPaste)
-            }
-            if menu(.bgPasteAs) {
-                Menu("Paste As") {
-                    Button("Alias") { browser.pasteAsLinks(into: browser.currentURL, symbolic: false) }
-                    Button("Symbolic Link") { browser.pasteAsLinks(into: browser.currentURL, symbolic: true) }
-                }
-                .disabled(!browser.canPaste)
-            }
-            Divider()
-            if menu(.bgHiddenFiles) {
-                Button(browser.showsHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files") {
-                    browser.toggleHiddenFiles()
-                }
-            }
-            if menu(.bgRevealHidden) {
-                if !browser.showsHiddenFiles {
-                    Button("Reveal Hidden Files for 30 Seconds") {
-                        browser.showHiddenFilesTemporarily()
-                    }
-                }
-            }
-            if menu(.bgReload) {
-                Button("Reload") { browser.reload() }
+            // Fork: el orden y lo visible vienen de Ajustes → Menú contextual.
+            let options = ContextMenuSettings.order(.background, in: menuOrder).filter { menu($0) }
+            ForEach(Array(options.enumerated()), id: \.element) { index, option in
+                if index > 0 && option.startsGroup { Divider() }
+                backgroundMenuEntry(option)
             }
         }
         .onMoveCommand { direction in
@@ -667,40 +548,43 @@ struct FileListView: View {
 
     @ViewBuilder
     private func contextMenu(for item: FileItem) -> some View {
-        if menu(.open, item) {
+        // Fork: el orden y lo visible vienen de Ajustes → Menú contextual.
+        let options = ContextMenuSettings.order(ContextMenuScope.of(item), in: menuOrder).filter { menu($0, item) }
+        ForEach(Array(options.enumerated()), id: \.element) { index, option in
+            if index > 0 && option.startsGroup { Divider() }
+            itemMenuEntry(option, item)
+        }
+    }
+
+    // Fork: cada opción del menú contextual por separado, para poder ordenarlas y ocultarlas.
+    @ViewBuilder
+    private func itemMenuEntry(_ option: ContextMenuOption, _ item: FileItem) -> some View {
+        switch option {
+        case .open:
             Button("Open") { browser.open(item) }
-        }
-        if item.isDirectory {
-            if menu(.openInNewTab, item) {
-                Button("Open in New Tab") { browser.newTab(at: item.url) }
+        case .openInNewTab:
+            Button("Open in New Tab") { browser.newTab(at: item.url) }
+        case .openInNewWindow:
+            Button("Open in New Window") { WindowService.open(at: item.url) }
+        case .showPackageContents:
+            if item.isPackage {
+                Button("Show Package Contents") { browser.navigate(to: item.url) }
             }
-            if menu(.openInNewWindow, item) {
-                Button("Open in New Window") { WindowService.open(at: item.url) }
-            }
-            if menu(.showPackageContents, item) {
-                if item.isPackage {
-                    Button("Show Package Contents") { browser.navigate(to: item.url) }
-                }
-            }
-        }
-        if menu(.quickLook, item) {
+        case .quickLook:
             Button("Quick Look") {
                 QuickLookService.shared.show(browser.selection.isEmpty ? [item.url] : Array(browser.selection))
             }
-        }
-        if menu(.getInfo, item) {
+        case .getInfo:
             Button("Get Info") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.showInfoForSelection()
             }
-        }
-        if menu(.revealInFinder, item) {
+        case .revealInFinder:
             Button("Reveal in Finder") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.revealSelectionInFinder()
             }
-        }
-        if menu(.openWith, item) {
+        case .openWith:
             Menu("Open With") {
                 ForEach(FileActionService.openWithApplications(for: item.url), id: \.self) { application in
                     Button(application.deletingPathExtension().lastPathComponent) {
@@ -726,11 +610,9 @@ struct FileListView: View {
                     }
                 }
             }
-        }
-        if menu(.share, item) {
+        case .share:
             ShareLink(items: browser.selection.isEmpty ? [item.url] : Array(browser.selection))
-        }
-        if menu(.imageActions, item) {
+        case .imageActions:
             if item.isImage {
                 Menu("Image Actions") {
                     Button("Rotate Left") {
@@ -753,86 +635,69 @@ struct FileListView: View {
                     }
                 }
             }
-        }
-        if item.isDirectory {
-            if menu(.favorite, item) {
-                FavoriteMenuItem(url: item.url)
-            }
-            if menu(.openInTerminal, item) {
+        case .favorite:
+            FavoriteMenuItem(url: item.url)
+        case .openInTerminal:
+            if item.isDirectory {
                 Button("Open in Terminal") { TerminalService.open(at: item.url) }
-            }
-        } else {
-            if menu(.openInTerminal, item) {
+            } else {
                 Button("Open Parent in Terminal") {
                     TerminalService.open(at: item.url.deletingLastPathComponent())
                 }
             }
-        }
-        Divider()
-        if menu(.cut, item) {
+        case .cut:
             Button("Cut") {
                 browser.selection.insert(item.url)
                 browser.cutSelection()
             }
-        }
-        if menu(.copy, item) {
+        case .copy:
             Button("Copy") {
                 browser.selection.insert(item.url)
                 browser.copySelection()
             }
-        }
-        // Fork: pegar también desde el clic derecho sobre un elemento (en carpetas, dentro de ella).
-        if menu(.paste, item) {
+        case .paste:
             Button(item.isDirectory ? "Paste into Folder" : "Paste") {
                 Task { await browser.paste(into: item.isDirectory ? item.url : browser.currentURL, operations: operationManager) }
             }
             .disabled(!browser.canPaste)
-        }
-        if menu(.duplicate, item) {
+        case .duplicate:
             Button("Duplicate") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 Task { await browser.duplicateSelection(using: operationManager) }
             }
-        }
-        if menu(.compress, item) {
+        case .compress:
             Button("Compress to ZIP") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.createArchiveFromSelection()
             }
-        }
-        if menu(.extract, item) {
+        case .extract:
             if ArchiveService.isArchive(item.url) {
                 Button("Extract Here") {
                     browser.selection = [item.url]
                     browser.extractSelectedArchives()
                 }
             }
-        }
-        if menu(.copyPath, item) {
+        case .copyPath:
             Button("Copy Path") {
                 FileActionService.copyPaths(browser.selection.isEmpty ? [item.url] : Array(browser.selection))
             }
-        }
-        if menu(.copyFilename, item) {
+        case .copyFilename:
             Button("Copy Filename") {
                 FileActionService.copyNames(browser.selection.isEmpty ? [item.url] : Array(browser.selection))
             }
-        }
-        if menu(.copyFileURL, item) {
+        case .copyFileURL:
             Button("Copy File URL") {
                 FileActionService.copyPaths(
                     browser.selection.isEmpty ? [item.url] : Array(browser.selection),
                     asFileURLs: true
                 )
             }
-        }
-        if menu(.calculateSize, item) {
+        case .calculateSize:
             Button("Calculate Size") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.calculateSelectedSizes()
             }
-        }
-        if menu(.checksums, item) {
+        case .checksums:
             Menu("Calculate Checksums") {
                 ForEach(ChecksumAlgorithm.allCases) { algorithm in
                     Button(algorithm.rawValue) {
@@ -846,33 +711,28 @@ struct FileListView: View {
                     browser.calculateChecksums(algorithms: ChecksumAlgorithm.allCases)
                 }
             }
-        }
-        if menu(.batchRename, item) {
+        case .batchRename:
             Button("Batch Rename…") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.showsBatchRenamePrompt = true
             }
-        }
-        if menu(.symbolicLink, item) {
+        case .symbolicLink:
             Button("Create Symbolic Link") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.createSymbolicLinks()
             }
-        }
-        if menu(.alias, item) {
+        case .alias:
             Button("Create Alias") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.createAliases()
             }
-        }
-        if menu(.tags, item) {
+        case .tags:
             Button("Tags…") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.tagText = ""
                 browser.showsTagPrompt = true
             }
-        }
-        if menu(.compare, item) {
+        case .compare:
             if browser.selection.count == 2 && browser.selection.allSatisfy({
                 (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true
             }) {
@@ -881,35 +741,99 @@ struct FileListView: View {
                     catch { browser.errorMessage = "Couldn’t open the comparison tool: \(error.localizedDescription)" }
                 }
             }
-        }
-        if menu(.rename, item) {
+        case .rename:
             Button("Rename") {
                 browser.selection = [item.url]
                 browser.renameTarget = item.url
             }
-        }
-        Divider()
-        if menu(.trash, item) {
+        case .trash:
             Button("Move to Trash", role: .destructive) {
                 if !browser.selection.contains(item.url) {
                     browser.selection = [item.url]
                 }
                 browser.moveSelectionToTrash()
             }
-        }
-        Divider()
-        if menu(.newFolder, item) {
+        case .newFolder:
             Button("New Folder…") { browser.showsNewFolderPrompt = true }
-        }
-        if menu(.newFile, item) {
+        case .newFile:
             Button("New File…") { browser.requestNewFile() }
-        }
-        if menu(.newFromTemplate, item) {
+        case .newFromTemplate:
             Menu("New from Template") {
                 ForEach(TemplateService.templates) { template in
                     Button(template.name) { browser.createFile(from: template) }
                 }
             }
+        default:
+            EmptyView()
+        }
+    }
+
+    // Fork: cada opción del menú contextual por separado, para poder ordenarlas y ocultarlas.
+    @ViewBuilder
+    private func backgroundMenuEntry(_ option: ContextMenuOption) -> some View {
+        switch option {
+        case .bgNewFolder:
+            Button("New Folder…") { browser.showsNewFolderPrompt = true }
+        case .bgNewFile:
+            Button("New File…") { browser.requestNewFile() }
+        case .bgNewFromTemplate:
+            Menu("New from Template") {
+                ForEach(TemplateService.templates) { template in
+                    Button(template.name) { browser.createFile(from: template) }
+                }
+            }
+        case .bgOpenInTerminal:
+            Button("Open in Terminal") { TerminalService.open(at: browser.currentURL) }
+        case .bgRevealInFinder:
+            Button("Reveal in Finder") {
+                NSWorkspace.shared.activateFileViewerSelecting([browser.currentURL])
+            }
+        case .bgCopyFolderPath:
+            Button("Copy Folder Path") {
+                FileActionService.copyPaths([browser.currentURL])
+            }
+        case .bgPaste:
+            Button("Paste") {
+                // The menu action uses the same real move/copy pipeline as ⌘V.
+                Task {
+                    await browser.paste(into: browser.currentURL, operations: operationManager)
+                }
+            }
+            .disabled(!browser.canPaste)
+        case .bgPasteAs:
+            Menu("Paste As") {
+                Button("Alias") { browser.pasteAsLinks(into: browser.currentURL, symbolic: false) }
+                Button("Symbolic Link") { browser.pasteAsLinks(into: browser.currentURL, symbolic: true) }
+            }
+            .disabled(!browser.canPaste)
+        case .bgHiddenFiles:
+            Button(browser.showsHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files") {
+                browser.toggleHiddenFiles()
+            }
+        case .bgRevealHidden:
+            if !browser.showsHiddenFiles {
+                Button("Reveal Hidden Files for 30 Seconds") {
+                    browser.showHiddenFilesTemporarily()
+                }
+            }
+        case .bgViewAs:
+            Menu("View As") {
+                ForEach(FileViewMode.allCases) { mode in
+                    Button {
+                        browser.viewMode = mode
+                    } label: {
+                        if browser.viewMode == mode {
+                            Label(mode.rawValue, systemImage: "checkmark")
+                        } else {
+                            Text(mode.rawValue)
+                        }
+                    }
+                }
+            }
+        case .bgReload:
+            Button("Reload") { browser.reload() }
+        default:
+            EmptyView()
         }
     }
 

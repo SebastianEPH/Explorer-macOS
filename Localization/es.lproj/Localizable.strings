@@ -398,3 +398,8 @@
 "Show “Locations” (disks and servers)" = "Mostrar «Ubicaciones» (discos y servidores)";
 "Icons and Selection" = "Iconos y selección";
 "Preview: Icons view · dashed line = click area · blue = selected" = "Vista previa: vista de iconos · línea discontinua = zona de clic · azul = seleccionado";
+"Each type has its own menu. Turn options off, drag them or use the arrows to move them, and watch the preview change." = "Cada tipo tiene su propio menú. Apaga opciones, arrástralas o usa las flechas para moverlas, y mira cómo cambia la vista previa.";
+"Original Order" = "Orden original";
+"Drag to move" = "Arrastra para mover";
+"Move up" = "Subir";
+"Move down" = "Bajar";

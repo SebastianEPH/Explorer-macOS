@@ -146,6 +146,39 @@ enum ContextMenuSettings {
         return hidden.sorted().joined(separator: ",")
     }
 
+    /// Orden propio de cada tipo: "tipo=a,b,c;tipo2=…" (vacío = orden original).
+    static let orderKey = "contextMenu.order"
+
+    private static func orders(_ stored: String) -> [String: [String]] {
+        var result: [String: [String]] = [:]
+        for part in stored.split(separator: ";") {
+            let pair = part.split(separator: "=", maxSplits: 1)
+            guard pair.count == 2 else { continue }
+            result[String(pair[0])] = pair[1].split(separator: ",").map(String.init)
+        }
+        return result
+    }
+
+    /// Opciones del tipo en el orden elegido; las que falten (opciones nuevas) van en su sitio original.
+    static func order(_ scope: ContextMenuScope, in stored: String) -> [ContextMenuOption] {
+        let defaults = scope.options
+        guard let saved = orders(stored)[scope.rawValue] else { return defaults }
+        var result = saved.compactMap(ContextMenuOption.init(rawValue:)).filter(defaults.contains)
+        for (index, option) in defaults.enumerated() where !result.contains(option) {
+            let previous = defaults[..<index].last(where: result.contains)
+            let position = previous.flatMap { result.firstIndex(of: $0) }.map { $0 + 1 } ?? 0
+            result.insert(option, at: position)
+        }
+        return result
+    }
+
+    static func setting(_ order: [ContextMenuOption]?, for scope: ContextMenuScope, in stored: String) -> String {
+        var all = orders(stored)
+        all[scope.rawValue] = order?.map(\.rawValue)
+        return all.keys.sorted().compactMap { key in all[key].map { "\(key)=\($0.joined(separator: ","))" } }
+            .joined(separator: ";")
+    }
+
     static func resetting(_ scope: ContextMenuScope, in stored: String) -> String {
         var hidden = hiddenSet(stored)
         hidden = hidden.filter { !$0.hasPrefix("\(scope.rawValue):") }
@@ -159,9 +192,13 @@ enum ContextMenuSettings {
 }
 
 /// Pestaña «Menú contextual» de Ajustes: un menú por tipo, con su vista previa.
+/// Las opciones se ocultan con el interruptor y se mueven arrastrando o con las flechas.
 struct ContextMenuSection: View {
     @AppStorage(ContextMenuSettings.hiddenKey) private var hidden = ""
+    @AppStorage(ContextMenuSettings.orderKey) private var orderStore = ""
     @State private var scope: ContextMenuScope = .folder
+
+    private var order: [ContextMenuOption] { ContextMenuSettings.order(scope, in: orderStore) }
 
     var body: some View {
         Section {
@@ -172,38 +209,66 @@ struct ContextMenuSection: View {
             }
             .pickerStyle(.segmented)
         } footer: {
-            Text("Each type has its own menu. Turn options off and watch the preview change.")
+            Text("Each type has its own menu. Turn options off, drag them or use the arrows to move them, and watch the preview change.")
         }
         Section {
             HStack(alignment: .top, spacing: 24) {
-                ContextMenuPreview(scope: scope, hidden: hidden)
+                ContextMenuPreview(scope: scope, hidden: hidden, order: order)
                 VStack(alignment: .leading, spacing: 0) {
-                    ForEach(scope.options) { option in
-                        Toggle(isOn: Binding(
-                            get: { ContextMenuSettings.isVisible(option, scope: scope, in: hidden) },
-                            set: { hidden = ContextMenuSettings.setting(option, scope: scope, visible: $0, in: hidden) }
-                        )) {
-                            Label(option.title, systemImage: option.symbol)
-                            if let condition = option.condition { Text(condition) }
-                        }
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
-                        .padding(.vertical, 3)
-                        Divider()
+                    List {
+                        ForEach(order) { option in row(option) }
+                            .onMove { from, to in
+                                var moved = order
+                                moved.move(fromOffsets: from, toOffset: to)
+                                orderStore = ContextMenuSettings.setting(moved, for: scope, in: orderStore)
+                            }
                     }
+                    .listStyle(.plain)
+                    .frame(height: CGFloat(order.count) * 34)
+                    .scrollDisabled(true)
                     HStack {
                         Button("Hide All") {
                             for option in scope.options {
                                 hidden = ContextMenuSettings.setting(option, scope: scope, visible: false, in: hidden)
                             }
                         }
-                        Spacer()
                         Button("Show All") { hidden = ContextMenuSettings.resetting(scope, in: hidden) }
+                        Spacer()
+                        Button("Original Order") { orderStore = ContextMenuSettings.setting(nil, for: scope, in: orderStore) }
                     }
                     .padding(.top, 8)
                 }
             }
         }
+    }
+
+    private func row(_ option: ContextMenuOption) -> some View {
+        let index = order.firstIndex(of: option) ?? 0
+        return HStack(spacing: 6) {
+            Image(systemName: "line.3.horizontal").foregroundStyle(.tertiary).help(Text("Drag to move"))
+            Toggle(isOn: Binding(
+                get: { ContextMenuSettings.isVisible(option, scope: scope, in: hidden) },
+                set: { hidden = ContextMenuSettings.setting(option, scope: scope, visible: $0, in: hidden) }
+            )) {
+                Label(option.title, systemImage: option.symbol)
+                if let condition = option.condition { Text(condition) }
+            }
+            .toggleStyle(.switch)
+            .controlSize(.small)
+            Spacer(minLength: 4)
+            Button { move(option, by: -1) } label: { Image(systemName: "chevron.up") }
+                .buttonStyle(.borderless).disabled(index == 0).help(Text("Move up"))
+            Button { move(option, by: 1) } label: { Image(systemName: "chevron.down") }
+                .buttonStyle(.borderless).disabled(index == order.count - 1).help(Text("Move down"))
+        }
+        .frame(height: 26)
+    }
+
+    private func move(_ option: ContextMenuOption, by delta: Int) {
+        var moved = order
+        guard let index = moved.firstIndex(of: option), moved.indices.contains(index + delta) else { return }
+        moved.swapAt(index, index + delta)
+        orderStore = ContextMenuSettings.setting(moved, for: scope, in: orderStore)
     }
 }
 

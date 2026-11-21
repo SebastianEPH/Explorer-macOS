@@ -153,9 +153,10 @@ struct HitAreaPreview: View {
 struct ContextMenuPreview: View {
     let scope: ContextMenuScope
     let hidden: String
+    let order: [ContextMenuOption]
 
     var body: some View {
-        let options = scope.options
+        let options = order
         let visible = options.filter { ContextMenuSettings.isVisible($0, scope: scope, in: hidden) }
         VStack(alignment: .leading, spacing: 6) {
             Label("Preview", systemImage: "eye").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
@@ -181,6 +182,7 @@ struct ContextMenuPreview: View {
         }
         .animation(.default, value: hidden)
         .animation(.default, value: scope)
+        .animation(.default, value: order)
     }
 
     private func menu(_ visible: [ContextMenuOption]) -> some View {
