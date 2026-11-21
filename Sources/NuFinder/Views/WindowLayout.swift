@@ -54,12 +54,15 @@ struct CompactTabs: View {
     }
 
     var body: some View {
-        Group {
+        // Las pestañas ocupan solo lo que necesitan; el resto sirve para mover la ventana.
+        HStack(spacing: 0) {
             if LayoutSettings.showsTabBar(mode, tabCount: browser.tabs.count) {
                 TabBarView()
-            } else {
-                Color.clear
+                    .fixedSize(horizontal: true, vertical: false)
+                    .frame(maxWidth: width, alignment: .leading)
             }
+            WindowDragArea()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(width: width)
         .id(buttonsWidth) // vuelve a medir al mostrar u ocultar botones
@@ -68,6 +71,25 @@ struct CompactTabs: View {
             if abs(target - width) > 2 { width = target }
         })
     }
+}
+
+/// Espacio vacío desde el que se arrastra la ventana; doble clic la maximiza (como la barra de título).
+struct WindowDragArea: NSViewRepresentable {
+    final class DragView: NSView {
+        override var mouseDownCanMoveWindow: Bool { true }
+        // Como la barra de título: se arrastra aunque la ventana no esté activa.
+        override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+        override func mouseDown(with event: NSEvent) {
+            if event.clickCount == 2 {
+                let action = UserDefaults.standard.string(forKey: "AppleActionOnDoubleClick") ?? "Maximize"
+                if action == "Minimize" { window?.performMiniaturize(nil) } else if action != "None" { window?.performZoom(nil) }
+            } else {
+                window?.performDrag(with: event)
+            }
+        }
+    }
+    func makeNSView(context: Context) -> NSView { DragView() }
+    func updateNSView(_ view: NSView, context: Context) {}
 }
 
 /// Mide el espacio desde el inicio de esta vista hasta el borde derecho de la ventana.

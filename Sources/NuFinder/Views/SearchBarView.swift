@@ -46,9 +46,7 @@ struct SearchBarView: View {
         .background(.bar)
         .accessibilityLabel("File search")
         .onChange(of: browser.searchFocusToken) { _, _ in searchFocused = true }
-        .simultaneousGesture(
-            TapGesture().onEnded { browser.clearSelection() }
-        )
+        // Fork: un clic en esta barra ya no quita la selección (solo un clic en vacío u otro archivo)
     }
 
     private var prompt: String {

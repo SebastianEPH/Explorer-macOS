@@ -56,8 +56,6 @@ struct TabBarView: View {
             .padding(.vertical, 5)
         }
         .background(.bar)
-        .simultaneousGesture(
-            TapGesture().onEnded { browser.clearSelection() }
-        )
+        // Fork: un clic en esta barra ya no quita la selección (solo un clic en vacío u otro archivo)
     }
 }

@@ -77,9 +77,7 @@ struct AddressBarRow: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(.bar)
-        .simultaneousGesture(
-            TapGesture().onEnded { browser.clearSelection() }
-        )
+        // Fork: un clic en esta barra ya no quita la selección (solo un clic en vacío u otro archivo)
     }
 
     private func paneNavigationIcon(_ systemName: String) -> some View {
