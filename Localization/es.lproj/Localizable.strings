@@ -300,3 +300,12 @@
 "Newer" = "Más reciente";
 "Folder" = "Carpeta";
 "Date Created" = "Fecha de creación";
+
+/* Fork: Ajustes → Menú contextual */
+"Context Menu" = "Menú contextual";
+"Choose which options appear when you right-click." = "Elige qué opciones aparecen al hacer clic derecho.";
+"On a file or folder" = "Sobre un archivo o carpeta";
+"On empty space" = "Sobre el espacio vacío";
+"Show All Options" = "Mostrar todas las opciones";
+"Share…" = "Compartir…";
+"Show Hidden Files" = "Mostrar archivos ocultos";

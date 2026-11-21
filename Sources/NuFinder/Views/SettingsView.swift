@@ -41,6 +41,7 @@ struct SettingsView: View {
             }
             FavoritesSection()
             ItemHitAreaSection()
+            ContextMenuSection()
             PermissionsSection()
             FinderRedirectSection()
             LanguageSection()

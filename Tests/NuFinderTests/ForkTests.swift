@@ -111,4 +111,18 @@ struct ForkTests {
         #expect(!FileManager.default.fileExists(atPath: root.appendingPathComponent("a.txt").path))
         #expect(SharedClipboard.urls.isEmpty)
     }
+
+    @Test func contextMenuOptionsCanBeHiddenAndRestored() {
+        var stored = ""
+        #expect(ContextMenuOption.allCases.allSatisfy { ContextMenuSettings.isVisible($0, in: stored) })
+        stored = ContextMenuSettings.setting(.checksums, visible: false, in: stored)
+        stored = ContextMenuSettings.setting(.bgReload, visible: false, in: stored)
+        #expect(!ContextMenuSettings.isVisible(.checksums, in: stored))
+        #expect(!ContextMenuSettings.isVisible(.bgReload, in: stored))
+        #expect(ContextMenuSettings.isVisible(.open, in: stored))
+        stored = ContextMenuSettings.setting(.checksums, visible: true, in: stored)
+        #expect(ContextMenuSettings.isVisible(.checksums, in: stored))
+        #expect(stored == "bgReload")
+        #expect(Set(ContextMenuOption.allCases.map(\.rawValue)).count == ContextMenuOption.allCases.count)
+    }
 }

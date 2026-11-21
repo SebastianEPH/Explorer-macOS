@@ -22,6 +22,8 @@ struct FileListView: View {
     @AppStorage(ItemHitAreaSettings.compactKey) private var compactHitArea = true // Fork
     @AppStorage(ListColumnSettings.showsCreatedKey) private var showsCreatedColumn = false // Fork
     @AppStorage(ItemHitAreaSettings.spacingKey) private var gridSpacing = ItemHitAreaSettings.defaultSpacing // Fork
+    @AppStorage(ContextMenuSettings.hiddenKey) private var hiddenMenuOptions = "" // Fork
+    private func menu(_ option: ContextMenuOption) -> Bool { ContextMenuSettings.isVisible(option, in: hiddenMenuOptions) } // Fork
 
     private static let byteFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
@@ -211,57 +213,81 @@ struct FileListView: View {
             return .handled
         }
         .contextMenu {
-            Button("New Folder…") { browser.showsNewFolderPrompt = true }
-            Button("New File…") { browser.requestNewFile() }
-            Menu("New from Template") {
-                ForEach(TemplateService.templates) { template in
-                    Button(template.name) { browser.createFile(from: template) }
+            if menu(.bgNewFolder) {
+                Button("New Folder…") { browser.showsNewFolderPrompt = true }
+            }
+            if menu(.bgNewFile) {
+                Button("New File…") { browser.requestNewFile() }
+            }
+            if menu(.bgNewFromTemplate) {
+                Menu("New from Template") {
+                    ForEach(TemplateService.templates) { template in
+                        Button(template.name) { browser.createFile(from: template) }
+                    }
                 }
             }
             Divider()
-            Button("Open in Terminal") { TerminalService.open(at: browser.currentURL) }
-            Button("Reveal in Finder") {
-                NSWorkspace.shared.activateFileViewerSelecting([browser.currentURL])
+            if menu(.bgOpenInTerminal) {
+                Button("Open in Terminal") { TerminalService.open(at: browser.currentURL) }
             }
-            Button("Copy Folder Path") {
-                FileActionService.copyPaths([browser.currentURL])
-            }
-            Divider()
-            Button("Paste") {
-                // The menu action uses the same real move/copy pipeline as ⌘V.
-                Task {
-                    await browser.paste(into: browser.currentURL, operations: operationManager)
+            if menu(.bgRevealInFinder) {
+                Button("Reveal in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([browser.currentURL])
                 }
             }
-            .disabled(!browser.canPaste)
-            Menu("Paste As") {
-                Button("Alias") { browser.pasteAsLinks(into: browser.currentURL, symbolic: false) }
-                Button("Symbolic Link") { browser.pasteAsLinks(into: browser.currentURL, symbolic: true) }
-            }
-            .disabled(!browser.canPaste)
-            Divider()
-            Button(browser.showsHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files") {
-                browser.toggleHiddenFiles()
-            }
-            if !browser.showsHiddenFiles {
-                Button("Reveal Hidden Files for 30 Seconds") {
-                    browser.showHiddenFilesTemporarily()
+            if menu(.bgCopyFolderPath) {
+                Button("Copy Folder Path") {
+                    FileActionService.copyPaths([browser.currentURL])
                 }
             }
-            Menu("View As") {
-                ForEach(FileViewMode.allCases) { mode in
-                    Button {
-                        browser.viewMode = mode
-                    } label: {
-                        if browser.viewMode == mode {
-                            Label(mode.rawValue, systemImage: "checkmark")
-                        } else {
-                            Text(mode.rawValue)
+            Divider()
+            if menu(.bgPaste) {
+                Button("Paste") {
+                    // The menu action uses the same real move/copy pipeline as ⌘V.
+                    Task {
+                        await browser.paste(into: browser.currentURL, operations: operationManager)
+                    }
+                }
+                .disabled(!browser.canPaste)
+            }
+            if menu(.bgPasteAs) {
+                Menu("Paste As") {
+                    Button("Alias") { browser.pasteAsLinks(into: browser.currentURL, symbolic: false) }
+                    Button("Symbolic Link") { browser.pasteAsLinks(into: browser.currentURL, symbolic: true) }
+                }
+                .disabled(!browser.canPaste)
+            }
+            Divider()
+            if menu(.bgHiddenFiles) {
+                Button(browser.showsHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files") {
+                    browser.toggleHiddenFiles()
+                }
+            }
+            if menu(.bgRevealHidden) {
+                if !browser.showsHiddenFiles {
+                    Button("Reveal Hidden Files for 30 Seconds") {
+                        browser.showHiddenFilesTemporarily()
+                    }
+                }
+            }
+            if menu(.bgViewAs) {
+                Menu("View As") {
+                    ForEach(FileViewMode.allCases) { mode in
+                        Button {
+                            browser.viewMode = mode
+                        } label: {
+                            if browser.viewMode == mode {
+                                Label(mode.rawValue, systemImage: "checkmark")
+                            } else {
+                                Text(mode.rawValue)
+                            }
                         }
                     }
                 }
             }
-            Button("Reload") { browser.reload() }
+            if menu(.bgReload) {
+                Button("Reload") { browser.reload() }
+            }
         }
         .dropDestination(for: FileDragPayload.self) { payloads, _ in
             moveDroppedItems(payloads.flatMap(\.urls), to: browser.currentURL)
@@ -323,41 +349,63 @@ struct FileListView: View {
             return true
         }
         .contextMenu {
-            Button("New Folder…") { browser.showsNewFolderPrompt = true }
-            Button("New File…") { browser.requestNewFile() }
-            Menu("New from Template") {
-                ForEach(TemplateService.templates) { template in
-                    Button(template.name) { browser.createFile(from: template) }
+            if menu(.bgNewFolder) {
+                Button("New Folder…") { browser.showsNewFolderPrompt = true }
+            }
+            if menu(.bgNewFile) {
+                Button("New File…") { browser.requestNewFile() }
+            }
+            if menu(.bgNewFromTemplate) {
+                Menu("New from Template") {
+                    ForEach(TemplateService.templates) { template in
+                        Button(template.name) { browser.createFile(from: template) }
+                    }
                 }
             }
             Divider()
-            Button("Open in Terminal") { TerminalService.open(at: browser.currentURL) }
-            Button("Reveal in Finder") {
-                NSWorkspace.shared.activateFileViewerSelecting([browser.currentURL])
+            if menu(.bgOpenInTerminal) {
+                Button("Open in Terminal") { TerminalService.open(at: browser.currentURL) }
             }
-            Button("Copy Folder Path") { FileActionService.copyPaths([browser.currentURL]) }
-            Divider()
-            Button("Paste") {
-                Task {
-                    await browser.paste(into: browser.currentURL, operations: operationManager)
+            if menu(.bgRevealInFinder) {
+                Button("Reveal in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([browser.currentURL])
                 }
             }
-            .disabled(!browser.canPaste)
-            Menu("Paste As") {
-                Button("Alias") { browser.pasteAsLinks(into: browser.currentURL, symbolic: false) }
-                Button("Symbolic Link") { browser.pasteAsLinks(into: browser.currentURL, symbolic: true) }
+            if menu(.bgCopyFolderPath) {
+                Button("Copy Folder Path") { FileActionService.copyPaths([browser.currentURL]) }
             }
-            .disabled(!browser.canPaste)
             Divider()
-            Button(browser.showsHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files") {
-                browser.toggleHiddenFiles()
+            if menu(.bgPaste) {
+                Button("Paste") {
+                    Task {
+                        await browser.paste(into: browser.currentURL, operations: operationManager)
+                    }
+                }
+                .disabled(!browser.canPaste)
             }
-            if !browser.showsHiddenFiles {
-                Button("Reveal Hidden Files for 30 Seconds") {
-                    browser.showHiddenFilesTemporarily()
+            if menu(.bgPasteAs) {
+                Menu("Paste As") {
+                    Button("Alias") { browser.pasteAsLinks(into: browser.currentURL, symbolic: false) }
+                    Button("Symbolic Link") { browser.pasteAsLinks(into: browser.currentURL, symbolic: true) }
+                }
+                .disabled(!browser.canPaste)
+            }
+            Divider()
+            if menu(.bgHiddenFiles) {
+                Button(browser.showsHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files") {
+                    browser.toggleHiddenFiles()
                 }
             }
-            Button("Reload") { browser.reload() }
+            if menu(.bgRevealHidden) {
+                if !browser.showsHiddenFiles {
+                    Button("Reveal Hidden Files for 30 Seconds") {
+                        browser.showHiddenFilesTemporarily()
+                    }
+                }
+            }
+            if menu(.bgReload) {
+                Button("Reload") { browser.reload() }
+            }
         }
         .onMoveCommand { direction in
             moveKeyboardSelection(direction)
@@ -618,180 +666,248 @@ struct FileListView: View {
 
     @ViewBuilder
     private func contextMenu(for item: FileItem) -> some View {
-        Button("Open") { browser.open(item) }
+        if menu(.open) {
+            Button("Open") { browser.open(item) }
+        }
         if item.isDirectory {
-            Button("Open in New Tab") { browser.newTab(at: item.url) }
-            Button("Open in New Window") { WindowService.open(at: item.url) }
-            if item.isPackage {
-                Button("Show Package Contents") { browser.navigate(to: item.url) }
+            if menu(.openInNewTab) {
+                Button("Open in New Tab") { browser.newTab(at: item.url) }
             }
-        }
-        Button("Quick Look") {
-            QuickLookService.shared.show(browser.selection.isEmpty ? [item.url] : Array(browser.selection))
-        }
-        Button("Get Info") {
-            if !browser.selection.contains(item.url) { browser.selection = [item.url] }
-            browser.showInfoForSelection()
-        }
-        Button("Reveal in Finder") {
-            if !browser.selection.contains(item.url) { browser.selection = [item.url] }
-            browser.revealSelectionInFinder()
-        }
-        Menu("Open With") {
-            ForEach(FileActionService.openWithApplications(for: item.url), id: \.self) { application in
-                Button(application.deletingPathExtension().lastPathComponent) {
-                    NSWorkspace.shared.open(
-                        [item.url],
-                        withApplicationAt: application,
-                        configuration: NSWorkspace.OpenConfiguration()
-                    )
+            if menu(.openInNewWindow) {
+                Button("Open in New Window") { WindowService.open(at: item.url) }
+            }
+            if menu(.showPackageContents) {
+                if item.isPackage {
+                    Button("Show Package Contents") { browser.navigate(to: item.url) }
                 }
             }
-            Divider()
-            Menu("Always Open With") {
+        }
+        if menu(.quickLook) {
+            Button("Quick Look") {
+                QuickLookService.shared.show(browser.selection.isEmpty ? [item.url] : Array(browser.selection))
+            }
+        }
+        if menu(.getInfo) {
+            Button("Get Info") {
+                if !browser.selection.contains(item.url) { browser.selection = [item.url] }
+                browser.showInfoForSelection()
+            }
+        }
+        if menu(.revealInFinder) {
+            Button("Reveal in Finder") {
+                if !browser.selection.contains(item.url) { browser.selection = [item.url] }
+                browser.revealSelectionInFinder()
+            }
+        }
+        if menu(.openWith) {
+            Menu("Open With") {
                 ForEach(FileActionService.openWithApplications(for: item.url), id: \.self) { application in
                     Button(application.deletingPathExtension().lastPathComponent) {
-                        Task {
-                            do {
-                                try await FileActionService.setDefaultApplication(application, for: item.url)
-                            } catch {
-                                browser.errorMessage = "Couldn’t change the default app: \(error.localizedDescription)"
+                        NSWorkspace.shared.open(
+                            [item.url],
+                            withApplicationAt: application,
+                            configuration: NSWorkspace.OpenConfiguration()
+                        )
+                    }
+                }
+                Divider()
+                Menu("Always Open With") {
+                    ForEach(FileActionService.openWithApplications(for: item.url), id: \.self) { application in
+                        Button(application.deletingPathExtension().lastPathComponent) {
+                            Task {
+                                do {
+                                    try await FileActionService.setDefaultApplication(application, for: item.url)
+                                } catch {
+                                    browser.errorMessage = "Couldn’t change the default app: \(error.localizedDescription)"
+                                }
                             }
                         }
                     }
                 }
             }
         }
-        ShareLink(items: browser.selection.isEmpty ? [item.url] : Array(browser.selection))
-        if item.isImage {
-            Menu("Image Actions") {
-                Button("Rotate Left") {
-                    performImageAction(item) { try ImageActionService.rotate($0, direction: .left) }
-                }
-                Button("Rotate Right") {
-                    performImageAction(item) { try ImageActionService.rotate($0, direction: .right) }
-                }
-                Button("Resize Copies…") {
-                    imageResizeURLs = selectedImages(including: item)
-                    showsImageResize = true
-                }
-                Menu("Convert Copies") {
-                    Button("PNG") {
-                        performImageAction(item) { try ImageActionService.convert($0, to: .png) }
+        if menu(.share) {
+            ShareLink(items: browser.selection.isEmpty ? [item.url] : Array(browser.selection))
+        }
+        if menu(.imageActions) {
+            if item.isImage {
+                Menu("Image Actions") {
+                    Button("Rotate Left") {
+                        performImageAction(item) { try ImageActionService.rotate($0, direction: .left) }
                     }
-                    Button("JPEG") {
-                        performImageAction(item) { try ImageActionService.convert($0, to: .jpeg) }
+                    Button("Rotate Right") {
+                        performImageAction(item) { try ImageActionService.rotate($0, direction: .right) }
+                    }
+                    Button("Resize Copies…") {
+                        imageResizeURLs = selectedImages(including: item)
+                        showsImageResize = true
+                    }
+                    Menu("Convert Copies") {
+                        Button("PNG") {
+                            performImageAction(item) { try ImageActionService.convert($0, to: .png) }
+                        }
+                        Button("JPEG") {
+                            performImageAction(item) { try ImageActionService.convert($0, to: .jpeg) }
+                        }
                     }
                 }
             }
         }
         if item.isDirectory {
-            FavoriteMenuItem(url: item.url)
-            Button("Open in Terminal") { TerminalService.open(at: item.url) }
+            if menu(.favorite) {
+                FavoriteMenuItem(url: item.url)
+            }
+            if menu(.openInTerminal) {
+                Button("Open in Terminal") { TerminalService.open(at: item.url) }
+            }
         } else {
-            Button("Open Parent in Terminal") {
-                TerminalService.open(at: item.url.deletingLastPathComponent())
-            }
-        }
-        Divider()
-        Button("Cut") {
-            browser.selection.insert(item.url)
-            browser.cutSelection()
-        }
-        Button("Copy") {
-            browser.selection.insert(item.url)
-            browser.copySelection()
-        }
-        // Fork: pegar también desde el clic derecho sobre un elemento (en carpetas, dentro de ella).
-        Button(item.isDirectory ? "Paste into Folder" : "Paste") {
-            Task { await browser.paste(into: item.isDirectory ? item.url : browser.currentURL, operations: operationManager) }
-        }
-        .disabled(!browser.canPaste)
-        Button("Duplicate") {
-            if !browser.selection.contains(item.url) { browser.selection = [item.url] }
-            Task { await browser.duplicateSelection(using: operationManager) }
-        }
-        Button("Compress to ZIP") {
-            if !browser.selection.contains(item.url) { browser.selection = [item.url] }
-            browser.createArchiveFromSelection()
-        }
-        if ArchiveService.isArchive(item.url) {
-            Button("Extract Here") {
-                browser.selection = [item.url]
-                browser.extractSelectedArchives()
-            }
-        }
-        Button("Copy Path") {
-            FileActionService.copyPaths(browser.selection.isEmpty ? [item.url] : Array(browser.selection))
-        }
-        Button("Copy Filename") {
-            FileActionService.copyNames(browser.selection.isEmpty ? [item.url] : Array(browser.selection))
-        }
-        Button("Copy File URL") {
-            FileActionService.copyPaths(
-                browser.selection.isEmpty ? [item.url] : Array(browser.selection),
-                asFileURLs: true
-            )
-        }
-        Button("Calculate Size") {
-            if !browser.selection.contains(item.url) { browser.selection = [item.url] }
-            browser.calculateSelectedSizes()
-        }
-        Menu("Calculate Checksums") {
-            ForEach(ChecksumAlgorithm.allCases) { algorithm in
-                Button(algorithm.rawValue) {
-                    if !browser.selection.contains(item.url) { browser.selection = [item.url] }
-                    browser.calculateChecksums(algorithms: [algorithm])
+            if menu(.openInTerminal) {
+                Button("Open Parent in Terminal") {
+                    TerminalService.open(at: item.url.deletingLastPathComponent())
                 }
             }
-            Divider()
-            Button("All Checksums") {
+        }
+        Divider()
+        if menu(.cut) {
+            Button("Cut") {
+                browser.selection.insert(item.url)
+                browser.cutSelection()
+            }
+        }
+        if menu(.copy) {
+            Button("Copy") {
+                browser.selection.insert(item.url)
+                browser.copySelection()
+            }
+        }
+        // Fork: pegar también desde el clic derecho sobre un elemento (en carpetas, dentro de ella).
+        if menu(.paste) {
+            Button(item.isDirectory ? "Paste into Folder" : "Paste") {
+                Task { await browser.paste(into: item.isDirectory ? item.url : browser.currentURL, operations: operationManager) }
+            }
+            .disabled(!browser.canPaste)
+        }
+        if menu(.duplicate) {
+            Button("Duplicate") {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
-                browser.calculateChecksums(algorithms: ChecksumAlgorithm.allCases)
+                Task { await browser.duplicateSelection(using: operationManager) }
             }
         }
-        Button("Batch Rename…") {
-            if !browser.selection.contains(item.url) { browser.selection = [item.url] }
-            browser.showsBatchRenamePrompt = true
-        }
-        Button("Create Symbolic Link") {
-            if !browser.selection.contains(item.url) { browser.selection = [item.url] }
-            browser.createSymbolicLinks()
-        }
-        Button("Create Alias") {
-            if !browser.selection.contains(item.url) { browser.selection = [item.url] }
-            browser.createAliases()
-        }
-        Button("Tags…") {
-            if !browser.selection.contains(item.url) { browser.selection = [item.url] }
-            browser.tagText = ""
-            browser.showsTagPrompt = true
-        }
-        if browser.selection.count == 2 && browser.selection.allSatisfy({
-            (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true
-        }) {
-            Button("Compare Files") {
-                do { try FileActionService.compare(Array(browser.selection)) }
-                catch { browser.errorMessage = "Couldn’t open the comparison tool: \(error.localizedDescription)" }
+        if menu(.compress) {
+            Button("Compress to ZIP") {
+                if !browser.selection.contains(item.url) { browser.selection = [item.url] }
+                browser.createArchiveFromSelection()
             }
         }
-        Button("Rename") {
-            browser.selection = [item.url]
-            browser.renameTarget = item.url
+        if menu(.extract) {
+            if ArchiveService.isArchive(item.url) {
+                Button("Extract Here") {
+                    browser.selection = [item.url]
+                    browser.extractSelectedArchives()
+                }
+            }
         }
-        Divider()
-        Button("Move to Trash", role: .destructive) {
-            if !browser.selection.contains(item.url) {
+        if menu(.copyPath) {
+            Button("Copy Path") {
+                FileActionService.copyPaths(browser.selection.isEmpty ? [item.url] : Array(browser.selection))
+            }
+        }
+        if menu(.copyFilename) {
+            Button("Copy Filename") {
+                FileActionService.copyNames(browser.selection.isEmpty ? [item.url] : Array(browser.selection))
+            }
+        }
+        if menu(.copyFileURL) {
+            Button("Copy File URL") {
+                FileActionService.copyPaths(
+                    browser.selection.isEmpty ? [item.url] : Array(browser.selection),
+                    asFileURLs: true
+                )
+            }
+        }
+        if menu(.calculateSize) {
+            Button("Calculate Size") {
+                if !browser.selection.contains(item.url) { browser.selection = [item.url] }
+                browser.calculateSelectedSizes()
+            }
+        }
+        if menu(.checksums) {
+            Menu("Calculate Checksums") {
+                ForEach(ChecksumAlgorithm.allCases) { algorithm in
+                    Button(algorithm.rawValue) {
+                        if !browser.selection.contains(item.url) { browser.selection = [item.url] }
+                        browser.calculateChecksums(algorithms: [algorithm])
+                    }
+                }
+                Divider()
+                Button("All Checksums") {
+                    if !browser.selection.contains(item.url) { browser.selection = [item.url] }
+                    browser.calculateChecksums(algorithms: ChecksumAlgorithm.allCases)
+                }
+            }
+        }
+        if menu(.batchRename) {
+            Button("Batch Rename…") {
+                if !browser.selection.contains(item.url) { browser.selection = [item.url] }
+                browser.showsBatchRenamePrompt = true
+            }
+        }
+        if menu(.symbolicLink) {
+            Button("Create Symbolic Link") {
+                if !browser.selection.contains(item.url) { browser.selection = [item.url] }
+                browser.createSymbolicLinks()
+            }
+        }
+        if menu(.alias) {
+            Button("Create Alias") {
+                if !browser.selection.contains(item.url) { browser.selection = [item.url] }
+                browser.createAliases()
+            }
+        }
+        if menu(.tags) {
+            Button("Tags…") {
+                if !browser.selection.contains(item.url) { browser.selection = [item.url] }
+                browser.tagText = ""
+                browser.showsTagPrompt = true
+            }
+        }
+        if menu(.compare) {
+            if browser.selection.count == 2 && browser.selection.allSatisfy({
+                (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true
+            }) {
+                Button("Compare Files") {
+                    do { try FileActionService.compare(Array(browser.selection)) }
+                    catch { browser.errorMessage = "Couldn’t open the comparison tool: \(error.localizedDescription)" }
+                }
+            }
+        }
+        if menu(.rename) {
+            Button("Rename") {
                 browser.selection = [item.url]
+                browser.renameTarget = item.url
             }
-            browser.moveSelectionToTrash()
         }
         Divider()
-        Button("New Folder…") { browser.showsNewFolderPrompt = true }
-        Button("New File…") { browser.requestNewFile() }
-        Menu("New from Template") {
-            ForEach(TemplateService.templates) { template in
-                Button(template.name) { browser.createFile(from: template) }
+        if menu(.trash) {
+            Button("Move to Trash", role: .destructive) {
+                if !browser.selection.contains(item.url) {
+                    browser.selection = [item.url]
+                }
+                browser.moveSelectionToTrash()
+            }
+        }
+        Divider()
+        if menu(.newFolder) {
+            Button("New Folder…") { browser.showsNewFolderPrompt = true }
+        }
+        if menu(.newFile) {
+            Button("New File…") { browser.requestNewFile() }
+        }
+        if menu(.newFromTemplate) {
+            Menu("New from Template") {
+                ForEach(TemplateService.templates) { template in
+                    Button(template.name) { browser.createFile(from: template) }
+                }
             }
         }
     }
