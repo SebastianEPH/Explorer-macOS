@@ -26,6 +26,7 @@ struct SettingsPreviewBox<Content: View>: View {
 
 /// Barra de herramientas tal como aparece arriba a la derecha de la ventana.
 struct ToolbarPreview: View {
+    var workspaces = true
     let split: Bool
     let terminal: Bool
     let operations: Bool
@@ -40,12 +41,12 @@ struct ToolbarPreview: View {
                     .overlay(alignment: .leading) {
                         Text(verbatim: "~/Documents").font(.caption).foregroundStyle(.secondary).padding(.leading, 8)
                     }
-                item("square.stack.3d.up", "Workspaces", on: true)
+                item("square.stack.3d.up", "Workspaces", on: workspaces)
                 item("rectangle.split.2x1", "Split Pane", on: split)
                 item("terminal", "Terminal", on: terminal)
                 item("arrow.left.arrow.right.circle", "File Operations", on: operations)
             }
-            .animation(.default, value: [split, terminal, operations])
+            .animation(.default, value: [workspaces, split, terminal, operations])
         }
     }
 

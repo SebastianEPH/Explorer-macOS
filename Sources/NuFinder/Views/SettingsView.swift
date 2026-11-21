@@ -6,6 +6,7 @@ struct SettingsView: View {
     @AppStorage("toolbar.showsSplit") private var toolbarShowsSplit = true
     @AppStorage("toolbar.showsTerminal") private var toolbarShowsTerminal = true
     @AppStorage("toolbar.showsOperations") private var toolbarShowsOperations = true
+    @AppStorage("toolbar.showsWorkspaces") private var toolbarShowsWorkspaces = true // Fork
     @AppStorage("shortcut.commandPalette") private var commandPaletteKey = "p"
     @AppStorage("shortcut.terminal") private var terminalKey = "t"
     @AppStorage("gitStatusEnabled") private var gitStatusEnabled = false
@@ -23,7 +24,8 @@ struct SettingsView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Section("Toolbar") {
-                ToolbarPreview(split: toolbarShowsSplit, terminal: toolbarShowsTerminal, operations: toolbarShowsOperations) // Fork
+                ToolbarPreview(workspaces: toolbarShowsWorkspaces, split: toolbarShowsSplit, terminal: toolbarShowsTerminal, operations: toolbarShowsOperations) // Fork
+                Toggle(isOn: $toolbarShowsWorkspaces) { Label("Workspaces", systemImage: "square.stack.3d.up"); Text("Save and restore the open folders and the split pane.") }
                 Toggle(isOn: $toolbarShowsSplit) { Label("Split Pane", systemImage: "rectangle.split.2x1"); Text("Shows two folders side by side.") }
                 Toggle(isOn: $toolbarShowsTerminal) { Label("Terminal", systemImage: "terminal"); Text("Opens the current folder in the terminal.") }
                 Toggle(isOn: $toolbarShowsOperations) { Label("File Operations", systemImage: "arrow.left.arrow.right.circle"); Text("Progress of copies and moves in progress.") }

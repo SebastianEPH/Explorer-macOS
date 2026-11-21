@@ -16,6 +16,7 @@ struct ContentView: View {
     @AppStorage("toolbar.showsSplit") private var toolbarShowsSplit = true
     @AppStorage("toolbar.showsTerminal") private var toolbarShowsTerminal = true
     @AppStorage("toolbar.showsOperations") private var toolbarShowsOperations = true
+    @AppStorage("toolbar.showsWorkspaces") private var toolbarShowsWorkspaces = true // Fork
     @AppStorage("gitStatusEnabled") private var gitStatusEnabled = false
     @State private var newFileName = "Untitled.txt"
     @State private var newFolderName = String(localized: "untitled folder")
@@ -257,6 +258,7 @@ struct ContentView: View {
     // Fork: botones de la barra en una vista aparte para poder ponerlos también junto a las pestañas.
     @ViewBuilder
     private var toolbarButtons: some View {
+            if toolbarShowsWorkspaces { // Fork: Espacios de trabajo, ocultable en Ajustes
             Menu {
                 if workspaceStore.workspaces.isEmpty {
                     Text("No Saved Workspaces")
@@ -276,6 +278,7 @@ struct ContentView: View {
             }
             .menuStyle(.borderlessButton)
             .help("Workspaces")
+            }
             if toolbarShowsSplit {
                 Button {
                     showsSplitPane.toggle()
