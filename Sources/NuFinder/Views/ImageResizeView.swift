@@ -48,7 +48,7 @@ struct ImageResizeView: View {
             browser.reload()
             dismiss()
         } catch {
-            browser.errorMessage = "Couldn’t resize the image: \(error.localizedDescription)"
+            browser.errorMessage = String(localized: "Couldn’t resize the image: \(error.localizedDescription)")
         }
     }
 }

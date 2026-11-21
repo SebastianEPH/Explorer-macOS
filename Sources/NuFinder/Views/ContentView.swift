@@ -17,7 +17,7 @@ struct ContentView: View {
     @AppStorage("toolbar.showsOperations") private var toolbarShowsOperations = true
     @AppStorage("gitStatusEnabled") private var gitStatusEnabled = false
     @State private var newFileName = "Untitled.txt"
-    @State private var newFolderName = "untitled folder"
+    @State private var newFolderName = String(localized: "untitled folder")
     @State private var workspaceName = ""
     @State private var showsSaveWorkspace = false
     @State private var showsWorkspaceManager = false
@@ -86,7 +86,7 @@ struct ContentView: View {
             Button("Cancel", role: .cancel) {}
             Button("Create") {
                 browser.createFolder(named: newFolderName)
-                newFolderName = "untitled folder"
+                newFolderName = String(localized: "untitled folder")
             }
         } message: {
             Text("Create a folder in \(browser.currentURL.lastPathComponent).")
@@ -141,7 +141,7 @@ struct ContentView: View {
         .sheet(isPresented: detailPresented) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
-                    Text(browser.detailTitle ?? "Details").font(.title2.bold())
+                    Text(browser.detailTitle ?? String(localized: "Details")).font(.title2.bold())
                     Spacer()
                     Button("Done") { browser.detailTitle = nil }
                         .keyboardShortcut(.defaultAction)
@@ -276,7 +276,7 @@ struct ContentView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .help(showsSplitPane ? "Close Split Pane" : "Open Split Pane")
+                .help(showsSplitPane ? String(localized: "Close Split Pane") : String(localized: "Open Split Pane"))
             }
             if toolbarShowsTerminal {
                 Button {
@@ -380,7 +380,7 @@ private struct WorkspaceManagerView: View {
                             Image(systemName: store.launchWorkspaceID == workspace.id ? "play.circle.fill" : "play.circle")
                         }
                         .buttonStyle(.borderless)
-                        .help(store.launchWorkspaceID == workspace.id ? "Don’t Open at Launch" : "Open at Launch")
+                        .help(store.launchWorkspaceID == workspace.id ? String(localized: "Don’t Open at Launch") : String(localized: "Open at Launch"))
                         Button("Open") {
                             openWorkspace(workspace)
                             dismiss()

@@ -245,11 +245,11 @@ struct FileListView: View {
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
             } else if browser.displayedItems.isEmpty {
                 ContentUnavailableView(
-                    browser.searchText.isEmpty ? "Empty Folder" : "No Matches",
+                    browser.searchText.isEmpty ? String(localized: "Empty Folder") : String(localized: "No Matches"),
                     systemImage: browser.searchText.isEmpty ? "folder" : "magnifyingglass",
                     description: Text(browser.searchText.isEmpty
-                                      ? "Right-click to create a new file."
-                                      : "Try a different name or search mode.")
+                                      ? String(localized: "Right-click to create a new file.")
+                                      : String(localized: "Try a different name or search mode."))
                 )
             }
         }
@@ -316,7 +316,7 @@ struct FileListView: View {
                 ProgressView()
             } else if browser.displayedItems.isEmpty {
                 ContentUnavailableView(
-                    browser.searchText.isEmpty ? "Empty Folder" : "No Matches",
+                    browser.searchText.isEmpty ? String(localized: "Empty Folder") : String(localized: "No Matches"),
                     systemImage: browser.searchText.isEmpty ? "folder" : "magnifyingglass"
                 )
             }
@@ -627,7 +627,7 @@ struct FileListView: View {
                                 do {
                                     try await FileActionService.setDefaultApplication(application, for: item.url)
                                 } catch {
-                                    browser.errorMessage = "Couldn’t change the default app: \(error.localizedDescription)"
+                                    browser.errorMessage = String(localized: "Couldn’t change the default app: \(error.localizedDescription)")
                                 }
                             }
                         }
@@ -762,7 +762,7 @@ struct FileListView: View {
             }) {
                 Button("Compare Files") {
                     do { try FileActionService.compare(Array(browser.selection)) }
-                    catch { browser.errorMessage = "Couldn’t open the comparison tool: \(error.localizedDescription)" }
+                    catch { browser.errorMessage = String(localized: "Couldn’t open the comparison tool: \(error.localizedDescription)") }
                 }
             }
         case .rename:
@@ -831,7 +831,7 @@ struct FileListView: View {
             }
             .disabled(!browser.canPaste)
         case .bgHiddenFiles:
-            Button(browser.showsHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files") {
+            Button(browser.showsHiddenFiles ? String(localized: "Hide Hidden Files") : "Show Hidden Files") {
                 browser.toggleHiddenFiles()
             }
         case .bgRevealHidden:
@@ -847,9 +847,9 @@ struct FileListView: View {
                         browser.viewMode = mode
                     } label: {
                         if browser.viewMode == mode {
-                            Label(mode.rawValue, systemImage: "checkmark")
+                            Label(LocalizedStringKey(mode.rawValue), systemImage: "checkmark")
                         } else {
-                            Text(mode.rawValue)
+                            Text(LocalizedStringKey(mode.rawValue))
                         }
                     }
                 }
@@ -895,7 +895,7 @@ struct FileListView: View {
             _ = try action(selectedImages(including: item))
             browser.reload()
         } catch {
-            browser.errorMessage = "Couldn’t process the image: \(error.localizedDescription)"
+            browser.errorMessage = String(localized: "Couldn’t process the image: \(error.localizedDescription)")
         }
     }
 }

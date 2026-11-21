@@ -47,12 +47,12 @@ enum FavoritesSettings {
     static func allLocations() -> [FavoriteLocation] {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let builtIn = [
-            FavoriteLocation(url: home, title: "Home", icon: "house", isBuiltIn: true),
-            FavoriteLocation(url: home.appendingPathComponent("Desktop"), title: "Desktop",
+            FavoriteLocation(url: home, title: String(localized: "Home"), icon: "house", isBuiltIn: true),
+            FavoriteLocation(url: home.appendingPathComponent("Desktop"), title: String(localized: "Desktop"),
                              icon: "menubar.dock.rectangle", isBuiltIn: true),
-            FavoriteLocation(url: home.appendingPathComponent("Documents"), title: "Documents",
+            FavoriteLocation(url: home.appendingPathComponent("Documents"), title: String(localized: "Documents"),
                              icon: "doc", isBuiltIn: true),
-            FavoriteLocation(url: home.appendingPathComponent("Downloads"), title: "Downloads",
+            FavoriteLocation(url: home.appendingPathComponent("Downloads"), title: String(localized: "Downloads"),
                              icon: "arrow.down.circle", isBuiltIn: true)
         ]
         let custom = (defaults.stringArray(forKey: "customFavoritePaths") ?? []).map {

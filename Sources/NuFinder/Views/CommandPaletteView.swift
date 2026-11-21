@@ -25,7 +25,7 @@ struct CommandPaletteView: View {
                     run(command)
                     dismiss()
                 } label: {
-                    Text(command)
+                    Text(LocalizedStringKey(command)) // Fork: traducido
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(.plain)

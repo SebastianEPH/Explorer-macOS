@@ -52,7 +52,7 @@ struct SearchBarView: View {
     }
 
     private var prompt: String {
-        browser.searchContents ? "Search names and file contents" : "Search by file name"
+        browser.searchContents ? String(localized: "Search names and file contents") : String(localized: "Search by file name")
     }
 
     private var scopeMenu: some View {
@@ -65,13 +65,13 @@ struct SearchBarView: View {
                     if scope == .computer { browser.usesSpotlight = true }
                     browser.updateSearch()
                 } label: {
-                    Label(scope.rawValue, systemImage: scope.systemImage)
+                    Label(LocalizedStringKey(scope.rawValue), systemImage: scope.systemImage)
                 }
             }
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: browser.searchScope.systemImage)
-                Text(browser.searchScope.rawValue)
+                Text(LocalizedStringKey(browser.searchScope.rawValue))
                     .lineLimit(1)
                 Image(systemName: "chevron.down")
                     .font(.system(size: 8, weight: .bold))
@@ -102,20 +102,20 @@ struct SearchBarView: View {
             Divider()
             Picker("Name Matching", selection: $browser.searchMatchMode) {
                 ForEach(SearchMatchMode.allCases) { mode in
-                    Text(mode.rawValue).tag(mode)
+                    Text(LocalizedStringKey(mode.rawValue)).tag(mode)
                 }
             }
             .onChange(of: browser.searchMatchMode) { _, _ in browser.updateSearch() }
             Picker("Kind", selection: $browser.searchKindFilter) {
                 ForEach(SearchKindFilter.allCases) { kind in
-                    Text(kind.rawValue).tag(kind)
+                    Text(LocalizedStringKey(kind.rawValue)).tag(kind)
                 }
             }
             .onChange(of: browser.searchKindFilter) { _, _ in browser.updateSearch() }
 
             Menu("Minimum Size: \(sizeLabel)") {
                 ForEach([0, 1, 10, 100, 1000], id: \.self) { megabytes in
-                    Button(megabytes == 0 ? "Any Size" : "\(megabytes) MB") {
+                    Button(megabytes == 0 ? String(localized: "Any Size") : "\(megabytes) MB") {
                         browser.minimumSearchSizeMB = megabytes
                         browser.updateSearch()
                     }
@@ -123,7 +123,7 @@ struct SearchBarView: View {
             }
             Menu("Modified: \(dateLabel)") {
                 ForEach([0, 1, 7, 30, 365], id: \.self) { days in
-                    Button(days == 0 ? "Any Time" : "Within \(days) Day\(days == 1 ? "" : "s")") {
+                    Button(days == 0 ? String(localized: "Any Time") : String(localized: "Within \(days) days")) {
                         browser.modifiedWithinDays = days
                         browser.updateSearch()
                     }
@@ -155,7 +155,7 @@ struct SearchBarView: View {
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
-        .help(activeFilterCount > 0 ? "Search Filters (\(activeFilterCount) Active)" : "Search Filters")
+        .help(activeFilterCount > 0 ? String(localized: "Search Filters (\(activeFilterCount) Active)") : String(localized: "Search Filters"))
     }
 
     private var activeFilterCount: Int {
@@ -171,6 +171,6 @@ struct SearchBarView: View {
     }
 
     private var dateLabel: String {
-        browser.modifiedWithinDays == 0 ? "Any Time" : "Last \(browser.modifiedWithinDays) Days"
+        browser.modifiedWithinDays == 0 ? String(localized: "Any Time") : String(localized: "Last \(browser.modifiedWithinDays) Days")
     }
 }

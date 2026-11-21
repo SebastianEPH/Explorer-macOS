@@ -19,18 +19,18 @@ struct FileInfoView: View {
                 Spacer()
             }
             Divider()
-            infoRow("Where", item.url.deletingLastPathComponent().path)
-            infoRow("Size", item.isDirectory ? "Folder size is calculated during transfers" :
+            infoRow(String(localized: "Where"), item.url.deletingLastPathComponent().path)
+            infoRow("Size", item.isDirectory ? String(localized: "Folder size is calculated during transfers") :
                         byteFormatter.string(fromByteCount: item.size))
             if let created = item.created {
-                infoRow("Created", created.formatted(date: .long, time: .shortened))
+                infoRow(String(localized: "Created"), created.formatted(date: .long, time: .shortened))
             }
             if let modified = item.modified {
-                infoRow("Modified", modified.formatted(date: .long, time: .shortened))
+                infoRow(String(localized: "Modified"), modified.formatted(date: .long, time: .shortened))
             }
             if let attributes = try? FileManager.default.attributesOfItem(atPath: item.url.path) {
                 if let owner = attributes[.ownerAccountName] as? String {
-                    infoRow("Owner", owner)
+                    infoRow(String(localized: "Owner"), owner)
                 }
                 if let permissions = attributes[.posixPermissions] as? NSNumber {
                     infoRow("Permissions", String(format: "%03o", permissions.intValue))

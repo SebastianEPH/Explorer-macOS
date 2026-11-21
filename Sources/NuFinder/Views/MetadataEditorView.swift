@@ -9,7 +9,7 @@ struct MetadataEditorView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        DisclosureGroup("Permissions and Extended Attributes") {
+        DisclosureGroup(String(localized: "Permissions and Extended Attributes")) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     TextField("Mode", text: $permissions)
@@ -61,7 +61,7 @@ struct MetadataEditorView: View {
 
     private func applyPermissions() {
         guard let mode = Int(permissions, radix: 8) else {
-            errorMessage = "Enter an octal mode such as 0644."
+            errorMessage = String(localized: "Enter an octal mode such as 0644.")
             return
         }
         do {

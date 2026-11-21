@@ -102,7 +102,7 @@ enum ContactSheetService {
             .font: NSFont.systemFont(ofSize: min(24, bounds.width / 30), weight: .bold),
             .foregroundColor: NSColor.labelColor,
         ]
-        let heading = page == 0 ? title : "\(title) — Page \(page + 1)"
+        let heading = page == 0 ? title : String(localized: "\(title) — Page \(page + 1)")
         heading.draw(at: CGPoint(x: margin, y: bounds.height - margin - 24), withAttributes: titleStyle)
 
         let top = bounds.height - margin - 54

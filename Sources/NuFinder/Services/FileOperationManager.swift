@@ -315,7 +315,7 @@ final class FileOperationManager: ObservableObject, @unchecked Sendable {
               isDirectory.boolValue else { return }
         if destinationPath == sourcePath || destinationPath.hasPrefix(sourcePath + "/") {
             throw CocoaError(.fileWriteInvalidFileName, userInfo: [
-                NSLocalizedDescriptionKey: "A folder can’t be moved into itself or one of its subfolders."
+                NSLocalizedDescriptionKey: String(localized: "A folder can’t be moved into itself or one of its subfolders.")
             ])
         }
     }

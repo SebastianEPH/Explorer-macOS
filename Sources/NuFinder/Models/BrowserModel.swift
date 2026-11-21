@@ -185,7 +185,7 @@ final class BrowserModel: ObservableObject {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory),
               isDirectory.boolValue else {
-            errorMessage = "The folder “\(url.path)” could not be opened."
+            errorMessage = String(localized: "The folder “\(url.path)” could not be opened.")
             return
         }
         currentURL = url
@@ -229,7 +229,7 @@ final class BrowserModel: ObservableObject {
         } catch is CancellationError {
             // Closing the native authentication or share picker is not an error.
         } catch {
-            errorMessage = "Couldn’t connect to the server: \(error.localizedDescription)"
+            errorMessage = String(localized: "Couldn’t connect to the server: \(error.localizedDescription)")
         }
     }
 
@@ -555,14 +555,14 @@ final class BrowserModel: ObservableObject {
     func calculateSelectedSizes() {
         let urls = Array(selection)
         guard !urls.isEmpty else { return }
-        detailTitle = "Calculating Size…"
+        detailTitle = String(localized: "Calculating Size…")
         detailText = ""
         Task {
             let bytes = await Task.detached { FileOperationManager.totalBytes(of: urls) }.value
             let formatter = ByteCountFormatter()
             formatter.countStyle = .file
-            detailTitle = "Selection Size"
-            detailText = "\(formatter.string(fromByteCount: bytes)) across \(urls.count) item\(urls.count == 1 ? "" : "s")."
+            detailTitle = String(localized: "Selection Size")
+            detailText = String(localized: "\(formatter.string(fromByteCount: bytes)) across \(urls.count) items.")
         }
     }
 
@@ -571,10 +571,10 @@ final class BrowserModel: ObservableObject {
             (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true
         }
         guard !urls.isEmpty else {
-            errorMessage = "Select one or more regular files to calculate checksums."
+            errorMessage = String(localized: "Select one or more regular files to calculate checksums.")
             return
         }
-        detailTitle = "Calculating Checksums…"
+        detailTitle = String(localized: "Calculating Checksums…")
         detailText = ""
         Task {
             let lines = await Task.detached {
@@ -657,7 +657,7 @@ final class BrowserModel: ObservableObject {
                 self?.reload()
             }
         } catch {
-            errorMessage = "Batch rename was rolled back: \(error.localizedDescription)"
+            errorMessage = String(localized: "Batch rename was rolled back: \(error.localizedDescription)")
         }
     }
 
@@ -734,7 +734,7 @@ final class BrowserModel: ObservableObject {
             }
         } catch {
             aliases.forEach { try? FileManager.default.removeItem(at: $0) }
-            errorMessage = "Couldn’t create the alias: \(error.localizedDescription)"
+            errorMessage = String(localized: "Couldn’t create the alias: \(error.localizedDescription)")
         }
     }
 
@@ -764,7 +764,7 @@ final class BrowserModel: ObservableObject {
             }
             reload()
         } catch {
-            errorMessage = "Couldn’t update tags: \(error.localizedDescription)"
+            errorMessage = String(localized: "Couldn’t update tags: \(error.localizedDescription)")
         }
     }
 
@@ -785,7 +785,7 @@ final class BrowserModel: ObservableObject {
         let baseName = sources.count == 1 ? sources[0].deletingPathExtension().lastPathComponent : "Archive"
         let desired = currentURL.appendingPathComponent("\(baseName).zip")
         let destination = FileOperationManager.uniqueDestination(for: desired, in: currentURL)
-        detailTitle = "Creating Archive…"
+        detailTitle = String(localized: "Creating Archive…")
         detailText = ""
         Task {
             do {
@@ -801,7 +801,7 @@ final class BrowserModel: ObservableObject {
                 }
             } catch {
                 detailTitle = nil
-                errorMessage = "Couldn’t create the archive: \(error.localizedDescription)"
+                errorMessage = String(localized: "Couldn’t create the archive: \(error.localizedDescription)")
             }
         }
     }
@@ -809,7 +809,7 @@ final class BrowserModel: ObservableObject {
     func extractSelectedArchives() {
         let archives = selection.filter(ArchiveService.isArchive)
         guard !archives.isEmpty else { return }
-        detailTitle = "Extracting Archive…"
+        detailTitle = String(localized: "Extracting Archive…")
         detailText = ""
         Task {
             var destinations: [URL] = []
@@ -833,7 +833,7 @@ final class BrowserModel: ObservableObject {
             } catch {
                 destinations.forEach { try? FileManager.default.removeItem(at: $0) }
                 detailTitle = nil
-                errorMessage = "Couldn’t extract the archive: \(error.localizedDescription)"
+                errorMessage = String(localized: "Couldn’t extract the archive: \(error.localizedDescription)")
             }
         }
     }
@@ -926,7 +926,7 @@ final class BrowserModel: ObservableObject {
             }
         } catch {
             created.forEach { try? FileManager.default.removeItem(at: $0) }
-            errorMessage = "Couldn’t paste the link: \(error.localizedDescription)"
+            errorMessage = String(localized: "Couldn’t paste the link: \(error.localizedDescription)")
         }
     }
 
@@ -935,7 +935,7 @@ final class BrowserModel: ObservableObject {
     func createFile(named name: String) {
         guard let url = validatedNewItemURL(named: name) else { return }
         guard FileManager.default.createFile(atPath: url.path, contents: Data()) else {
-            errorMessage = "The file could not be created."
+            errorMessage = String(localized: "The file could not be created.")
             return
         }
         reload()
@@ -964,13 +964,13 @@ final class BrowserModel: ObservableObject {
     func rename(_ url: URL, to name: String) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !trimmed.contains("/") else {
-            errorMessage = "Enter a name without a slash."
+            errorMessage = String(localized: "Enter a name without a slash.")
             return
         }
         let target = url.deletingLastPathComponent().appendingPathComponent(trimmed)
         guard target != url else { renameTarget = nil; return }
         guard !FileManager.default.fileExists(atPath: target.path) else {
-            errorMessage = "An item named “\(trimmed)” already exists."
+            errorMessage = String(localized: "An item named “\(trimmed)” already exists.")
             return
         }
         do {
@@ -1032,12 +1032,12 @@ final class BrowserModel: ObservableObject {
     private func validatedNewItemURL(named name: String) -> URL? {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !trimmed.contains("/") else {
-            errorMessage = "Enter a name without a slash."
+            errorMessage = String(localized: "Enter a name without a slash.")
             return nil
         }
         let url = currentURL.appendingPathComponent(trimmed)
         guard !FileManager.default.fileExists(atPath: url.path) else {
-            errorMessage = "An item named “\(trimmed)” already exists."
+            errorMessage = String(localized: "An item named “\(trimmed)” already exists.")
             return nil
         }
         return url
@@ -1166,7 +1166,7 @@ final class BrowserModel: ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 if let error {
-                    self.errorMessage = "Couldn’t move the selected item\(urls.count == 1 ? "" : "s") to the Trash: \(error.localizedDescription)"
+                    self.errorMessage = String(localized: "Couldn’t move the selected items to the Trash: \(error.localizedDescription)")
                     return
                 }
                 self.selection.subtract(urls)
@@ -1212,12 +1212,12 @@ final class BrowserModel: ObservableObject {
     var favorites: [FavoriteLocation] {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let builtIn = [
-            FavoriteLocation(url: home, title: "Home", icon: "house", isBuiltIn: true),
-            FavoriteLocation(url: home.appendingPathComponent("Desktop"), title: "Desktop",
+            FavoriteLocation(url: home, title: String(localized: "Home"), icon: "house", isBuiltIn: true),
+            FavoriteLocation(url: home.appendingPathComponent("Desktop"), title: String(localized: "Desktop"),
                              icon: "menubar.dock.rectangle", isBuiltIn: true),
-            FavoriteLocation(url: home.appendingPathComponent("Documents"), title: "Documents",
+            FavoriteLocation(url: home.appendingPathComponent("Documents"), title: String(localized: "Documents"),
                              icon: "doc", isBuiltIn: true),
-            FavoriteLocation(url: home.appendingPathComponent("Downloads"), title: "Downloads",
+            FavoriteLocation(url: home.appendingPathComponent("Downloads"), title: String(localized: "Downloads"),
                              icon: "arrow.down.circle", isBuiltIn: true)
         ]
         let locations = builtIn + customFavorites.map {
@@ -1352,17 +1352,17 @@ private enum NetworkShareService {
         var errorDescription: String? {
             switch self {
             case .invalidAddress:
-                return "Enter an SMB address such as smb://server/share."
+                return String(localized: "Enter an SMB address such as smb://server/share.")
             case .passwordInAddress:
-                return "Leave the password out of the address. macOS will ask for it securely."
+                return String(localized: "Leave the password out of the address. macOS will ask for it securely.")
             case .failed(let status):
                 if status > 0 {
                     return String(cString: strerror(status))
                 }
                 return (SecCopyErrorMessageString(OSStatus(status), nil) as String?)
-                    ?? "The server returned error \(status)."
+                    ?? String(localized: "The server returned error \(status).")
             case .noMountPoint:
-                return "macOS connected but did not return a mounted share."
+                return String(localized: "macOS connected but did not return a mounted share.")
             }
         }
     }

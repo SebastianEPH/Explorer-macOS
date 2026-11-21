@@ -9,14 +9,14 @@ struct FileTemplate: Identifiable, Sendable {
 
 enum TemplateService {
     static let templates: [FileTemplate] = [
-        FileTemplate(name: "Plain Text", suggestedFilename: "Untitled.txt", contents: Data()),
+        FileTemplate(name: String(localized: "Plain Text"), suggestedFilename: "Untitled.txt", contents: Data()),
         FileTemplate(
             name: "Markdown",
             suggestedFilename: "README.md",
             contents: Data("# Title\n\n".utf8)
         ),
         FileTemplate(
-            name: "Swift File",
+            name: String(localized: "Swift File"),
             suggestedFilename: "Untitled.swift",
             contents: Data("import Foundation\n\n".utf8)
         ),

@@ -27,13 +27,13 @@ struct GitStatusBadge: View {
 
     private func description(for state: GitFileState) -> String {
         switch state {
-        case .modified: "Git: Modified"
-        case .added: "Git: Added"
-        case .deleted: "Git: Deleted"
-        case .renamed: "Git: Renamed"
-        case .conflicted: "Git: Conflict"
-        case .untracked: "Git: Untracked"
-        case .ignored: "Git: Ignored"
+        case .modified: String(localized: "Git: Modified")
+        case .added: String(localized: "Git: Added")
+        case .deleted: String(localized: "Git: Deleted")
+        case .renamed: String(localized: "Git: Renamed")
+        case .conflicted: String(localized: "Git: Conflict")
+        case .untracked: String(localized: "Git: Untracked")
+        case .ignored: String(localized: "Git: Ignored")
         }
     }
 }

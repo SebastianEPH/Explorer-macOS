@@ -174,7 +174,7 @@ struct FreeloaderApp: App {
                     .keyboardShortcut("p", modifiers: [.command, .option])
                 Picker("View Mode", selection: bind(\.viewMode)) {
                     ForEach(FileViewMode.allCases) { mode in
-                        Text(mode.rawValue).tag(mode)
+                        Text(LocalizedStringKey(mode.rawValue)).tag(mode)
                     }
                 }
                 Menu("Columns") {
@@ -183,7 +183,7 @@ struct FreeloaderApp: App {
                     Toggle("Date Modified", isOn: bind(\.showsModifiedColumn))
                     Toggle("Date Created", isOn: $showsCreatedColumn)
                 }
-                Button(browser.showsHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files") {
+                Button(browser.showsHiddenFiles ? String(localized: "Hide Hidden Files") : "Show Hidden Files") {
                     browser.toggleHiddenFiles()
                 }
                 .keyboardShortcut(".", modifiers: [.command, .shift])

@@ -30,7 +30,7 @@ struct TabBarView: View {
                     .contentShape(Rectangle())
                     .onTapGesture { browser.selectTab(tab.id) }
                     .contextMenu {
-                        Button(tab.isPinned ? "Unpin Tab" : "Pin Tab") {
+                        Button(tab.isPinned ? String(localized: "Unpin Tab") : String(localized: "Pin Tab")) {
                             browser.togglePinnedTab(tab.id)
                         }
                         Button("Duplicate Tab") {

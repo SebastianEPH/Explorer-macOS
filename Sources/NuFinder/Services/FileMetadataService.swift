@@ -24,7 +24,7 @@ enum FileMetadataService {
     static func setPermissions(_ mode: Int, at url: URL) throws {
         guard (0...0o7777).contains(mode) else {
             throw CocoaError(.fileWriteInvalidFileName, userInfo: [
-                NSLocalizedDescriptionKey: "Permissions must be an octal value from 0000 through 7777."
+                NSLocalizedDescriptionKey: String(localized: "Permissions must be an octal value from 0000 through 7777.")
             ])
         }
         try FileManager.default.setAttributes([.posixPermissions: mode], ofItemAtPath: url.path)

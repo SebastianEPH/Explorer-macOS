@@ -67,7 +67,7 @@ enum ArchiveService {
         let data = output.fileHandleForReading.readDataToEndOfFile()
         let errorData = errors.fileHandleForReading.readDataToEndOfFile()
         guard process.terminationStatus == 0 else {
-            let message = String(data: errorData, encoding: .utf8) ?? "Archive operation failed."
+            let message = String(data: errorData, encoding: .utf8) ?? String(localized: "Archive operation failed.")
             throw NSError(
                 domain: "Freeloader.Archive",
                 code: Int(process.terminationStatus),

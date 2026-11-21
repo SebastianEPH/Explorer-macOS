@@ -81,7 +81,7 @@ struct SidebarView: View {
                                         Image(systemName: "eject")
                                     }
                                     .buttonStyle(.borderless)
-                                    .help("\(volume.isNetwork ? "Disconnect" : "Eject") \(volume.name)")
+                                    .help(volume.isNetwork ? String(localized: "Disconnect \(volume.name)") : String(localized: "Eject \(volume.name)"))
                                 }
                             }
                             .dropDestination(for: URL.self) { urls, _ in
@@ -139,14 +139,14 @@ struct SidebarView: View {
             refreshVolumes()
         }
         .confirmationDialog(
-            "Transfers are still running",
+            String(localized: "Transfers are still running"),
             isPresented: Binding(
                 get: { pendingEject != nil },
                 set: { if !$0 { pendingEject = nil } }
             ),
             titleVisibility: .visible
         ) {
-            Button(pendingEject?.isNetwork == true ? "Disconnect Anyway" : "Eject Anyway",
+            Button(pendingEject?.isNetwork == true ? String(localized: "Disconnect Anyway") : String(localized: "Eject Anyway"),
                    role: .destructive) {
                 if let volume = pendingEject { eject(volume) }
                 pendingEject = nil
@@ -219,7 +219,7 @@ struct SidebarView: View {
                 Task { @MainActor in
                     if let error {
                         browser.errorMessage =
-                            "Couldn’t disconnect \(volume.name): \(error.localizedDescription)"
+                            String(localized: "Couldn’t disconnect \(volume.name): \(error.localizedDescription)")
                     }
                     refreshVolumes()
                 }
@@ -231,7 +231,7 @@ struct SidebarView: View {
                 try NSWorkspace.shared.unmountAndEjectDevice(at: volume.url)
                 refreshVolumes()
             } catch {
-                browser.errorMessage = "Couldn’t eject \(volume.name): \(error.localizedDescription)"
+                browser.errorMessage = String(localized: "Couldn’t eject \(volume.name): \(error.localizedDescription)")
             }
         }
     }

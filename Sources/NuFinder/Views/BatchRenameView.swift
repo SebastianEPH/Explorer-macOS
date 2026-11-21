@@ -49,7 +49,7 @@ struct BatchRenameView: View {
                 TextField("New extension (optional)", text: $request.extensionOverride)
                 Picker("Letter case", selection: $request.letterCase) {
                     ForEach(RenameLetterCase.allCases) { value in
-                        Text(value.rawValue).tag(value)
+                        Text(LocalizedStringKey(value.rawValue)).tag(value)
                     }
                 }
                 Stepper("Starting number: \(request.startIndex)", value: $request.startIndex, in: 0...999_999)

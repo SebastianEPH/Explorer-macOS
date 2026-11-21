@@ -6,14 +6,14 @@ struct SortMenu: View {
     var body: some View {
         Menu {
             ForEach(Array(browser.sortCriteria.enumerated()), id: \.element.id) { index, criterion in
-                Menu("\(index + 1). \(criterion.field.rawValue)") {
+                Menu("\(index + 1). \(String(localized: String.LocalizationValue(criterion.field.rawValue)))") {
                     Picker("Field", selection: fieldBinding(index)) {
                         ForEach(SortField.allCases) { field in
-                            Text(field.rawValue).tag(field)
+                            Text(LocalizedStringKey(field.rawValue)).tag(field)
                         }
                     }
                     Divider()
-                    Button(criterion.ascending ? "Descending" : "Ascending") {
+                    Button(criterion.ascending ? String(localized: "Descending") : String(localized: "Ascending")) {
                         browser.sortCriteria[index].ascending.toggle()
                         browser.sortedAgain()
                     }
@@ -28,7 +28,7 @@ struct SortMenu: View {
             Divider()
             Menu("Add Criterion") {
                 ForEach(SortField.allCases) { field in
-                    Button(field.rawValue) {
+                    Button(LocalizedStringKey(field.rawValue)) {
                         browser.sortCriteria.append(SortCriterion(field: field, ascending: true))
                         browser.sortedAgain()
                     }

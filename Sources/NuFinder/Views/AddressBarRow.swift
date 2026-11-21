@@ -102,7 +102,7 @@ struct AddressBarRow: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
-        .help("View Mode: \(browser.viewMode.rawValue)")
+        .help("View Mode: \(String(localized: String.LocalizationValue(browser.viewMode.rawValue)))")
     }
 
     private func viewModeIcon(_ mode: FileViewMode) -> String {

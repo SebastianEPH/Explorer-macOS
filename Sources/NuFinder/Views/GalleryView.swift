@@ -32,7 +32,7 @@ struct GalleryView: View {
             Group {
                 if images.isEmpty {
                     ContentUnavailableView(
-                        "No Images Here",
+                        String(localized: "No Images Here"),
                         systemImage: "photo.on.rectangle.angled",
                         description: Text("This gallery only shows images in the current folder.")
                     )
@@ -78,7 +78,7 @@ struct GalleryView: View {
             Spacer()
             Picker("Gallery Mode", selection: $mode) {
                 ForEach(GalleryMode.allCases) { mode in
-                    Text(mode.rawValue).tag(mode)
+                    Text(LocalizedStringKey(mode.rawValue)).tag(mode)
                 }
             }
             .pickerStyle(.segmented)
@@ -113,7 +113,7 @@ struct GalleryView: View {
     private func chooseExport(format: ExportFormat) {
         let panel = NSSavePanel()
         panel.allowedContentTypes = format == .png ? [.png] : [.pdf]
-        panel.nameFieldStringValue = "\(browser.currentURL.lastPathComponent) Contact Sheet.\(format.extensionName)"
+        panel.nameFieldStringValue = String(localized: "\(browser.currentURL.lastPathComponent) Contact Sheet.\(format.extensionName)")
         guard panel.runModal() == .OK, let url = panel.url else { return }
         isExporting = true
         let items = images
@@ -127,7 +127,7 @@ struct GalleryView: View {
                     }
                 }.value
             } catch {
-                exportError = "Couldn’t save the contact sheet: \(error.localizedDescription)"
+                exportError = String(localized: "Couldn’t save the contact sheet: \(error.localizedDescription)")
             }
             isExporting = false
         }
@@ -141,7 +141,7 @@ struct GalleryView: View {
             do {
                 try await ContactSheetService.printContactSheet(images: items, title: title)
             } catch {
-                exportError = "Couldn’t print the contact sheet: \(error.localizedDescription)"
+                exportError = String(localized: "Couldn’t print the contact sheet: \(error.localizedDescription)")
             }
             isExporting = false
         }
