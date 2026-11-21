@@ -932,6 +932,8 @@ private struct RenameField: View {
     var body: some View {
         TextField("Name", text: $name)
             .textFieldStyle(.plain)
+            .autocorrectionDisabled() // Fork: sin autocorrección ni herramientas de escritura al renombrar
+            .writingToolsBehavior(.disabled)
             .focused($focused)
             .onAppear {
                 name = item.name

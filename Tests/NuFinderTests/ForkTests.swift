@@ -200,6 +200,12 @@ struct ForkTests {
         #expect(SidebarExtras.cloudName("Dropbox") == "Dropbox")
     }
 
+    @Test func textPredictionIsTurnedOff() {
+        let defaults = UserDefaults(suiteName: "ForkTests.\(UUID().uuidString)")!
+        TextPredictionSettings.apply(defaults)
+        #expect(defaults.object(forKey: TextPredictionSettings.key) as? Bool == false)
+    }
+
     @Test func behaviorSettingsDefaultToOriginal() {
         let defaults = UserDefaults(suiteName: "ForkTests.\(UUID().uuidString)")!
         #expect(BehaviorSettings.restoresTabs(defaults))
