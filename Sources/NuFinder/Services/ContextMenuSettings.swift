@@ -18,6 +18,15 @@ enum ContextMenuOption: String, CaseIterable, Identifiable {
 
     var isBackground: Bool { rawValue.hasPrefix("bg") }
 
+    /// Nombre tal como sale en el menú real de ese tipo (algunas opciones cambian de nombre).
+    func title(in scope: ContextMenuScope) -> LocalizedStringKey {
+        switch (self, scope) {
+        case (.openInTerminal, .file), (.openInTerminal, .image), (.openInTerminal, .archive): "Open Parent in Terminal"
+        case (.paste, .folder): "Paste into Folder"
+        default: title
+        }
+    }
+
     var title: LocalizedStringKey {
         switch self {
         case .open: "Open"
@@ -250,7 +259,7 @@ struct ContextMenuSection: View {
                 get: { ContextMenuSettings.isVisible(option, scope: scope, in: hidden) },
                 set: { hidden = ContextMenuSettings.setting(option, scope: scope, visible: $0, in: hidden) }
             )) {
-                Label(option.title, systemImage: option.symbol)
+                Label(option.title(in: scope), systemImage: option.symbol)
                 if let condition = option.condition { Text(condition) }
             }
             .toggleStyle(.switch)

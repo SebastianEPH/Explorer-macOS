@@ -194,7 +194,7 @@ struct ContextMenuPreview: View {
                 if index > 0, option.startsGroup { Divider().padding(.vertical, 2) }
                 HStack(spacing: 6) {
                     Image(systemName: option.symbol).frame(width: 16).foregroundStyle(.secondary)
-                    Text(option.title).font(.system(size: 12))
+                    Text(option.title(in: scope)).font(.system(size: 12))
                     Spacer(minLength: 0)
                     if option.hasSubmenu { Image(systemName: "chevron.right").font(.system(size: 9)) }
                 }

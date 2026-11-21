@@ -159,6 +159,13 @@ struct ForkTests {
         #expect(known.bytes == 1500 && known.pendingFolders == 0)
     }
 
+    @Test func contextMenuTitlesMatchRealMenu() {
+        #expect(ContextMenuOption.openInTerminal.title(in: .file) == "Open Parent in Terminal")
+        #expect(ContextMenuOption.openInTerminal.title(in: .folder) == "Open in Terminal")
+        #expect(ContextMenuOption.paste.title(in: .folder) == "Paste into Folder")
+        #expect(ContextMenuOption.paste.title(in: .file) == "Paste")
+    }
+
     @Test func behaviorSettingsDefaultToOriginal() {
         let defaults = UserDefaults(suiteName: "ForkTests.\(UUID().uuidString)")!
         #expect(BehaviorSettings.restoresTabs(defaults))
