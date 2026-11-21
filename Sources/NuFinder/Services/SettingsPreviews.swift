@@ -117,31 +117,34 @@ struct GitBadgePreview: View {
     }
 }
 
-/// Cuadrícula de iconos con la zona de clic resaltada.
+/// Cuadrícula de iconos igual que la vista «Iconos» real: mismo tamaño, separación,
+/// zona de clic (línea discontinua) y color de selección (el segundo está seleccionado).
 struct HitAreaPreview: View {
     let compact: Bool
     let spacing: Double
+    let iconSize: Double
+    private let items = [("Fotos", "folder.fill"), ("Informe.pdf", "doc.fill"), ("Vacaciones.jpg", "photo.fill"), ("Música", "folder.fill")]
 
     var body: some View {
-        SettingsPreviewBox(title: "Preview: blue = area that selects the file when clicked") {
-            HStack(alignment: .top, spacing: spacing) {
-                ForEach(["Fotos", "Informe.pdf", "Música"], id: \.self) { name in
-                    VStack(spacing: 4) {
-                        Image(systemName: name.contains(".") ? "doc.fill" : "folder.fill")
-                            .font(.system(size: 30))
-                            .foregroundStyle(name.contains(".") ? Color.secondary : Color.accentColor)
-                        Text(verbatim: name).font(.caption)
+        SettingsPreviewBox(title: "Preview: Icons view · dashed line = click area · blue = selected") {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: iconSize + 49), spacing: spacing)], spacing: spacing) {
+                ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                    VStack(spacing: 7) {
+                        Image(systemName: item.1)
+                            .font(.system(size: iconSize * 0.8))
+                            .foregroundStyle(item.1 == "folder.fill" ? Color.accentColor : .secondary)
+                            .frame(width: iconSize, height: iconSize)
+                        Text(verbatim: item.0).font(.callout).lineLimit(2).multilineTextAlignment(.center)
                     }
-                    .padding(6)
-                    .frame(width: compact ? nil : 96)
-                    .frame(maxHeight: compact ? nil : 80, alignment: .top)
-                    .background(Color.accentColor.opacity(0.18), in: RoundedRectangle(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.accentColor.opacity(0.6)))
+                    .frame(maxWidth: compact ? iconSize + 36 : .infinity, minHeight: iconSize + 26)
+                    .padding(7)
+                    .background(index == 1 ? Color.accentColor.opacity(0.22) : .clear, in: RoundedRectangle(cornerRadius: 7))
+                    .overlay(RoundedRectangle(cornerRadius: 7).strokeBorder(Color.accentColor.opacity(0.7), style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
                 }
             }
-            .frame(height: 90)
             .animation(.default, value: compact)
             .animation(.default, value: spacing)
+            .animation(.default, value: iconSize)
         }
     }
 }

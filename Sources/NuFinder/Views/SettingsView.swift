@@ -46,7 +46,7 @@ struct SettingsView: View {
         }
         .settingsTab("General", systemImage: "gearshape")
         Form { StartupSection() }.settingsTab("Startup", systemImage: "power")
-        Form { FileBehaviorSection(); ItemHitAreaSection() }.settingsTab("Files", systemImage: "doc")
+        Form { ItemHitAreaSection(); FileBehaviorSection() }.settingsTab("Files", systemImage: "doc")
         Form { AppearanceSection() }.settingsTab("Appearance", systemImage: "paintpalette")
         Form { FavoritesSection() }.settingsTab("Favorites", systemImage: "star")
         Form { ContextMenuSection() }.settingsTab("Context Menu", systemImage: "contextualmenu.and.cursorarrow")

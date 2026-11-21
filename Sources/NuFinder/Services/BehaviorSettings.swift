@@ -168,7 +168,6 @@ struct StartupSection: View {
 struct FileBehaviorSection: View {
     @AppStorage(BehaviorSettings.foldersInNewTabKey) private var foldersInNewTab = false
     @AppStorage(BehaviorSettings.confirmTrashKey) private var confirmTrash = false
-    @AppStorage(BehaviorSettings.iconSizeKey) private var iconSize = BehaviorSettings.defaultIconSize
     @AppStorage(ListColumnSettings.showsCreatedKey) private var showsCreated = false
     @AppStorage("previewPane.visible") private var previewVisible = true
     @AppStorage("operations.autoClose") private var autoClose = true
@@ -182,25 +181,6 @@ struct FileBehaviorSection: View {
             Toggle(isOn: $confirmTrash) {
                 Label("Ask before moving to the Trash", systemImage: "trash")
                 Text("Shows a confirmation before deleting with ⌘⌫ or the menu.")
-            }
-        }
-        Section("Icons") {
-            LabeledContent {
-                HStack {
-                    Slider(value: $iconSize, in: 32...128, step: 4)
-                    Text("\(Int(iconSize)) pt").monospacedDigit().frame(width: 50, alignment: .trailing)
-                }
-            } label: { Label("Icon size", systemImage: "arrow.up.left.and.arrow.down.right") }
-            SettingsPreviewBox(title: "Preview: Icons view") {
-                HStack(spacing: 16) {
-                    ForEach(["folder.fill", "doc.fill", "photo.fill"], id: \.self) { symbol in
-                        Image(systemName: symbol)
-                            .font(.system(size: iconSize * 0.75))
-                            .foregroundStyle(symbol == "folder.fill" ? Color.accentColor : .secondary)
-                            .frame(width: iconSize, height: iconSize)
-                    }
-                }
-                .animation(.default, value: iconSize)
             }
         }
         Section("Panels") {
