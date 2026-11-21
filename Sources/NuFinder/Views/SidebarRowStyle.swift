@@ -15,11 +15,16 @@ struct SidebarRowButtonStyle: ButtonStyle {
         @State private var isHovering = false
 
         var body: some View {
+            // El fondo se dibuja por fuera (márgenes negativos) para no mover el texto:
+            // así queda alineado con las filas que no usan este estilo (discos, «Conectarse al servidor»).
             configuration.label
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
-                .background(background, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(background)
+                        .padding(.horizontal, -6)
+                        .padding(.vertical, -3)
+                )
                 .contentShape(Rectangle())
                 .scaleEffect(configuration.isPressed ? 0.98 : 1)
                 .onHover { isHovering = $0 }
