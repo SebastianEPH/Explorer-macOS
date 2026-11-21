@@ -12,6 +12,9 @@ enum FinderRedirectService {
     private static var observers: [NSObjectProtocol] = []
     private static let startedAt = Date()
     private static var redirecting = false
+    /// Fork: pausa para abrir ventanas que solo existen en Finder (AirDrop, Red).
+    private static var pausedUntil = Date.distantPast
+    static func pause(seconds: TimeInterval) { pausedUntil = Date().addingTimeInterval(seconds) }
 
     static var isEnabled: Bool { UserDefaults.standard.bool(forKey: enabledKey) }
 
@@ -34,7 +37,7 @@ enum FinderRedirectService {
 
     private static func redirect(_ finder: NSRunningApplication?) {
         // Al iniciar sesión macOS arranca Finder por su cuenta: eso no es un clic.
-        guard isEnabled, Date().timeIntervalSince(startedAt) > 15, !redirecting else { return }
+        guard isEnabled, Date().timeIntervalSince(startedAt) > 15, !redirecting, Date() > pausedUntil else { return }
         redirecting = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             finder?.terminate()

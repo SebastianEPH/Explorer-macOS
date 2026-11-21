@@ -421,7 +421,6 @@
 "View buttons (List, Compact, Icons)" = "Botones de vista (Lista, Compacta, Iconos)";
 
 /* Fork: barra lateral, sección Más */
-"More" = "Más";
 "Trash" = "Papelera";
 "iCloud Drive" = "iCloud Drive";
 "Empty the Trash?" = "¿Vaciar la Papelera?";
@@ -429,8 +428,6 @@
 "Empty Trash" = "Vaciar Papelera";
 "Empty Trash…" = "Vaciar Papelera…";
 "Couldn’t empty the Trash: %@. Explorer may need Full Disk Access (Settings → System)." = "No se pudo vaciar la Papelera: %@. Puede que Explorer necesite Acceso total al disco (Ajustes → Sistema).";
-"Right-click it to empty the Trash." = "Haz clic derecho sobre ella para vaciarla.";
-"Only appears if iCloud Drive is turned on on this Mac." = "Solo aparece si iCloud Drive está activado en este Mac.";
 "Applications" = "Aplicaciones";
 "Explorer needs Full Disk Access to show the Trash" = "Explorer necesita Acceso total al disco para mostrar la Papelera";
 "macOS protects the Trash. Turn on Explorer in Privacy & Security → Full Disk Access, then reopen Explorer." = "macOS protege la Papelera. Activa Explorer en Privacidad y seguridad → Acceso total al disco y vuelve a abrir Explorer.";
@@ -581,3 +578,7 @@
 "Copy path" = "Copiar ruta";
 "Tabs in the top bar (one row)" = "Pestañas en la barra de arriba (una sola fila)";
 "The tabs go into the window’s top bar, next to its buttons, instead of a row of their own." = "Las pestañas van dentro de la barra de arriba de la ventana, junto a sus botones, en vez de ocupar una fila propia.";
+"Network" = "Red";
+"Cloud storage (OneDrive, Google Drive, Dropbox…)" = "Nubes (OneDrive, Google Drive, Dropbox…)";
+"Send the selected files by AirDrop, or open the AirDrop window" = "Envía por AirDrop los archivos seleccionados, o abre la ventana de AirDrop";
+"They appear inside “Locations”. Cloud folders are found automatically." = "Aparecen dentro de «Ubicaciones». Las carpetas de nubes se detectan solas.";

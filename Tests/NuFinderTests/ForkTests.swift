@@ -194,6 +194,12 @@ struct ForkTests {
         #expect(!LayoutSettings.showsTabBar("never", tabCount: 5))
     }
 
+    @Test func cloudFolderNames() {
+        #expect(SidebarExtras.cloudName("OneDrive-Personal") == "OneDrive (Personal)")
+        #expect(SidebarExtras.cloudName("GoogleDrive-ana@x.com") == "Google Drive (ana@x.com)")
+        #expect(SidebarExtras.cloudName("Dropbox") == "Dropbox")
+    }
+
     @Test func behaviorSettingsDefaultToOriginal() {
         let defaults = UserDefaults(suiteName: "ForkTests.\(UUID().uuidString)")!
         #expect(BehaviorSettings.restoresTabs(defaults))

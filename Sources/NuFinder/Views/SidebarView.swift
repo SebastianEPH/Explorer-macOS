@@ -88,6 +88,7 @@ struct SidebarView: View {
                                 moveDroppedItems(urls, to: volume.url)
                             }
                         }
+                        SidebarExtrasRows() // Fork: AirDrop, Red, nubes, iCloud, Aplicaciones, Papelera
                         Button {
                             browser.requestConnectToServer()
                         } label: {
@@ -96,7 +97,6 @@ struct SidebarView: View {
                         .buttonStyle(.plain)
                     }
                     }
-                    SidebarExtrasSection() // Fork: Papelera, Aplicaciones, iCloud Drive
                     if browser.showsTree {
                         Section("Folders") {
                             FolderTreeNode(
