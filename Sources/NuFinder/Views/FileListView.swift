@@ -204,6 +204,14 @@ struct FileListView: View {
                 .width(min: 140, ideal: 170)
             }
         }
+        // Fork: recuadro de selección al arrastrar desde una zona vacía, como en Windows.
+        .tableMarquee(onSelect: { rows in
+            let items = browser.displayedItems
+            browser.selection = Set(rows.filter(items.indices.contains).map { items[$0].url })
+        }, current: {
+            let items = browser.displayedItems
+            return Set(items.indices.filter { browser.selection.contains(items[$0].url) })
+        })
         .onKeyPress(.return) {
             guard let selectedURL = browser.selection.first,
                   browser.displayedItems.contains(where: { $0.url == selectedURL }) else {

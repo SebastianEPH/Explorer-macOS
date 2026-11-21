@@ -173,6 +173,12 @@ struct ForkTests {
         #expect(RightClickSelection.selection(afterRightClickOn: b, current: [a, b, c]) == [a, b, c])
     }
 
+    @Test func tableMarqueeSelection() {
+        #expect(TableMarquee.selection(rows: [2, 3], base: [0], additive: false) == [2, 3])
+        #expect(TableMarquee.selection(rows: [2, 3], base: [0], additive: true) == [0, 2, 3])
+        #expect(TableMarquee.selection(rows: [], base: [1], additive: false).isEmpty)
+    }
+
     @Test func behaviorSettingsDefaultToOriginal() {
         let defaults = UserDefaults(suiteName: "ForkTests.\(UUID().uuidString)")!
         #expect(BehaviorSettings.restoresTabs(defaults))
