@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage("gitStatusEnabled") private var gitStatusEnabled = false
 
     var body: some View {
+        TabView { // Fork: Ajustes en pestañas
         Form {
             Picker("Terminal application", selection: $terminalPath) {
                 ForEach(TerminalService.installedApplications, id: \.path) { application in
@@ -39,18 +40,22 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            FavoritesSection()
-            ItemHitAreaSection()
-            ContextMenuSection()
+            LanguageSection()
+        }
+        .settingsTab("General", systemImage: "gearshape")
+        Form { ItemHitAreaSection() }.settingsTab("Files", systemImage: "doc")
+        Form { FavoritesSection() }.settingsTab("Favorites", systemImage: "star")
+        Form { ContextMenuSection() }.settingsTab("Context Menu", systemImage: "contextualmenu.and.cursorarrow")
+        Form {
             PermissionsSection()
             FinderRedirectSection()
-            LanguageSection()
             UpdatesSection()
+        }
+        .settingsTab("System", systemImage: "lock.shield")
         }
         .onChange(of: commandPaletteKey) { _, value in commandPaletteKey = sanitized(value, fallback: "p") }
         .onChange(of: terminalKey) { _, value in terminalKey = sanitized(value, fallback: "t") }
-        .padding(20)
-        .frame(width: 520)
+        .frame(width: 560, height: 520)
     }
 
     private func sanitized(_ value: String, fallback: String) -> String {

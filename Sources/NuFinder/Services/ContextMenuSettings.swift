@@ -87,18 +87,17 @@ struct ContextMenuSection: View {
     @AppStorage(ContextMenuSettings.hiddenKey) private var hidden = ""
 
     var body: some View {
-        Section("Context Menu") {
-            Text("Choose which options appear when you right-click.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            DisclosureGroup("On a file or folder") {
-                toggles(ContextMenuOption.allCases.filter { !$0.isBackground })
-            }
-            DisclosureGroup("On empty space") {
-                toggles(ContextMenuOption.allCases.filter(\.isBackground))
-            }
+        Section {
             Button("Show All Options") { hidden = "" }
                 .disabled(hidden.isEmpty)
+        } footer: {
+            Text("Choose which options appear when you right-click.")
+        }
+        Section("On a file or folder") {
+            toggles(ContextMenuOption.allCases.filter { !$0.isBackground })
+        }
+        Section("On empty space") {
+            toggles(ContextMenuOption.allCases.filter(\.isBackground))
         }
     }
 
@@ -109,5 +108,12 @@ struct ContextMenuSection: View {
                 set: { hidden = ContextMenuSettings.setting(option, visible: $0, in: hidden) }
             ))
         }
+    }
+}
+
+extension View {
+    /// Fork: una pestaña de Ajustes con formulario agrupado y desplazable.
+    func settingsTab(_ title: LocalizedStringKey, systemImage: String) -> some View {
+        formStyle(.grouped).tabItem { Label(title, systemImage: systemImage) }
     }
 }

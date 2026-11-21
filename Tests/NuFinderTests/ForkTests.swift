@@ -3,6 +3,7 @@ import Testing
 @testable import NuFinder
 
 /// Pruebas de lo que añade el fork.
+@Suite(.serialized) // el portapapeles compartido es global: sin paralelo
 struct ForkTests {
     @MainActor
     private func loadedBrowser(at root: URL) async throws -> BrowserModel {

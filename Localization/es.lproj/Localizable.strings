@@ -309,3 +309,8 @@
 "Show All Options" = "Mostrar todas las opciones";
 "Share…" = "Compartir…";
 "Show Hidden Files" = "Mostrar archivos ocultos";
+
+/* Fork: pestañas de Ajustes */
+"General" = "General";
+"Files" = "Archivos";
+"System" = "Sistema";
