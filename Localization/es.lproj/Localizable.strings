@@ -575,9 +575,9 @@
 "Buttons with copy (one row)" = "Botones con copiar (una fila)";
 "Text only" = "Solo texto";
 "Path" = "Ruta";
-"With buttons only, the pencil or a double-click lets you type a path." = "Con solo botones, el lápiz o un doble clic te dejan escribir una ruta.";
 "Search bar" = "Barra de búsqueda";
 "Hidden: ⌘F still searches." = "Oculta: ⌘F sigue buscando.";
 "only with 2+ tabs" = "solo con 2+ pestañas";
-"Type a path" = "Escribir una ruta";
 "Copy path" = "Copiar ruta";
+"Tabs in the top bar (one row)" = "Pestañas en la barra de arriba (una sola fila)";
+"The tabs go into the window’s top bar, next to its buttons, instead of a row of their own." = "Las pestañas van dentro de la barra de arriba de la ventana, junto a sus botones, en vez de ocupar una fila propia.";

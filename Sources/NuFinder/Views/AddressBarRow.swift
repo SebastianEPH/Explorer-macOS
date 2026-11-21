@@ -3,7 +3,6 @@ import SwiftUI
 struct AddressBarRow: View {
     @EnvironmentObject private var browser: BrowserModel
     @AppStorage(LayoutSettings.pathKey) private var pathMode = "both" // Fork
-    @State private var editingPath = false // Fork
 
     var body: some View {
         VStack(spacing: 7) {
@@ -46,8 +45,8 @@ struct AddressBarRow: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(.tint)
                 .help("Parent Folder")
-                if pathMode == "buttons" && !editingPath { // Fork: ruta en botones con copiar
-                    PathButtonsBar(editing: $editingPath)
+                if pathMode == "buttons" { // Fork: ruta en botones con botón de copiar
+                    PathButtonsBar()
                 } else {
                 Image(systemName: "location")
                     .foregroundStyle(.secondary)
@@ -75,11 +74,6 @@ struct AddressBarRow: View {
             }
             if pathMode == "both" { BreadcrumbView() } // Fork
         }
-        .onChange(of: browser.currentURL) { _, _ in editingPath = false } // Fork
-        .onChange(of: editingPath) { _, editing in // Fork: al editar, el cursor va al campo de texto
-            if editing { DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { browser.requestAddressFocus() } }
-        }
-        .onExitCommand { editingPath = false } // Fork
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(.bar)

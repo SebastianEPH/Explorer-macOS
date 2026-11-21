@@ -6,6 +6,7 @@ struct ContentView: View {
     @EnvironmentObject private var operations: FileOperationManager
     @EnvironmentObject private var paneFocus: PaneFocusCoordinator
     @AppStorage("previewPane.visible") private var previewVisible = true // Fork
+    @AppStorage(LayoutSettings.compactTopKey) private var compactTop = false // Fork
     @StateObject private var secondaryBrowser = BrowserModel(
         initialURL: FileManager.default.homeDirectoryForCurrentUser,
         restoresSession: false
@@ -166,7 +167,7 @@ struct ContentView: View {
     @ViewBuilder
     private func browserPane(for model: BrowserModel) -> some View {
         VStack(spacing: 0) {
-            LayoutTabBar() // Fork: pestañas según Ajustes → Apariencia → Ventana
+            LayoutTabBar() // Fork: pestañas según Ajustes → Ventana
             AddressBarRow()
             Divider()
             LayoutSearchBar() // Fork: búsqueda según Ajustes
@@ -245,7 +246,17 @@ struct ContentView: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        ToolbarItemGroup {
+        if compactTop { // Fork: pestañas dentro de la barra de arriba
+            ToolbarItem(placement: .navigation) { CompactTabs().environmentObject(activeBrowser) }
+        }
+        ToolbarItemGroup(placement: compactTop ? .primaryAction : .automatic) { // Fork: en compacto, a la derecha
+            toolbarButtons // Fork: los mismos botones pueden ir en la fila de pestañas
+        }
+    }
+
+    // Fork: botones de la barra en una vista aparte para poder ponerlos también junto a las pestañas.
+    @ViewBuilder
+    private var toolbarButtons: some View {
             Menu {
                 if workspaceStore.workspaces.isEmpty {
                     Text("No Saved Workspaces")
@@ -298,7 +309,6 @@ struct ContentView: View {
                 .buttonStyle(.plain)
                 .help("File Operations")
             }
-        }
     }
 
     private var detailPresented: Binding<Bool> {

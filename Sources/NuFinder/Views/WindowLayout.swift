@@ -8,6 +8,8 @@ enum LayoutSettings {
     static let tabBarKey = "layout.tabBar"       // "always", "multiple", "never"
     static let pathKey = "layout.path"           // "both", "buttons", "text"
     static let showsSearchKey = "layout.showsSearch"
+    /// Sin barra de título: los botones van a la derecha de la fila de pestañas.
+    static let compactTopKey = "layout.compactTop"
 
     static func showsTabBar(_ mode: String, tabCount: Int) -> Bool {
         switch mode {
@@ -22,11 +24,77 @@ enum LayoutSettings {
 struct LayoutTabBar: View {
     @EnvironmentObject private var browser: BrowserModel
     @AppStorage(LayoutSettings.tabBarKey) private var mode = "always"
+    @AppStorage(LayoutSettings.compactTopKey) private var compactTop = false
 
     var body: some View {
-        if LayoutSettings.showsTabBar(mode, tabCount: browser.tabs.count) {
+        // En el modo compacto las pestañas van dentro de la barra de arriba (ver `CompactTabsToolbarItem`).
+        if !compactTop && LayoutSettings.showsTabBar(mode, tabCount: browser.tabs.count) {
             TabBarView()
             Divider()
+        }
+    }
+}
+
+/// Pestañas dentro de la barra de arriba de la ventana. Ocupan el espacio libre hasta los botones,
+/// para que estos queden en el borde derecho.
+struct CompactTabs: View {
+    @EnvironmentObject private var browser: BrowserModel
+    @AppStorage(LayoutSettings.tabBarKey) private var mode = "always"
+    @State private var width: CGFloat = 300
+
+    /// Ancho aproximado de los botones de la derecha y márgenes.
+    static let buttonsWidth: CGFloat = 200
+
+    var body: some View {
+        Group {
+            if LayoutSettings.showsTabBar(mode, tabCount: browser.tabs.count) {
+                TabBarView()
+            } else {
+                Color.clear
+            }
+        }
+        .frame(width: width)
+        .background(ToolbarSpaceReader { available in
+            let target = max(120, available - Self.buttonsWidth)
+            if abs(target - width) > 2 { width = target }
+        })
+    }
+}
+
+/// Mide el espacio desde el inicio de esta vista hasta el borde derecho de la ventana.
+private struct ToolbarSpaceReader: NSViewRepresentable {
+    let onChange: (CGFloat) -> Void
+
+    func makeNSView(context: Context) -> ReaderView {
+        let view = ReaderView()
+        view.onChange = onChange
+        return view
+    }
+
+    func updateNSView(_ view: ReaderView, context: Context) {
+        view.onChange = onChange
+        view.report()
+    }
+
+    final class ReaderView: NSView {
+        var onChange: ((CGFloat) -> Void)?
+        private var observer: NSObjectProtocol?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if let observer { NotificationCenter.default.removeObserver(observer) }
+            guard let window else { return }
+            observer = NotificationCenter.default.addObserver(forName: NSWindow.didResizeNotification, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.report() }
+            }
+            DispatchQueue.main.async { self.report() }
+        }
+
+        func report() {
+            guard let window else { return }
+            let minX = convert(bounds, to: nil).minX
+            let available = window.frame.width - minX
+            DispatchQueue.main.async { self.onChange?(available) }
         }
     }
 }
@@ -56,21 +124,14 @@ struct LayoutSearchBar: View {
     }
 }
 
-/// Ruta en botones con copiar y editar, en la misma fila que atrás y adelante.
+/// Ruta en botones (la de siempre, sin cambios) más un botón que solo copia la ruta.
 struct PathButtonsBar: View {
     @EnvironmentObject private var browser: BrowserModel
-    @Binding var editing: Bool
     @State private var copied = false
 
     var body: some View {
         HStack(spacing: 6) {
             BreadcrumbView()
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .onTapGesture(count: 2) { editing = true }
-            Button { editing = true } label: { Image(systemName: "pencil") }
-                .buttonStyle(.borderless)
-                .help(Text("Type a path"))
             Button {
                 FileActionService.copyPaths([browser.currentURL])
                 copied = true
@@ -82,21 +143,24 @@ struct PathButtonsBar: View {
             .buttonStyle(.borderless)
             .help(Text("Copy path"))
         }
-        .padding(.horizontal, 8)
-        .frame(height: 24)
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
     }
 }
 
 /// Muestra u oculta el título «Explorer» de la ventana; los botones de arriba se quedan.
 struct WindowTitleVisibility: NSViewRepresentable {
     @AppStorage(LayoutSettings.showsTitleKey) private var showsTitle = true
+    @AppStorage(LayoutSettings.compactTopKey) private var compactTop = false
 
     func makeNSView(context: Context) -> NSView { NSView() }
 
     func updateNSView(_ view: NSView, context: Context) {
-        let visibility: NSWindow.TitleVisibility = showsTitle ? .visible : .hidden
-        DispatchQueue.main.async { view.window?.titleVisibility = visibility }
+        let visibility: NSWindow.TitleVisibility = showsTitle && !compactTop ? .visible : .hidden
+        let compact = compactTop
+        DispatchQueue.main.async {
+            guard let window = view.window else { return }
+            window.titleVisibility = visibility
+            _ = compact
+        }
     }
 }
 
@@ -106,14 +170,20 @@ struct WindowLayoutSection: View {
     @AppStorage(LayoutSettings.tabBarKey) private var tabBar = "always"
     @AppStorage(LayoutSettings.pathKey) private var path = "both"
     @AppStorage(LayoutSettings.showsSearchKey) private var showsSearch = true
+    @AppStorage(LayoutSettings.compactTopKey) private var compactTop = false
 
     var body: some View {
         Section("Window") {
             SettingsPreviewBox(title: "Preview: top of the window") { preview }
+            Toggle(isOn: $compactTop) {
+                Label("Tabs in the top bar (one row)", systemImage: "rectangle.topthird.inset.filled")
+                Text("The tabs go into the window’s top bar, next to its buttons, instead of a row of their own.")
+            }
             Toggle(isOn: $showsTitle) {
                 Label("Window title “Explorer”", systemImage: "textformat")
                 Text("The buttons on the right stay.")
             }
+            .disabled(compactTop)
             Picker(selection: $tabBar) {
                 Text("Always").tag("always")
                 Text("Only with 2 or more tabs").tag("multiple")
@@ -125,14 +195,13 @@ struct WindowLayoutSection: View {
                 Text("Text only").tag("text")
             } label: {
                 Label("Path", systemImage: "folder")
-                Text("With buttons only, the pencil or a double-click lets you type a path.")
             }
             Toggle(isOn: $showsSearch) {
                 Label("Search bar", systemImage: "magnifyingglass")
                 Text("Hidden: ⌘F still searches.")
             }
             Button("Restore Defaults") {
-                showsTitle = true; tabBar = "always"; path = "both"; showsSearch = true
+                showsTitle = true; tabBar = "always"; path = "both"; showsSearch = true; compactTop = false
             }
         }
     }
@@ -140,6 +209,16 @@ struct WindowLayoutSection: View {
     // Dibujo simplificado de las filas de arriba de la ventana, en el orden real.
     private var preview: some View {
         VStack(spacing: 0) {
+            if compactTop {
+                row(height: 24) {
+                    HStack(spacing: 4) {
+                        ForEach([Color.red, .yellow, .green], id: \.self) { Circle().fill($0).frame(width: 8) }
+                        if tabBar != "never" { tab("Proyectos", selected: true).padding(.leading, 6); tab("Descargas", selected: false) }
+                        Spacer()
+                        ForEach(0..<3, id: \.self) { _ in mini(.accentColor) }
+                    }
+                }
+            } else {
             row(height: 26) {
                 HStack(spacing: 5) {
                     ForEach([Color.red, .yellow, .green], id: \.self) { Circle().fill($0).frame(width: 8) }
@@ -148,7 +227,8 @@ struct WindowLayoutSection: View {
                     ForEach(0..<3, id: \.self) { _ in mini(.accentColor) }
                 }
             }
-            if tabBar != "never" {
+            }
+            if tabBar != "never" && !compactTop {
                 row(height: 22) {
                     HStack(spacing: 4) {
                         tab("Proyectos", selected: true)
@@ -164,7 +244,7 @@ struct WindowLayoutSection: View {
             row(height: 26) {
                 HStack(spacing: 4) {
                     mini(.accentColor); mini(.accentColor); mini(.accentColor)
-                    if path == "buttons" { crumbs; Image(systemName: "pencil").font(.system(size: 9)); Image(systemName: "doc.on.doc").font(.system(size: 9)) }
+                    if path == "buttons" { crumbs; Image(systemName: "doc.on.doc").font(.system(size: 9)) }
                     else { textField }
                     mini(.accentColor); mini(.accentColor)
                 }
@@ -190,7 +270,7 @@ struct WindowLayoutSection: View {
         .background(Color(nsColor: .textBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(.separator))
-        .animation(.default, value: [showsTitle, showsSearch])
+        .animation(.default, value: [showsTitle, showsSearch, compactTop])
         .animation(.default, value: tabBar + path)
     }
 
