@@ -20,7 +20,7 @@ struct SidebarView: View {
                                 Label(favorite.title, systemImage: favorite.icon)
                                     .lineLimit(1)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(SidebarRowButtonStyle(isCurrent: favorite.url.standardizedFileURL == browser.currentURL.standardizedFileURL)) // Fork
                             .dropDestination(for: URL.self) { urls, _ in
                                 moveDroppedItems(urls, to: favorite.url)
                             } isTargeted: { targeted in
