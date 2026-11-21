@@ -187,6 +187,13 @@ struct ForkTests {
         #expect(AppearanceSettings.color(hex: "blue") == nil)
     }
 
+    @Test func tabBarVisibility() {
+        #expect(LayoutSettings.showsTabBar("always", tabCount: 1))
+        #expect(!LayoutSettings.showsTabBar("multiple", tabCount: 1))
+        #expect(LayoutSettings.showsTabBar("multiple", tabCount: 2))
+        #expect(!LayoutSettings.showsTabBar("never", tabCount: 5))
+    }
+
     @Test func behaviorSettingsDefaultToOriginal() {
         let defaults = UserDefaults(suiteName: "ForkTests.\(UUID().uuidString)")!
         #expect(BehaviorSettings.restoresTabs(defaults))

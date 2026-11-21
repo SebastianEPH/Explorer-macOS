@@ -561,3 +561,23 @@
 "Any color" = "Cualquier color";
 "Preview: the purple buttons of the window, in light and dark mode" = "Vista previa: los botones morados de la ventana, en modo claro y oscuro";
 "These colors are used by the toolbar buttons, the up button, sorting, the gallery and the badges." = "Estos colores se usan en los botones de la barra, el botón de subir, ordenar, la galería y los contadores.";
+
+/* Fork: Ajustes → Apariencia → Ventana */
+"Window" = "Ventana";
+"Preview: top of the window" = "Vista previa: parte de arriba de la ventana";
+"Window title “Explorer”" = "Título de la ventana «Explorer»";
+"The buttons on the right stay." = "Los botones de la derecha se quedan.";
+"Always" = "Siempre";
+"Only with 2 or more tabs" = "Solo con 2 o más pestañas";
+"Never" = "Nunca";
+"Tab bar" = "Barra de pestañas";
+"Buttons and text (two rows)" = "Botones y texto (dos filas)";
+"Buttons with copy (one row)" = "Botones con copiar (una fila)";
+"Text only" = "Solo texto";
+"Path" = "Ruta";
+"With buttons only, the pencil or a double-click lets you type a path." = "Con solo botones, el lápiz o un doble clic te dejan escribir una ruta.";
+"Search bar" = "Barra de búsqueda";
+"Hidden: ⌘F still searches." = "Oculta: ⌘F sigue buscando.";
+"only with 2+ tabs" = "solo con 2+ pestañas";
+"Type a path" = "Escribir una ruta";
+"Copy path" = "Copiar ruta";

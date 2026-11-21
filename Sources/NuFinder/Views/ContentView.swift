@@ -58,6 +58,7 @@ struct ContentView: View {
             )
         }
         .toolbar { toolbar }
+        .background(WindowTitleVisibility()) // Fork: título de la ventana según Ajustes
         .onAppear {
             paneFocus.activate(browser)
             NSApp.keyWindow?.representedURL = browser.currentURL
@@ -165,12 +166,10 @@ struct ContentView: View {
     @ViewBuilder
     private func browserPane(for model: BrowserModel) -> some View {
         VStack(spacing: 0) {
-            TabBarView()
-            Divider()
+            LayoutTabBar() // Fork: pestañas según Ajustes → Apariencia → Ventana
             AddressBarRow()
             Divider()
-            SearchBarView()
-            Divider()
+            LayoutSearchBar() // Fork: búsqueda según Ajustes
             HStack(spacing: 0) {
                 FileListView()
                 if let previewItem = previewItem(in: model) {
