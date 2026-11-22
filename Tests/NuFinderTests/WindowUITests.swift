@@ -167,4 +167,53 @@ struct WindowUITests {
         let layout = window.contentLayoutRect.maxY
         #expect(layout < window.frame.height, "el contenido no llega bajo la barra de título")
     }
+
+    // MARK: nube
+
+    /// Completa: en una carpeta normal no salen las opciones de la nube.
+    @Test func normalFolderHasNoCloudOptions() async throws {
+        let url = try folder("nocloud", files: ["nota.txt"])
+        let window = try await openWindow(at: url)
+        defer { window.close() }
+        let browser = try #require(KeyWindowFocus.shared.browser(for: window))
+        for _ in 0..<40 where browser.displayedItems.isEmpty { try await spin(0.1) }
+        browser.viewMode = .list
+        try await spin(1)
+        let menu = try #require(firstRowMenu(in: window))
+        #expect(!menu.contains("Download Now") && !menu.contains("Remove Download"), "\(menu)")
+    }
+
+    /// Flujo: archivo solo en la nube → clic derecho «Descargar ahora» → apago la opción
+    /// en Ajustes → vuelvo a abrir la ventana → ya no sale.
+    @Test func cloudMenuFollowsSettings() async throws {
+        let defaults = UserDefaults.standard
+        let savedHidden = defaults.string(forKey: ContextMenuSettings.hiddenKey)
+        let savedMenu = defaults.object(forKey: CloudStatus.menuKey)
+        let savedProvider = CloudStatus.provider
+        defer {
+            defaults.set(savedHidden, forKey: ContextMenuSettings.hiddenKey)
+            defaults.set(savedMenu, forKey: CloudStatus.menuKey)
+            CloudStatus.provider = savedProvider
+        }
+        defaults.set("", forKey: ContextMenuSettings.hiddenKey)
+        defaults.set(true, forKey: CloudStatus.menuKey)
+        let url = try folder("cloud", files: ["Informe.docx"])
+        CloudStatus.provider = { $0.lastPathComponent == "Informe.docx" ? .cloudOnly : nil }
+
+        func menuItems() async throws -> [String] {
+            let window = try await openWindow(at: url)
+            defer { window.close() }
+            let browser = try #require(KeyWindowFocus.shared.browser(for: window))
+            for _ in 0..<40 where browser.displayedItems.isEmpty { try await spin(0.1) }
+            browser.viewMode = .list
+            try await spin(1)
+            return try #require(firstRowMenu(in: window))
+        }
+        let before = try await menuItems()
+        #expect(before.contains("Download Now"), "\(before)")
+        #expect(!before.contains("Remove Download"))
+        defaults.set(false, forKey: CloudStatus.menuKey)
+        let after = try await menuItems()
+        #expect(!after.contains("Download Now"), "\(after)")
+    }
 }

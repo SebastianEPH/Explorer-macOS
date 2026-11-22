@@ -236,6 +236,8 @@ extension ContextMenuOption {
         case .copyFileURL: "globe"
         case .calculateSize: "scalemass"
         case .checksums: "number"
+        case .cloudDownload: "icloud.and.arrow.down"
+        case .cloudEvict: "icloud.slash"
         case .batchRename: "pencil.and.list.clipboard"
         case .symbolicLink: "arrow.triangle.branch"
         case .alias: "arrowshape.turn.up.right"
@@ -268,6 +270,8 @@ extension ContextMenuOption {
         switch self {
         case .showPackageContents: "Only on app bundles and packages"
         case .compare: "Only with two files selected"
+        case .cloudDownload: "Only on cloud files not yet downloaded"
+        case .cloudEvict: "Only on downloaded cloud files"
         case .bgRevealHidden: "Only while hidden files are hidden"
         default: nil
         }

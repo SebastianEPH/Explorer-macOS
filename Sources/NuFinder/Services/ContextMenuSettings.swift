@@ -8,6 +8,7 @@ enum ContextMenuOption: String, CaseIterable, Identifiable {
     case revealInFinder, openWith, share, imageActions, favorite, openInTerminal
     case cut, copy, paste, duplicate, compress, extract
     case copyPath, copyFilename, copyFileURL, calculateSize, checksums
+    case cloudDownload, cloudEvict // Fork: nube (OneDrive, iCloud…)
     case batchRename, symbolicLink, alias, tags, compare, rename, trash
     case newFolder, newFile, newFromTemplate
     // Sobre el espacio vacío de la carpeta
@@ -52,6 +53,8 @@ enum ContextMenuOption: String, CaseIterable, Identifiable {
         case .copyFileURL: "Copy File URL"
         case .calculateSize: "Calculate Size"
         case .checksums: "Calculate Checksums"
+        case .cloudDownload: "Download Now"
+        case .cloudEvict: "Remove Download"
         case .batchRename: "Batch Rename…"
         case .symbolicLink: "Create Symbolic Link"
         case .alias: "Create Alias"

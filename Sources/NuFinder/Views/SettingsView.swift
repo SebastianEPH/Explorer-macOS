@@ -31,7 +31,8 @@ struct SettingsView: View {
             SettingsPagesView(tab: "files", pages: [
                 SettingsPage("icons", "Icons and Selection", "square.grid.2x2") { ItemHitAreaSection() },
                 SettingsPage("opening", "Opening and Deleting", "trash") { FileBehaviorSection(part: "opening") },
-                SettingsPage("panels", "Panels", "sidebar.right") { FileBehaviorSection(part: "panels") }
+                SettingsPage("panels", "Panels", "sidebar.right") { FileBehaviorSection(part: "panels") },
+                SettingsPage("cloud", "Cloud Files", "icloud") { CloudStatusSection() } // Fork
             ])
             .settingsTab("Files", systemImage: "doc").tag("files")
             SettingsPagesView(tab: "appearance", pages: [

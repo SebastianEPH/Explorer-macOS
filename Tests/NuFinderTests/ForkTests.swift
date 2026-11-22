@@ -339,4 +339,49 @@ struct ForkTests {
         #expect(d.object(forKey: "finderRedirect.enabled") == nil)
         #expect(DefaultSettings.mine["finderRedirect.enabled"] == nil)
     }
+
+    // MARK: nube (File Provider)
+
+    @Test func cloudStateMapsFinderValues() {
+        #expect(CloudItemState.from(isUbiquitous: false, status: .notDownloaded, isDownloading: false, isUploading: false, hasError: false) == nil)
+        #expect(CloudItemState.from(isUbiquitous: true, status: .notDownloaded, isDownloading: false, isUploading: false, hasError: false) == .cloudOnly)
+        #expect(CloudItemState.from(isUbiquitous: true, status: .current, isDownloading: false, isUploading: false, hasError: false) == .downloaded)
+        #expect(CloudItemState.from(isUbiquitous: true, status: .notDownloaded, isDownloading: true, isUploading: false, hasError: false) == .downloading)
+        #expect(CloudItemState.from(isUbiquitous: true, status: .current, isDownloading: false, isUploading: true, hasError: false) == .uploading)
+        #expect(CloudItemState.from(isUbiquitous: true, status: .current, isDownloading: false, isUploading: true, hasError: true) == .error)
+    }
+
+    @Test func normalFilesHaveNoCloudState() throws {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).txt")
+        try Data("x".utf8).write(to: file)
+        defer { try? FileManager.default.removeItem(at: file) }
+        #expect(CloudStatus.read(file) == nil)
+    }
+
+    @Test func cloudMenuOptionsOnlyForMatchingState() throws {
+        let d = try #require(UserDefaults(suiteName: "ForkTests.cloud.\(UUID().uuidString)"))
+        let saved = CloudStatus.provider
+        defer { CloudStatus.provider = saved }
+        let url = URL(fileURLWithPath: "/tmp/x.docx")
+        CloudStatus.provider = { _ in .cloudOnly }
+        #expect(CloudStatus.menuAllows(.cloudDownload, url, store: d))
+        #expect(!CloudStatus.menuAllows(.cloudEvict, url, store: d))
+        CloudStatus.provider = { _ in .downloaded }
+        #expect(CloudStatus.menuAllows(.cloudEvict, url, store: d))
+        #expect(!CloudStatus.menuAllows(.cloudDownload, url, store: d))
+        CloudStatus.provider = { _ in nil }
+        #expect(!CloudStatus.menuAllows(.cloudDownload, url, store: d), "salió en un archivo normal")
+        #expect(CloudStatus.menuAllows(.copy, url, store: d), "afectó a otras opciones")
+        CloudStatus.provider = { _ in .cloudOnly }
+        d.set(false, forKey: CloudStatus.menuKey)
+        #expect(!CloudStatus.menuAllows(.cloudDownload, url, store: d), "salió con la opción apagada")
+    }
+
+    @Test func cloudOptionsAreInItemMenusOnly() {
+        for scope in ContextMenuScope.allCases {
+            #expect(scope.options.contains(.cloudDownload) == (scope != .background))
+        }
+        #expect(CloudStatus.defaults[CloudStatus.enabledKey] as? Bool == true)
+        #expect(CloudStatus.defaults[CloudStatus.showDownloadedKey] as? Bool == false, "Finder no marca los descargados")
+    }
 }

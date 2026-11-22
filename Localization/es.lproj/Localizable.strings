@@ -648,3 +648,28 @@
 "Transparency" = "Transparencia";
 "“Like Finder” uses the same macOS material as Finder’s sidebar." = "«Como Finder» usa el mismo material de macOS que la barra lateral de Finder.";
 
+
+/* Fork: nube (OneDrive, Google Drive, Dropbox, iCloud Drive) */
+"Only in the cloud" = "Solo en la nube";
+"Downloading" = "Descargando";
+"Uploading" = "Subiendo";
+"Downloaded" = "Descargado";
+"Sync error" = "Error de sincronización";
+"Download Now" = "Descargar ahora";
+"Remove Download" = "Quitar descarga";
+"Cloud Files" = "Archivos en la nube";
+"Show cloud status icons" = "Mostrar el estado de la nube";
+"Next to each file in OneDrive, Google Drive, Dropbox or iCloud Drive: only in the cloud, downloading, uploading or with an error, like Finder." = "Junto a cada archivo de OneDrive, Google Drive, Dropbox o iCloud Drive: solo en la nube, descargando, subiendo o con error, como en Finder.";
+"Also mark downloaded files" = "Marcar también los descargados";
+"Finder shows nothing on files that are already on this Mac." = "Finder no marca los archivos que ya están en este Mac.";
+"Turn on “Show cloud status icons” to use this." = "Activa «Mostrar el estado de la nube» para usar esto.";
+"Refresh every" = "Actualizar cada";
+"How often the status of visible files is checked again." = "Cada cuánto se vuelve a mirar el estado de los archivos que se ven.";
+"“Download Now” and “Remove Download” in the right-click menu" = "«Descargar ahora» y «Quitar descarga» en el clic derecho";
+"Only on cloud files. Removing the download frees space; the file stays in the cloud." = "Solo en archivos de la nube. Quitar la descarga libera espacio; el archivo sigue en la nube.";
+"Turned off, cloud folders look like normal folders, as before." = "Apagado, las carpetas de la nube se ven como carpetas normales, como antes.";
+"Preview: a OneDrive folder" = "Vista previa: una carpeta de OneDrive";
+"Right-click on “Informe.docx”" = "Clic derecho en «Informe.docx»";
+"Right-click on “Presupuesto.xlsx”" = "Clic derecho en «Presupuesto.xlsx»";
+"Only on cloud files not yet downloaded" = "Solo en archivos de la nube sin descargar";
+"Only on downloaded cloud files" = "Solo en archivos de la nube ya descargados";

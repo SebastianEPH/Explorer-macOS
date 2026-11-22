@@ -95,6 +95,7 @@ struct FileListView: View {
                             .foregroundStyle(.secondary)
                     }
                     GitStatusBadge(url: item.url)
+                    CloudStatusBadge(url: item.url) // Fork
                 }
                 .frame(maxWidth: compactHitArea ? nil : .infinity, alignment: .leading)
                 .padding(.horizontal, 5)
@@ -361,6 +362,7 @@ struct FileListView: View {
                         .multilineTextAlignment(.center)
                 }
                 GitStatusBadge(url: item.url)
+                CloudStatusBadge(url: item.url) // Fork
             }
             .frame(maxWidth: compactHitArea ? iconSize + 36 : .infinity, minHeight: iconSize + 26)
         } else {
@@ -372,6 +374,7 @@ struct FileListView: View {
                     Text(item.name).lineLimit(1)
                 }
                 GitStatusBadge(url: item.url)
+                CloudStatusBadge(url: item.url) // Fork
                 if !compactHitArea { Spacer() }
             }
             .frame(maxWidth: compactHitArea ? nil : .infinity, alignment: .leading)
@@ -573,7 +576,7 @@ struct FileListView: View {
     @ViewBuilder
     private func contextMenu(for item: FileItem) -> some View {
         // Fork: el orden y lo visible vienen de Ajustes → Menú contextual.
-        let options = ContextMenuSettings.order(ContextMenuScope.of(item), in: menuOrder).filter { menu($0, item) }
+        let options = ContextMenuSettings.order(ContextMenuScope.of(item), in: menuOrder).filter { menu($0, item) && CloudStatus.menuAllows($0, item.url) }
         ForEach(Array(options.enumerated()), id: \.element) { index, option in
             if index > 0 && option.startsGroup { Divider() }
             itemMenuEntry(option, item)
@@ -721,6 +724,10 @@ struct FileListView: View {
                 if !browser.selection.contains(item.url) { browser.selection = [item.url] }
                 browser.calculateSelectedSizes()
             }
+        case .cloudDownload: // Fork
+            Button("Download Now") { CloudStatus.download(browser.selection.contains(item.url) ? Array(browser.selection) : [item.url]) }
+        case .cloudEvict: // Fork
+            Button("Remove Download") { CloudStatus.evict(browser.selection.contains(item.url) ? Array(browser.selection) : [item.url]) }
         case .checksums:
             Menu("Calculate Checksums") {
                 ForEach(ChecksumAlgorithm.allCases) { algorithm in
