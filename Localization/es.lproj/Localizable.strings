@@ -611,3 +611,6 @@
 "Not used while “Reopen the tabs from last time” is on. Turn it off to choose a start folder." = "No se usa mientras «Volver a abrir las pestañas de la última vez» está activado. Desactívalo para elegir una carpeta de inicio.";
 "Turn on the status bar above to choose what it shows." = "Activa la barra de estado (arriba) para elegir qué muestra.";
 "Square Window" = "Ventana cuadrada";
+"Icon margin" = "Margen del icono";
+"Empty space around the drawing. 0 % fills everything; 10 % matches Apple’s icons." = "Espacio libre alrededor del dibujo. 0 % llena todo; 10 % es como los iconos de Apple.";
+"Reset" = "Restablecer";

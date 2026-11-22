@@ -238,6 +238,11 @@ struct ForkTests {
         }
     }
 
+    @Test func appIconMarginDefault() {
+        #expect(AppIconService.defaultMargin == 0.10)
+        #expect(UserDefaults.standard.object(forKey: AppIconService.marginKey) == nil || AppIconService.margin >= 0)
+    }
+
     @Test func behaviorSettingsDefaultToOriginal() {
         let defaults = UserDefaults(suiteName: "ForkTests.\(UUID().uuidString)")!
         #expect(BehaviorSettings.restoresTabs(defaults))

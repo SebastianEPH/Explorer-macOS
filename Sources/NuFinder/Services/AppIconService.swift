@@ -10,6 +10,10 @@ enum AppIconService {
     static let key = "appearance.appIcon"   // "" = original
     /// Fondo de color detrás del dibujo (el usuario lo prefiere sin fondo).
     static let backgroundKey = "appearance.appIconBackground"
+    /// Espacio libre a cada lado del icono (0 = llena todo; 0,10 = como los iconos de Apple).
+    static let marginKey = "appearance.appIconMargin"
+    static let defaultMargin = 0.10
+    static var margin: Double { UserDefaults.standard.object(forKey: marginKey) as? Double ?? defaultMargin }
 
     @MainActor private static var observer: NSKeyValueObservation?
 
@@ -30,12 +34,12 @@ enum AppIconService {
         }
         let dark = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
         let background = UserDefaults.standard.bool(forKey: backgroundKey)
-        NSApp.applicationIconImage = image(design, dark: dark, background: background, size: 512)
+        NSApp.applicationIconImage = image(design, dark: dark, background: background, margin: margin, size: 512)
     }
 
     @MainActor
-    static func image(_ design: AppIconDesign, dark: Bool, background: Bool, size: CGFloat) -> NSImage? {
-        let renderer = ImageRenderer(content: AppIconArt(design: design, dark: dark, background: background).frame(width: size, height: size))
+    static func image(_ design: AppIconDesign, dark: Bool, background: Bool, margin: Double = defaultMargin, size: CGFloat) -> NSImage? {
+        let renderer = ImageRenderer(content: AppIconArt(design: design, dark: dark, background: background, margin: margin).frame(width: size, height: size))
         renderer.scale = 2
         return renderer.nsImage
     }
@@ -112,11 +116,13 @@ struct AppIconArt: View {
     let design: AppIconDesign
     let dark: Bool
     var background = true
+    /// Espacio libre a cada lado (fracción del tamaño).
+    var margin: Double = AppIconService.defaultMargin
 
     var body: some View {
         GeometryReader { geo in
             let s = min(geo.size.width, geo.size.height)
-            let box = s * 0.8
+            let box = s * (1 - 2 * min(max(margin, 0), 0.4))
             ZStack {
                 if background {
                     RoundedRectangle(cornerRadius: box * 0.225, style: .continuous)
@@ -764,6 +770,7 @@ struct FolderShape: Shape {
 struct AppIconSection: View {
     @AppStorage(AppIconService.key) private var selected = ""
     @AppStorage(AppIconService.backgroundKey) private var background = false
+    @AppStorage(AppIconService.marginKey) private var margin = AppIconService.defaultMargin
     @Environment(\.colorScheme) private var colorScheme
     /// Qué versión se ve en la vista previa (nil = la del modo actual de macOS).
     @State private var previewDark: Bool?
@@ -781,6 +788,16 @@ struct AppIconSection: View {
                 Text("See how each icon looks in light or dark mode.")
             }
             .pickerStyle(.segmented)
+            LabeledContent {
+                HStack {
+                    Slider(value: $margin, in: 0...0.3, step: 0.01)
+                    Text("\(Int((margin * 100).rounded())) %").monospacedDigit().frame(width: 44, alignment: .trailing)
+                    Button("Reset") { margin = AppIconService.defaultMargin }.disabled(abs(margin - AppIconService.defaultMargin) < 0.001)
+                }
+            } label: {
+                Label("Icon margin", systemImage: "square.dashed")
+                Text("Empty space around the drawing. 0 % fills everything; 10 % matches Apple’s icons.")
+            }
             Toggle(isOn: $background) {
                 Label("Colored background", systemImage: "app")
                 Text("Off: only the drawing, without the rounded colored square.")
@@ -793,7 +810,7 @@ struct AppIconSection: View {
                 ForEach(AppIconDesign.all) { design in
                     option(id: design.id, name: design.name, number: design.number) {
                         // Uno solo, en el modo actual (dos copias claro/oscuro parecían iconos repetidos).
-                        AppIconArt(design: design, dark: showsDark, background: background).frame(width: 60, height: 60)
+                        AppIconArt(design: design, dark: showsDark, background: background, margin: margin).frame(width: 60, height: 60)
                     }
                 }
             }
@@ -806,6 +823,7 @@ struct AppIconSection: View {
         }
         .onChange(of: selected) { _, _ in AppIconService.apply() }
         .onChange(of: background) { _, _ in AppIconService.apply() }
+        .onChange(of: margin) { _, _ in AppIconService.apply() }
     }
 
     private func option<Content: View>(id: String, name: LocalizedStringKey, number: Int? = nil, @ViewBuilder _ preview: () -> Content) -> some View {
