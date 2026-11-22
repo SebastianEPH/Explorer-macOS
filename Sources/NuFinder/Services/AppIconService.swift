@@ -543,9 +543,7 @@ struct AppIconSection: View {
                     option(id: design.id, name: design.name, number: design.number) {
                         HStack(spacing: 2) {
                             AppIconArt(design: design, dark: false, background: background).frame(width: 52, height: 52)
-                                .background(Color(white: 0.94), in: RoundedRectangle(cornerRadius: 6))
                             AppIconArt(design: design, dark: true, background: background).frame(width: 52, height: 52)
-                                .background(Color(white: 0.16), in: RoundedRectangle(cornerRadius: 6))
                         }
                     }
                 }
