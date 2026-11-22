@@ -235,7 +235,7 @@
 "Explorer %@ (build %lld)" = "Explorer %@ (compilación %lld)";
 "Explorer (local build)" = "Explorer (compilación local)";
 "About Explorer" = "Acerca de Explorer";
-"Fork of Freeloader by KopitarFan (MIT license).\ngithub.com/%@" = "Fork de Freeloader, de KopitarFan (licencia MIT).\ngithub.com/%@";
+"Based on an open-source project by KopitarFan (MIT license)." = "Basado en un proyecto de código abierto de KopitarFan (licencia MIT).";
 "build %lld" = "compilación %lld";
 "Could not open iTerm: %@" = "No se pudo abrir iTerm: %@";
 
@@ -599,3 +599,10 @@
 "Glass Folder" = "Carpeta de cristal";
 "Window + Tiles" = "Ventana + Mosaico";
 "Cards" = "Tarjetas";
+"File Types" = "Tipos de archivo";
+"Folder Grid" = "Cuadrícula de carpetas";
+"Isometric" = "Isométrico";
+"Two-Tone" = "Dos tonos";
+"Hand-Drawn" = "Dibujado a mano";
+"Soft 3D" = "3D suave";
+"Minimal Gradient" = "Degradado minimalista";

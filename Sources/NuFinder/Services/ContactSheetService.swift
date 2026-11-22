@@ -71,7 +71,7 @@ enum ContactSheetService {
     @MainActor
     static func printContactSheet(images: [FileItem], title: String) async throws {
         let temporaryURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("Freeloader Contact Sheet \(UUID().uuidString).pdf")
+            .appendingPathComponent("Explorer Contact Sheet \(UUID().uuidString).pdf")
         try await Task.detached {
             try writePDF(images: images, title: title, to: temporaryURL)
         }.value

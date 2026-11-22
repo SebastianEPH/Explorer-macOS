@@ -69,7 +69,7 @@ enum ArchiveService {
         guard process.terminationStatus == 0 else {
             let message = String(data: errorData, encoding: .utf8) ?? String(localized: "Archive operation failed.")
             throw NSError(
-                domain: "Freeloader.Archive",
+                domain: "Explorer.Archive",
                 code: Int(process.terminationStatus),
                 userInfo: [NSLocalizedDescriptionKey: message.trimmingCharacters(in: .whitespacesAndNewlines)]
             )

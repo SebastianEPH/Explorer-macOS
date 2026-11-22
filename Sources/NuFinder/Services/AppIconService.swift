@@ -60,6 +60,8 @@ struct AppIconDesign: Identifiable {
         case tiles(TilesLayout, colors: [UInt32])
         /// Ideas nuevas, cada una distinta (inspiradas en el cristal en capas de macOS Tahoe y en los exploradores de dos paneles).
         case glassLayers, dualPane, lensGrid, monogram, glassFolder, windowTiles, cards, millerColumns
+        case sidebarApp, fileTypes, folderTabs, folderGrid, breadcrumb
+        case isometric, duotone, sketch, soft3D, gradientMinimal
     }
 
     /// Número que se muestra en Ajustes (1…20).
@@ -70,19 +72,31 @@ struct AppIconDesign: Identifiable {
     private static let tilesDark: [Color] = [.init(hex: 0x2A2D34), .init(hex: 0x15171B)]
     private static let classic: [UInt32] = [0x2B6CF0, 0x22B573, 0xF5A623, 0xE5484D]
 
+    private static let none: [Color] = [.init(hex: 0x6FD3FF), .init(hex: 0x2E8BEF)]
+
     nonisolated(unsafe) static let all: [AppIconDesign] = [
-        // Los dos que eligió el usuario, tal como estaban.
+        // Grupo A — inspirados en «Ventana» y «Mosaico» (interfaz plana y colorida)
         .init(id: "window", name: "Window", light: [.init(hex: 0x6FD3FF), .init(hex: 0x2E8BEF)], dark: windowDark, glyph: .window(.list, tint: 0x2E8BEF)),
         .init(id: "tiles", name: "Tiles", light: tilesLight, dark: tilesDark, glyph: .tiles(.grid2, colors: classic)),
-        // Ideas nuevas, todas distintas.
-        .init(id: "glass-layers", name: "Glass Layers", light: [.init(hex: 0x7DD3FC), .init(hex: 0x6366F1)], dark: [.init(hex: 0x1A1F3D), .init(hex: 0x0B0D1E)], glyph: .glassLayers),
+        .init(id: "window-tiles", name: "Window + Tiles", light: tilesLight, dark: tilesDark, glyph: .windowTiles),
         .init(id: "dual-pane", name: "Dual Pane", light: [.init(hex: 0x34D399), .init(hex: 0x0E7490)], dark: [.init(hex: 0x0E2A2A), .init(hex: 0x061414)], glyph: .dualPane),
+        .init(id: "columns", name: "Columns", light: [.init(hex: 0xF8FAFC), .init(hex: 0xCBD5E1)], dark: [.init(hex: 0x1F2937), .init(hex: 0x0B1120)], glyph: .millerColumns),
+        .init(id: "sidebar", name: "Sidebar", light: [.init(hex: 0xA5B4FC), .init(hex: 0x6366F1)], dark: windowDark, glyph: .sidebarApp),
+        .init(id: "file-types", name: "File Types", light: tilesLight, dark: tilesDark, glyph: .fileTypes),
+        .init(id: "folder-tabs", name: "Tabs", light: none, dark: windowDark, glyph: .folderTabs),
+        .init(id: "folder-grid", name: "Folder Grid", light: tilesLight, dark: tilesDark, glyph: .folderGrid),
+        .init(id: "breadcrumb", name: "Path", light: none, dark: windowDark, glyph: .breadcrumb),
+        // Grupo B — otro estilo: cristal, 3D suave, isométrico, dos tonos, trazo a mano, minimalista
+        .init(id: "glass-layers", name: "Glass Layers", light: [.init(hex: 0x7DD3FC), .init(hex: 0x6366F1)], dark: [.init(hex: 0x1A1F3D), .init(hex: 0x0B0D1E)], glyph: .glassLayers),
+        .init(id: "glass-folder", name: "Glass Folder", light: [.init(hex: 0x60A5FA), .init(hex: 0x1D4ED8)], dark: [.init(hex: 0x111D3A), .init(hex: 0x070D1C)], glyph: .glassFolder),
         .init(id: "lens-grid", name: "Explore", light: [.init(hex: 0xFDE68A), .init(hex: 0xF97316)], dark: [.init(hex: 0x2E1D0E), .init(hex: 0x160D06)], glyph: .lensGrid),
         .init(id: "monogram", name: "Monogram E", light: [.init(hex: 0x1E293B), .init(hex: 0x0F172A)], dark: [.init(hex: 0x111827), .init(hex: 0x030712)], glyph: .monogram),
-        .init(id: "glass-folder", name: "Glass Folder", light: [.init(hex: 0x60A5FA), .init(hex: 0x1D4ED8)], dark: [.init(hex: 0x111D3A), .init(hex: 0x070D1C)], glyph: .glassFolder),
-        .init(id: "window-tiles", name: "Window + Tiles", light: tilesLight, dark: tilesDark, glyph: .windowTiles),
         .init(id: "cards", name: "Cards", light: [.init(hex: 0xF9A8D4), .init(hex: 0xA855F7)], dark: [.init(hex: 0x2A1233), .init(hex: 0x140819)], glyph: .cards),
-        .init(id: "columns", name: "Columns", light: [.init(hex: 0xF8FAFC), .init(hex: 0xCBD5E1)], dark: [.init(hex: 0x1F2937), .init(hex: 0x0B1120)], glyph: .millerColumns)
+        .init(id: "isometric", name: "Isometric", light: [.init(hex: 0x93C5FD), .init(hex: 0x3B82F6)], dark: [.init(hex: 0x172036), .init(hex: 0x0A101C)], glyph: .isometric),
+        .init(id: "duotone", name: "Two-Tone", light: [.init(hex: 0x5EEAD4), .init(hex: 0x0D9488)], dark: [.init(hex: 0x0F2725), .init(hex: 0x071412)], glyph: .duotone),
+        .init(id: "sketch", name: "Hand-Drawn", light: [.init(hex: 0xFEF3C7), .init(hex: 0xFDE68A)], dark: [.init(hex: 0x2A2410), .init(hex: 0x141106)], glyph: .sketch),
+        .init(id: "soft3d", name: "Soft 3D", light: [.init(hex: 0xFDBA74), .init(hex: 0xF97316)], dark: [.init(hex: 0x2E1A0E), .init(hex: 0x170C06)], glyph: .soft3D),
+        .init(id: "gradient", name: "Minimal Gradient", light: [.init(hex: 0xF472B6), .init(hex: 0x8B5CF6)], dark: [.init(hex: 0x24112E), .init(hex: 0x110817)], glyph: .gradientMinimal)
     ]
 }
 
@@ -382,9 +396,147 @@ private struct NewGlyph: View {
                 column(highlight: 2)
                 column(highlight: 0, last: true)
             }
+        case .sidebarApp:
+            // Barra lateral de colores con lista, como la ventana del explorador.
+            HStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 5 * u) {
+                    ForEach([0x3B82F6, 0x22C55E, 0xF59E0B, 0xEF4444] as [UInt32], id: \.self) { hex in
+                        HStack(spacing: 2.5 * u) {
+                            Circle().fill(Color(hex: hex)).frame(width: 5 * u)
+                            RoundedRectangle(cornerRadius: 1 * u).fill(.white.opacity(0.85)).frame(width: 9 * u, height: 2.5 * u)
+                        }
+                    }
+                }
+                .padding(5 * u)
+                .frame(width: 24 * u, height: 54 * u, alignment: .topLeading)
+                .background(Color(hex: 0x6366F1))
+                VStack(spacing: 4 * u) {
+                    ForEach(0..<2) { _ in HStack(spacing: 4 * u) { ForEach(0..<2) { _ in RoundedRectangle(cornerRadius: 3 * u).fill(Color(hex: 0xE0E7FF)).frame(width: 15 * u, height: 15 * u) } } }
+                }
+                .frame(width: 42 * u, height: 54 * u)
+                .background(dark ? Color(hex: 0x2A3442) : .white)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 7 * u))
+            .shadow(color: .black.opacity(0.2), radius: 2 * u, y: 1 * u)
+        case .fileTypes:
+            // Mosaico donde cada cuadro es un tipo de archivo: documento, imagen, música, vídeo.
+            VStack(spacing: 6 * u) {
+                HStack(spacing: 6 * u) {
+                    typeTile(0x3B82F6) { VStack(spacing: 2.5 * u) { ForEach(0..<3) { _ in Capsule().fill(.white).frame(width: 13 * u, height: 2.5 * u) } } }
+                    typeTile(0x22C55E) { MountainShape().fill(.white).frame(width: 15 * u, height: 10 * u) }
+                }
+                HStack(spacing: 6 * u) {
+                    typeTile(0xF59E0B) { NoteShape().fill(.white).frame(width: 11 * u, height: 14 * u) }
+                    typeTile(0xEF4444) { PlayShape().fill(.white).frame(width: 11 * u, height: 12 * u) }
+                }
+            }
+        case .folderTabs:
+            // Carpetas como pestañas del navegador, una delante.
+            ZStack(alignment: .bottom) {
+                HStack(spacing: -6 * u) {
+                    tabShape(0x93C5FD); tabShape(0x60A5FA); tabShape(0x2563EB, front: true)
+                }
+                .offset(x: -14 * u, y: -35.5 * u)
+                RoundedRectangle(cornerRadius: 6 * u).fill(dark ? Color(hex: 0x2A3442) : .white).frame(width: 64 * u, height: 36 * u)
+                    .overlay(alignment: .topLeading) {
+                        VStack(alignment: .leading, spacing: 4 * u) { ForEach(0..<3) { _ in RoundedRectangle(cornerRadius: 1 * u).fill(Color(hex: 0x2563EB).opacity(0.35)).frame(width: 34 * u, height: 3 * u) } }.padding(7 * u)
+                    }
+                    .shadow(color: .black.opacity(0.18), radius: 2 * u, y: 1 * u)
+            }
+            .frame(height: 56 * u)
+        case .folderGrid:
+            // Cuadrícula de carpetas de colores.
+            VStack(spacing: 5 * u) {
+                ForEach(0..<2) { r in
+                    HStack(spacing: 6 * u) {
+                        ForEach(0..<2) { c in
+                            FolderShape().fill(Color(hex: [0x3B82F6, 0x22C55E, 0xF59E0B, 0xEF4444][r * 2 + c])).frame(width: 28 * u, height: 22 * u)
+                        }
+                    }
+                }
+            }
+        case .breadcrumb:
+            // La ruta en botones: chips encadenados.
+            VStack(alignment: .leading, spacing: 6 * u) {
+                chip(0x2563EB, width: 30)
+                HStack(spacing: 2 * u) { arrow(); chip(0x22C55E, width: 26) }.padding(.leading, 10 * u)
+                HStack(spacing: 2 * u) { arrow(); chip(0xF59E0B, width: 24) }.padding(.leading, 20 * u)
+            }
+            .scaleEffect(1.45)
+        case .isometric:
+            // Carpeta en perspectiva isométrica, con caras de tres tonos.
+            ZStack {
+                IsoFace(.top).fill(Color(hex: 0xBFDBFE))
+                IsoFace(.left).fill(Color(hex: 0x3B82F6))
+                IsoFace(.right).fill(Color(hex: 0x1D4ED8))
+                IsoTab().fill(Color(hex: 0x93C5FD))
+            }
+            .frame(width: 64 * u, height: 62 * u)
+        case .duotone:
+            // Dos tonos: carpeta rellena desplazada y su contorno encima.
+            ZStack {
+                FolderShape().fill(Color(hex: 0x5EEAD4).opacity(dark ? 0.6 : 0.9)).frame(width: 56 * u, height: 42 * u).offset(x: 5 * u, y: 5 * u)
+                FolderShape().stroke(dark ? Color.white : Color(hex: 0x0F766E), style: StrokeStyle(lineWidth: 4.5 * u, lineJoin: .round)).frame(width: 56 * u, height: 42 * u).offset(x: -3 * u, y: -3 * u)
+            }
+        case .sketch:
+            // Trazo a mano: varias líneas un poco desplazadas, como un dibujo con lápiz.
+            ZStack {
+                ForEach(0..<3) { i in
+                    FolderShape().stroke(dark ? Color.white.opacity(0.85) : Color(hex: 0x1F2937), style: StrokeStyle(lineWidth: (2.2 - Double(i) * 0.4) * u, lineCap: .round, lineJoin: .round))
+                        .frame(width: 58 * u, height: 44 * u)
+                        .rotationEffect(.degrees(Double(i) * 1.6 - 1.6))
+                        .offset(x: CGFloat(i - 1) * 0.9 * u, y: CGFloat(1 - i) * 0.7 * u)
+                }
+                Path { p in
+                    for k in 0..<5 { let x = CGFloat(k) * 9 * u; p.move(to: CGPoint(x: x, y: 18 * u)); p.addLine(to: CGPoint(x: x + 14 * u, y: 0)) }
+                }
+                .stroke(Color(hex: 0xF59E0B).opacity(0.8), style: StrokeStyle(lineWidth: 2 * u, lineCap: .round))
+                .frame(width: 50 * u, height: 18 * u).offset(y: 9 * u)
+            }
+        case .soft3D:
+            // 3D suave: una sola carpeta con volumen, brillo y sombra.
+            ZStack {
+                FolderShape().fill(LinearGradient(colors: [Color(hex: 0xFDBA74), Color(hex: 0xEA580C)], startPoint: .top, endPoint: .bottom))
+                    .frame(width: 64 * u, height: 50 * u)
+                FolderBody3D().fill(LinearGradient(colors: [Color(hex: 0xFFEDD5), Color(hex: 0xFB923C)], startPoint: .top, endPoint: .bottom))
+                    .frame(width: 64 * u, height: 50 * u)
+                    .overlay(FolderBody3D().stroke(.white.opacity(0.7), lineWidth: 1.2 * u).frame(width: 64 * u, height: 50 * u))
+                Capsule().fill(.white.opacity(0.55)).frame(width: 30 * u, height: 4 * u).offset(y: -2 * u).blur(radius: 1 * u)
+            }
+            .shadow(color: Color(hex: 0x9A3412).opacity(0.45), radius: 5 * u, y: 4 * u)
+        case .gradientMinimal:
+            // Minimalista: una carpeta de un solo degradado con una flecha vaciada.
+            ZStack {
+                FolderShape().fill(LinearGradient(colors: [Color(hex: 0xF472B6), Color(hex: 0x8B5CF6)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(width: 64 * u, height: 50 * u)
+                ArrowRight().fill(.white.opacity(0.92)).frame(width: 22 * u, height: 12 * u).offset(y: 5 * u)
+            }
         default:
             EmptyView()
         }
+    }
+
+    private func typeTile<C: View>(_ hex: UInt32, @ViewBuilder _ content: () -> C) -> some View {
+        RoundedRectangle(cornerRadius: 6 * u, style: .continuous).fill(Color(hex: hex)).frame(width: 26 * u, height: 26 * u).overlay(content())
+    }
+
+    private func tabShape(_ hex: UInt32, front: Bool = false) -> some View {
+        UnevenRoundedRectangle(topLeadingRadius: 4 * u, topTrailingRadius: 4 * u).fill(Color(hex: hex)).frame(width: 24 * u, height: 12 * u)
+            .zIndex(front ? 1 : 0)
+    }
+
+    private func chip(_ hex: UInt32, width: CGFloat) -> some View {
+        HStack(spacing: 2 * u) {
+            FolderShape().fill(.white).frame(width: 8 * u, height: 6 * u)
+            Capsule().fill(.white.opacity(0.8)).frame(width: (width - 14) * u, height: 2.5 * u)
+        }
+        .padding(.horizontal, 3.5 * u).frame(height: 12 * u)
+        .background(Capsule().fill(Color(hex: hex)))
+        .shadow(color: .black.opacity(0.15), radius: 1 * u, y: 0.5 * u)
+    }
+
+    private func arrow() -> some View {
+        ChevronIcon().stroke(dark ? Color.white.opacity(0.8) : Color(hex: 0x64748B), style: StrokeStyle(lineWidth: 2 * u, lineCap: .round, lineJoin: .round)).frame(width: 4 * u, height: 7 * u)
     }
 
     private func pane() -> some View {
@@ -426,6 +578,90 @@ private struct NewGlyph: View {
         }
         .padding(3 * u)
         .background(RoundedRectangle(cornerRadius: 4 * u).fill(dark ? Color.white.opacity(0.06) : .white))
+    }
+}
+
+private struct MountainShape: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX, y: r.maxY))
+        p.addLine(to: CGPoint(x: r.minX + r.width * 0.35, y: r.minY + r.height * 0.25))
+        p.addLine(to: CGPoint(x: r.minX + r.width * 0.55, y: r.minY + r.height * 0.6))
+        p.addLine(to: CGPoint(x: r.minX + r.width * 0.72, y: r.minY + r.height * 0.4))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.maxY))
+        p.closeSubpath()
+        p.addEllipse(in: CGRect(x: r.maxX - r.width * 0.28, y: r.minY - r.height * 0.15, width: r.width * 0.22, height: r.width * 0.22))
+        return p
+    }
+}
+
+private struct NoteShape: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.addEllipse(in: CGRect(x: r.minX, y: r.maxY - r.height * 0.36, width: r.width * 0.55, height: r.height * 0.36))
+        p.addRect(CGRect(x: r.minX + r.width * 0.42, y: r.minY, width: r.width * 0.14, height: r.height * 0.8))
+        p.addRect(CGRect(x: r.minX + r.width * 0.42, y: r.minY, width: r.width * 0.58, height: r.height * 0.16))
+        return p
+    }
+}
+
+private struct PlayShape: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX, y: r.minY))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.midY))
+        p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
+        p.closeSubpath()
+        return p
+    }
+}
+
+private struct ChevronIcon: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX, y: r.minY)); p.addLine(to: CGPoint(x: r.maxX, y: r.midY)); p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
+        return p
+    }
+}
+
+/// Caras de una carpeta isométrica (cubo plano).
+private struct IsoFace: Shape {
+    enum Side { case top, left, right }
+    let side: Side
+    init(_ side: Side) { self.side = side }
+    func path(in r: CGRect) -> Path {
+        let w = r.width, h = r.height
+        let top = CGPoint(x: r.midX, y: r.minY + h * 0.18), left = CGPoint(x: r.minX, y: r.minY + h * 0.36)
+        let right = CGPoint(x: r.maxX, y: r.minY + h * 0.36), center = CGPoint(x: r.midX, y: r.minY + h * 0.54)
+        let dy = h * 0.4
+        var p = Path()
+        switch side {
+        case .top: p.addLines([top, right, center, left])
+        case .left: p.addLines([left, center, CGPoint(x: center.x, y: center.y + dy), CGPoint(x: left.x, y: left.y + dy)])
+        case .right: p.addLines([center, right, CGPoint(x: right.x, y: right.y + dy), CGPoint(x: center.x, y: center.y + dy)])
+        }
+        p.closeSubpath()
+        _ = w
+        return p
+    }
+}
+
+private struct IsoTab: Shape {
+    func path(in r: CGRect) -> Path {
+        let h = r.height
+        var p = Path()
+        p.addLines([CGPoint(x: r.minX + r.width * 0.12, y: r.minY + h * 0.30), CGPoint(x: r.minX + r.width * 0.34, y: r.minY + h * 0.19),
+                    CGPoint(x: r.minX + r.width * 0.46, y: r.minY + h * 0.25), CGPoint(x: r.minX + r.width * 0.24, y: r.minY + h * 0.36)])
+        p.closeSubpath()
+        return p
+    }
+}
+
+/// Frente de la carpeta en 3D suave (un poco más bajo que la trasera).
+private struct FolderBody3D: Shape {
+    func path(in r: CGRect) -> Path {
+        RoundedRectangle(cornerRadius: min(r.width, r.height) * 0.14, style: .continuous)
+            .path(in: CGRect(x: r.minX, y: r.minY + r.height * 0.24, width: r.width, height: r.height * 0.76))
     }
 }
 
@@ -526,6 +762,7 @@ struct FolderShape: Shape {
 struct AppIconSection: View {
     @AppStorage(AppIconService.key) private var selected = ""
     @AppStorage(AppIconService.backgroundKey) private var background = false
+    @Environment(\.colorScheme) private var colorScheme
 
     private let columns = [GridItem(.adaptive(minimum: 120), spacing: 12)]
 
@@ -537,14 +774,12 @@ struct AppIconSection: View {
             }
             LazyVGrid(columns: columns, spacing: 12) {
                 option(id: "", name: "Original") {
-                    Image(nsImage: NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath)).resizable().frame(width: 52, height: 52)
+                    Image(nsImage: NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath)).resizable().frame(width: 60, height: 60)
                 }
                 ForEach(AppIconDesign.all) { design in
                     option(id: design.id, name: design.name, number: design.number) {
-                        HStack(spacing: 2) {
-                            AppIconArt(design: design, dark: false, background: background).frame(width: 52, height: 52)
-                            AppIconArt(design: design, dark: true, background: background).frame(width: 52, height: 52)
-                        }
+                        // Uno solo, en el modo actual (dos copias claro/oscuro parecían iconos repetidos).
+                        AppIconArt(design: design, dark: colorScheme == .dark, background: background).frame(width: 60, height: 60)
                     }
                 }
             }
@@ -557,8 +792,8 @@ struct AppIconSection: View {
     }
 
     private func option<Content: View>(id: String, name: LocalizedStringKey, number: Int? = nil, @ViewBuilder _ preview: () -> Content) -> some View {
-        Button { selected = id } label: {
-            VStack(spacing: 4) {
+        // Fork: toque directo en vez de Button: dentro del formulario el botón a veces no recibía el clic.
+        VStack(spacing: 4) {
                 preview()
                 HStack(spacing: 3) {
                     if let number { Text(verbatim: "\(number).").font(.caption.weight(.bold)).foregroundStyle(.secondary) }
@@ -569,8 +804,8 @@ struct AppIconSection: View {
             .frame(maxWidth: .infinity)
             .background(selected == id ? Color.accentColor.opacity(0.18) : .clear, in: RoundedRectangle(cornerRadius: 10))
             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(selected == id ? Color.accentColor : .clear, lineWidth: 2))
-        }
-        .buttonStyle(.plain)
+        .contentShape(RoundedRectangle(cornerRadius: 10))
+        .onTapGesture { selected = id }
         .hoverHighlight(cornerRadius: 10)
     }
 }

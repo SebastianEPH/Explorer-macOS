@@ -71,7 +71,7 @@ final class UpdateService {
             state = .installing(String(localized: "Downloading…"))
             let (zip, _) = try await URLSession.shared.download(from: url)
             let work = FileManager.default.temporaryDirectory
-                .appendingPathComponent("FreeloaderUpdate-\(UUID().uuidString)")
+                .appendingPathComponent("ExplorerUpdate-\(UUID().uuidString)")
             try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
 
             state = .installing(String(localized: "Unpacking…"))
@@ -202,7 +202,7 @@ enum AboutPanel {
     static func show() {
         let updates = UpdateService.shared
         let credits = NSAttributedString(
-            string: String(localized: "Fork of Freeloader by KopitarFan (MIT license).\ngithub.com/\(UpdateService.repository)"),
+            string: String(localized: "Based on an open-source project by KopitarFan (MIT license)."),
             attributes: [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor]
         )
         NSApp.orderFrontStandardAboutPanel(options: [
