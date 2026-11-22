@@ -4,7 +4,6 @@ struct CommandPaletteView: View {
     @EnvironmentObject private var browser: BrowserModel
     @EnvironmentObject private var operations: FileOperationManager
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("showsSplitPane") private var showsSplitPane = false
     @State private var query = ""
     @FocusState private var searchFocused: Bool
 
@@ -49,7 +48,7 @@ struct CommandPaletteView: View {
         case "Duplicate Tab": browser.duplicateTab(browser.activeTabID)
         case "Open in Terminal": TerminalService.open(at: browser.currentURL)
         case "File Operations": operations.showsDetails = true
-        case "Toggle Split Pane": showsSplitPane.toggle()
+        case "Toggle Split Pane": WindowSplitPanes.shared.keyWindowBinding.wrappedValue.toggle() // Fork: solo esta ventana
         case "Toggle Folder Tree": browser.showsTree.toggle()
         case "Toggle Hidden Files": browser.toggleHiddenFiles()
         case "List View": browser.viewMode = .list

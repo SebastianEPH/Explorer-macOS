@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         FinderRedirectService.start()
+        RemovedFeatures.cleanDefaults() // Fork: sin espacios de trabajo
         AppearanceSettings.apply() // Fork
         TextPredictionSettings.apply() // Fork: sin texto gris de predicción al escribir nombres
         AppIconService.start() // Fork: icono elegido en Ajustes (claro/oscuro)
@@ -48,9 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         _ sender: NSApplication,
         hasVisibleWindows flag: Bool
     ) -> Bool {
-        if !flag {
-            sender.windows.first?.makeKeyAndOrderFront(nil)
-        }
+        if !flag { return DockReopen.reopen(sender) } // Fork: ventana independiente
         sender.activate(ignoringOtherApps: true)
         return true
     }

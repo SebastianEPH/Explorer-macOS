@@ -109,7 +109,8 @@ struct ExplorerMenus: Commands {
     @AppStorage(BehaviorSettings.foldersInNewTabKey) private var foldersInNewTab = false
     @AppStorage(BehaviorSettings.hiddenByDefaultKey) private var hiddenByDefault = false
     @AppStorage(BehaviorSettings.iconSizeKey) private var iconSize = BehaviorSettings.defaultIconSize
-    @AppStorage("showsSplitPane") private var splitPane = false
+    @ObservedObject private var splitPanes = WindowSplitPanes.shared // Fork: panel de la ventana activa
+    @ObservedObject private var keyFocus = KeyWindowFocus.shared
 
     private var hasSelection: Bool { !browser().selection.isEmpty }
 
@@ -185,7 +186,7 @@ struct ExplorerMenus: Commands {
                 Button("Bigger Icons") { iconSize = min(128, iconSize + 8) }.keyboardShortcut("+")
                 Button("Smaller Icons") { iconSize = max(32, iconSize - 8) }.keyboardShortcut("-")
                 Divider()
-                Toggle("Split Pane", isOn: $splitPane).keyboardShortcut("s", modifiers: [.command, .option])
+                Toggle("Split Pane", isOn: splitPanes.keyWindowBinding).keyboardShortcut("s", modifiers: [.command, .option])
                 Toggle("Tabs in the top bar (one row)", isOn: $compactTop)
                 Picker("Tab bar", selection: $tabBar) {
                     Text("Always").tag("always")

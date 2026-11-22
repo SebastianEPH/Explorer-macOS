@@ -17,13 +17,14 @@ enum WindowService {
             .background(KeyWindowReader(focus: paneFocus, browser: browser, operations: operations))
         let controller = NSHostingController(rootView: root)
         let window = NSWindow(contentViewController: controller)
-        let splitPane = UserDefaults.standard.bool(forKey: "showsSplitPane")
+        let splitPane = UserDefaults.standard.bool(forKey: WindowSplitPanes.lastUsedKey)
         window.setContentSize(NSSize(width: splitPane ? 1180 : 1040, height: 680))
         window.title = "Explorer"
         window.representedURL = url
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
         // Ventana nueva siempre aislada, aunque macOS tenga «Preferir pestañas: siempre».
         window.tabbingMode = .disallowed
+        WindowLifetime.keep(window) // Fork: la ventana vive hasta cerrarse y se libera una sola vez
         window.center()
         window.makeKeyAndOrderFront(nil)
     }

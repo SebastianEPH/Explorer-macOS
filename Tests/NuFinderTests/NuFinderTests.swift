@@ -400,27 +400,4 @@ struct NuFinderTests {
         #expect(FileManager.default.fileExists(atPath: resized.path))
         #expect(converted.pathExtension == "jpg")
     }
-
-    @Test @MainActor func workspaceStorePersistsLayoutsAndLaunchChoice() throws {
-        let suiteName = "WorkspaceStoreTests.\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suiteName))
-        defer { defaults.removePersistentDomain(forName: suiteName) }
-        let snapshot = BrowserPaneSnapshot(
-            tabPaths: ["/tmp"], pinnedTabPaths: ["/tmp"], activeTabIndex: 0,
-            viewMode: "icons", showsKind: true, showsSize: false, showsModified: true,
-            sortFields: ["Name"], sortAscending: [true]
-        )
-        let workspace = SavedWorkspace(
-            id: UUID(), name: "Editing", primary: snapshot, secondary: snapshot,
-            splitPane: true, showsTree: true, updatedAt: Date()
-        )
-        let store = WorkspaceStore(defaults: defaults)
-        store.save(workspace)
-        store.toggleLaunch(workspace)
-
-        let restored = WorkspaceStore(defaults: defaults)
-        #expect(restored.workspaces.first?.name == "Editing")
-        #expect(restored.launchWorkspace?.splitPane == true)
-        #expect(restored.launchWorkspace?.primary.viewMode == "icons")
-    }
 }

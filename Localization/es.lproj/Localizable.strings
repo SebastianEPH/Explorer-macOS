@@ -111,7 +111,6 @@
 "Kind" = "Tipo";
 "Letter case" = "Mayúsculas y minúsculas";
 "Locations" = "Ubicaciones";
-"Manage Workspaces…" = "Gestionar espacios de trabajo…";
 "Maximum height" = "Alto máximo";
 "Maximum width" = "Ancho máximo";
 "Minimum Size: %@" = "Tamaño mínimo: %@";
@@ -133,7 +132,6 @@
 "New Tab" = "Nueva pestaña";
 "New Window" = "Nueva ventana";
 "No File Operations" = "No hay operaciones de archivos";
-"No Saved Workspaces" = "No hay espacios de trabajo guardados";
 "OK" = "Aceptar";
 "Open" = "Abrir";
 "Open Image Gallery" = "Abrir galería de imágenes";
@@ -160,7 +158,6 @@
 "Remove from Favorites" = "Quitar de Favoritos";
 "Rename" = "Renombrar";
 "Rename…" = "Renombrar…";
-"Rename Workspace" = "Renombrar espacio de trabajo";
 "Reopen Closed Tab" = "Reabrir pestaña cerrada";
 "Reopen Closed Window" = "Reabrir ventana cerrada";
 "Replace with" = "Reemplazar por";
@@ -168,7 +165,6 @@
 "Resize Copies…" = "Redimensionar copias…";
 "Resize Images" = "Redimensionar imágenes";
 "Retry" = "Reintentar";
-"Return to a complete Explorer layout in one click." = "Vuelve a una distribución completa de Explorer con un clic.";
 "Reveal Hidden Files for 30 Seconds" = "Mostrar archivos ocultos durante 30 segundos";
 "Reveal in Finder" = "Mostrar en Finder";
 "Rotate Left" = "Girar a la izquierda";
@@ -177,9 +173,7 @@
 "Save as PDF…" = "Guardar como PDF…";
 "Save as PNG…" = "Guardar como PNG…";
 "Save both panes, open tabs, view modes, and sorting." = "Guarda los dos paneles, las pestañas abiertas, los modos de vista y el orden.";
-"Save Current Workspace…" = "Guardar espacio de trabajo actual…";
 "Save Search" = "Guardar búsqueda";
-"Save Workspace" = "Guardar espacio de trabajo";
 "Saved Searches" = "Búsquedas guardadas";
 "Search Inside Files" = "Buscar dentro de los archivos";
 "Search Scope" = "Ámbito de búsqueda";
@@ -204,7 +198,6 @@
 "Undo" = "Deshacer";
 "Update Saved View" = "Actualizar vista guardada";
 "Use Spotlight Index" = "Usar el índice de Spotlight";
-"Use the workspace toolbar menu to save your current layout." = "Usa el menú de espacios de trabajo de la barra para guardar tu distribución actual.";
 "Used by the toolbar and Open in Terminal actions." = "La usan la barra de herramientas y «Abrir terminal aquí».";
 "UTF-8 value" = "Valor UTF-8";
 "View and Sort Saved" = "Vista y orden guardados";
@@ -214,8 +207,6 @@
 "When an item exists" = "Si ya existe un elemento";
 "Width" = "Ancho";
 "work, important, red" = "trabajo, importante, rojo";
-"Workspace name" = "Nombre del espacio de trabajo";
-"Workspaces" = "Espacios de trabajo";
 "%lld of %lld" = "%lld de %lld";
 "%@ of %@" = "%1$@ de %2$@";
 
@@ -497,8 +488,6 @@
 "Eject Anyway" = "Expulsar de todos modos";
 "Disconnect %@" = "Desconectar %@";
 "Eject %@" = "Expulsar %@";
-"Open at Launch" = "Abrir al iniciar";
-"Don’t Open at Launch" = "No abrir al iniciar";
 "Empty Folder" = "Carpeta vacía";
 "No Matches" = "Sin resultados";
 "Right-click to create a new file." = "Haz clic derecho para crear un archivo nuevo.";
@@ -582,7 +571,6 @@
 "Cloud storage (OneDrive, Google Drive, Dropbox…)" = "Nubes (OneDrive, Google Drive, Dropbox…)";
 "Send the selected files by AirDrop, or open the AirDrop window" = "Envía por AirDrop los archivos seleccionados, o abre la ventana de AirDrop";
 "They appear inside “Locations”. Cloud folders are found automatically." = "Aparecen dentro de «Ubicaciones». Las carpetas de nubes se detectan solas.";
-"Save and restore the open folders and the split pane." = "Guardan y recuperan las carpetas abiertas y el panel dividido.";
 "Calculate folder sizes automatically" = "Calcular el tamaño de las carpetas automáticamente";
 "Off: the Size column shows “—” for folders; right-click → Calculate Size when you need it." = "Desactivado: la columna Tamaño muestra «—» en las carpetas; clic derecho → Calcular tamaño cuando lo necesites.";
 

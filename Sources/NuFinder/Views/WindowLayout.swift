@@ -41,7 +41,6 @@ struct CompactTabs: View {
     @EnvironmentObject private var browser: BrowserModel
     @AppStorage(LayoutSettings.tabBarKey) private var mode = "always"
     @State private var width: CGFloat = 300
-    @AppStorage("toolbar.showsWorkspaces") private var showsWorkspaces = true
     @AppStorage("toolbar.showsSplit") private var showsSplit = true
     @AppStorage("toolbar.showsTerminal") private var showsTerminal = true
     @AppStorage("toolbar.showsOperations") private var showsOperations = true
@@ -50,7 +49,7 @@ struct CompactTabs: View {
     static func buttonsWidth(visible: Int) -> CGFloat { 22 + 40 * CGFloat(visible) }
 
     private var buttonsWidth: CGFloat {
-        Self.buttonsWidth(visible: [showsWorkspaces, showsSplit, showsTerminal, showsOperations].filter { $0 }.count)
+        Self.buttonsWidth(visible: [showsSplit, showsTerminal, showsOperations].filter { $0 }.count)
     }
 
     var body: some View {

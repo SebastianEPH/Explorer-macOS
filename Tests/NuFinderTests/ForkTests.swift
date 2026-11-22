@@ -265,4 +265,33 @@ struct ForkTests {
         #expect(BehaviorSettings.startURL(defaults)?.lastPathComponent == "Downloads")
         #expect(BehaviorSettings.folderURL("/no/existe") == nil)
     }
+
+    @Test @MainActor func splitPaneIsPerWindow() throws {
+        let suite = "ForkTests.split.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let panes = WindowSplitPanes(defaults: defaults)
+        let first = BrowserModel(initialURL: URL(fileURLWithPath: "/tmp"), restoresSession: false, defaults: defaults)
+        let second = BrowserModel(initialURL: URL(fileURLWithPath: "/tmp"), restoresSession: false, defaults: defaults)
+        #expect(!panes.isOn(first) && !panes.isOn(second))
+        panes.set(false, for: second)
+        panes.toggle(first)
+        #expect(panes.isOn(first))
+        #expect(!panes.isOn(second)) // la otra ventana no cambia
+        let third = BrowserModel(initialURL: URL(fileURLWithPath: "/tmp"), restoresSession: false, defaults: defaults)
+        #expect(panes.isOn(third)) // la nueva empieza como la última usada
+    }
+
+    @Test func removedWorkspacesDataIsCleaned() throws {
+        let suite = "ForkTests.ws.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set("x", forKey: "launchWorkspaceID")
+        defaults.set(Data(), forKey: "savedWorkspaces")
+        defaults.set(true, forKey: "showsSplitPane")
+        RemovedFeatures.cleanDefaults(defaults)
+        #expect(defaults.object(forKey: "launchWorkspaceID") == nil)
+        #expect(defaults.object(forKey: "savedWorkspaces") == nil)
+        #expect(defaults.bool(forKey: "showsSplitPane")) // lo demás se conserva
+    }
 }

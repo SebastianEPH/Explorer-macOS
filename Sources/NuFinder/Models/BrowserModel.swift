@@ -1108,55 +1108,6 @@ final class BrowserModel: ObservableObject {
         "folderViewPreference.\(url.standardizedFileURL.path)"
     }
 
-    func workspaceSnapshot() -> BrowserPaneSnapshot {
-        syncActiveTab()
-        return BrowserPaneSnapshot(
-            tabPaths: tabs.map { $0.url.path },
-            pinnedTabPaths: tabs.filter(\.isPinned).map { $0.url.path },
-            activeTabIndex: tabs.firstIndex(where: { $0.id == activeTabID }) ?? 0,
-            viewMode: viewMode.rawValue,
-            showsKind: showsKindColumn,
-            showsSize: showsSizeColumn,
-            showsModified: showsModifiedColumn,
-            sortFields: sortCriteria.map { $0.field.rawValue },
-            sortAscending: sortCriteria.map(\.ascending)
-        )
-    }
-
-    func restoreWorkspace(_ snapshot: BrowserPaneSnapshot) {
-        let validURLs = snapshot.tabPaths
-            .filter(Self.isRestorableSessionPath)
-            .map(Self.storedDirectoryURL)
-            .filter { FileManager.default.fileExists(atPath: $0.path) }
-        let urls = validURLs.isEmpty ? [FileManager.default.homeDirectoryForCurrentUser] : validURLs
-        let pinned = Set(snapshot.pinnedTabPaths)
-        tabs = urls.map {
-            BrowserTab(
-                id: UUID(),
-                url: $0,
-                history: [$0],
-                historyIndex: 0,
-                isPinned: pinned.contains($0.path)
-            )
-        }
-        let activeIndex = min(max(0, snapshot.activeTabIndex), tabs.count - 1)
-        activeTabID = tabs[activeIndex].id
-        currentURL = tabs[activeIndex].url
-        history = [currentURL]
-        historyIndex = 0
-        navigate(to: currentURL, addingHistory: false)
-        viewMode = FileViewMode(rawValue: snapshot.viewMode) ?? .list
-        showsKindColumn = snapshot.showsKind
-        showsSizeColumn = snapshot.showsSize
-        showsModifiedColumn = snapshot.showsModified
-        let criteria = zip(snapshot.sortFields, snapshot.sortAscending).compactMap { field, ascending in
-            SortField.allCases.first { $0.rawValue == field }.map {
-                SortCriterion(field: $0, ascending: ascending)
-            }
-        }
-        sortCriteria = criteria.isEmpty ? [SortCriterion(field: .name, ascending: true)] : criteria
-    }
-
     func moveSelectionToTrash() {
         let urls = Array(selection)
         guard !urls.isEmpty else { return }

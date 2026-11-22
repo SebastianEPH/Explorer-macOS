@@ -19,6 +19,8 @@ final class KeyWindowFocus: ObservableObject {
     private var browserSubscription: AnyCancellable?
     @Published private(set) var browser: BrowserModel?
     @Published private(set) var operations: FileOperationManager?
+    /// Modelo principal de la ventana activa (el panel izquierdo), aunque el foco esté en el derecho.
+    @Published private(set) var windowBrowser: BrowserModel?
 
     private init() {
         NotificationCenter.default.addObserver(
@@ -38,10 +40,15 @@ final class KeyWindowFocus: ObservableObject {
     private func windowBecameKey(_ window: NSWindow) {
         guard let entry = (entries.object(forKey: window) as? Box<Entry>)?.value else { return }
         operations = entry.operations
+        windowBrowser = entry.browser
         focusSubscription = entry.focus.$activeBrowser.sink { [weak self] active in
             self?.follow(active ?? entry.browser)
         }
     }
+
+    func isBrowserWindow(_ window: NSWindow) -> Bool { entries.object(forKey: window) != nil }
+    /// Modelo principal de una ventana concreta.
+    func browser(for window: NSWindow) -> BrowserModel? { (entries.object(forKey: window) as? Box<Entry>)?.value.browser }
 
     private func follow(_ model: BrowserModel) {
         guard model !== browser else { return }
