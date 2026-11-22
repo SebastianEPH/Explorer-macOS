@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         FinderRedirectService.start()
         AppearanceSettings.apply() // Fork
         TextPredictionSettings.apply() // Fork: sin texto gris de predicción al escribir nombres
+        AppIconService.start() // Fork: icono elegido en Ajustes (claro/oscuro)
         // A SwiftPM executable reaches didFinishLaunching before SwiftUI has
         // necessarily installed its WindowGroup. Activate on the next run-loop
         // turn so `swift run Freeloader` reliably comes in front of Terminal.

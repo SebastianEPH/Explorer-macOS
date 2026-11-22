@@ -585,3 +585,16 @@
 "Save and restore the open folders and the split pane." = "Guardan y recuperan las carpetas abiertas y el panel dividido.";
 "Calculate folder sizes automatically" = "Calcular el tamaño de las carpetas automáticamente";
 "Off: the Size column shows “—” for folders; right-click → Calculate Size when you need it." = "Desactivado: la columna Tamaño muestra «—» en las carpetas; clic derecho → Calcular tamaño cuando lo necesites.";
+
+/* Fork: iconos de la app */
+"App Icon" = "Icono de la app";
+"Classic" = "Clásico";
+"Compass" = "Brújula";
+"Stack" = "Pila";
+"Tree" = "Árbol";
+"Fast" = "Rápido";
+"Tiles" = "Mosaico";
+"Orbit" = "Órbita";
+"Minimal" = "Minimalista";
+"Paper Plane" = "Avión de papel";
+"Each icon has a light and a dark version (left and right) that change with macOS. It is shown in the Dock and ⌘Tab while Explorer is open; Finder keeps the original so macOS doesn’t ask for the permissions again." = "Cada icono tiene versión clara y oscura (izquierda y derecha) que cambian con macOS. Se ve en el Dock y en ⌘Tab mientras Explorer está abierto; Finder conserva el original para que macOS no vuelva a pedir los permisos.";
