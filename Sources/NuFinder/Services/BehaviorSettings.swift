@@ -154,6 +154,9 @@ struct FolderChoicePicker: View {
 }
 
 struct StartupSection: View {
+    /// Fork: apartado a mostrar (nil = todos).
+    var part: String? = nil
+    private func shows(_ name: String) -> Bool { part == nil || part == name }
     @AppStorage(BehaviorSettings.restoresTabsKey) private var restoresTabs = true
     @AppStorage(BehaviorSettings.startFolderKey) private var startFolder = ""
     @AppStorage(BehaviorSettings.newTabFolderKey) private var newTabFolder = ""
@@ -161,39 +164,48 @@ struct StartupSection: View {
     @AppStorage(BehaviorSettings.hiddenByDefaultKey) private var hiddenByDefault = false
 
     var body: some View {
-        Section("When Explorer Opens") {
-            Toggle(isOn: $restoresTabs) {
-                Label("Reopen the tabs from last time", systemImage: "arrow.counterclockwise")
-                Text("Off: always starts with one tab in the folder below.")
-            }
-            FolderChoicePicker(title: "Start folder", symbol: "house", emptyLabel: "Home", value: $startFolder)
-                .lockedSetting(restoresTabs)
-            if restoresTabs {
-                DisabledReason("Not used while “Reopen the tabs from last time” is on. Turn it off to choose a start folder.")
+        if shows("opens") {
+            Section("When Explorer Opens") {
+                Toggle(isOn: $restoresTabs) {
+                    Label("Reopen the tabs from last time", systemImage: "arrow.counterclockwise")
+                    Text("Off: always starts with one tab in the folder below.")
+                }
+                FolderChoicePicker(title: "Start folder", symbol: "house", emptyLabel: "Home", value: $startFolder)
+                    .lockedSetting(restoresTabs)
+                if restoresTabs {
+                    DisabledReason("Not used while “Reopen the tabs from last time” is on. Turn it off to choose a start folder.")
+                }
             }
         }
-        Section("Tabs") {
-            FolderChoicePicker(title: "New tab opens", symbol: "plus.square.on.square",
-                               emptyLabel: "The current folder", value: $newTabFolder)
-        }
-        Section("Default View") {
-            Picker(selection: $defaultView) {
-                Label("List", systemImage: "list.bullet").tag(FileViewMode.list.rawValue)
-                Label("Compact", systemImage: "square.grid.3x1.below.line.grid.1x2").tag(FileViewMode.compact.rawValue)
-                Label("Icons", systemImage: "square.grid.2x2").tag(FileViewMode.icons.rawValue)
-            } label: { Label("View new windows as", systemImage: "eye") }
-                .pickerStyle(.segmented)
-            ViewModePreview(mode: FileViewMode(rawValue: defaultView) ?? .list)
-            Toggle(isOn: $hiddenByDefault) {
-                Label("Show hidden files from the start", systemImage: "eye.slash")
-                Text("Files whose name starts with a dot, like .gitignore.")
+        if shows("tabs") {
+            Section("Tabs") {
+                FolderChoicePicker(title: "New tab opens", symbol: "plus.square.on.square",
+                                   emptyLabel: "The current folder", value: $newTabFolder)
             }
-            Text("Folders with their own saved view keep it.").font(.caption).foregroundStyle(.secondary)
+        }
+        if shows("view") {
+            Section("Default View") {
+                Picker(selection: $defaultView) {
+                    Label("List", systemImage: "list.bullet").tag(FileViewMode.list.rawValue)
+                    Label("Compact", systemImage: "square.grid.3x1.below.line.grid.1x2").tag(FileViewMode.compact.rawValue)
+                    Label("Icons", systemImage: "square.grid.2x2").tag(FileViewMode.icons.rawValue)
+                } label: { Label("View new windows as", systemImage: "eye") }
+                    .pickerStyle(.segmented)
+                ViewModePreview(mode: FileViewMode(rawValue: defaultView) ?? .list)
+                Toggle(isOn: $hiddenByDefault) {
+                    Label("Show hidden files from the start", systemImage: "eye.slash")
+                    Text("Files whose name starts with a dot, like .gitignore.")
+                }
+                Text("Folders with their own saved view keep it.").font(.caption).foregroundStyle(.secondary)
+            }
         }
     }
 }
 
 struct FileBehaviorSection: View {
+    /// Fork: apartado a mostrar (nil = todos).
+    var part: String? = nil
+    private func shows(_ name: String) -> Bool { part == nil || part == name }
     @AppStorage(BehaviorSettings.foldersInNewTabKey) private var foldersInNewTab = false
     @AppStorage(BehaviorSettings.confirmTrashKey) private var confirmTrash = false
     @AppStorage(ListColumnSettings.showsCreatedKey) private var showsCreated = false
@@ -202,74 +214,87 @@ struct FileBehaviorSection: View {
     @AppStorage(FolderSizeQueue.autoKey) private var autoFolderSizes = true
 
     var body: some View {
-        Section("Opening and Deleting") {
-            Toggle(isOn: $foldersInNewTab) {
-                Label("Open folders in a new tab", systemImage: "plus.square.on.square")
-                Text("Double-clicking a folder opens it in a new tab instead of the same one.")
-            }
-            Toggle(isOn: $confirmTrash) {
-                Label("Ask before moving to the Trash", systemImage: "trash")
-                Text("Shows a confirmation before deleting with ⌘⌫ or the menu.")
+        if shows("opening") {
+            Section("Opening and Deleting") {
+                Toggle(isOn: $foldersInNewTab) {
+                    Label("Open folders in a new tab", systemImage: "plus.square.on.square")
+                    Text("Double-clicking a folder opens it in a new tab instead of the same one.")
+                }
+                Toggle(isOn: $confirmTrash) {
+                    Label("Ask before moving to the Trash", systemImage: "trash")
+                    Text("Shows a confirmation before deleting with ⌘⌫ or the menu.")
+                }
             }
         }
-        Section("Panels") {
-            Toggle(isOn: $showsCreated) {
-                Label("“Date Created” column in List view", systemImage: "calendar.badge.plus")
-            }
-            Toggle(isOn: $previewVisible) {
-                Label("Image preview pane", systemImage: "sidebar.right")
-                Text("Panel on the right that shows the selected image.")
-            }
-            Toggle(isOn: $autoFolderSizes) {
-                Label("Calculate folder sizes automatically", systemImage: "scalemass")
-                Text("Off: the Size column shows “—” for folders; right-click → Calculate Size when you need it.")
-            }
-            Toggle(isOn: $autoClose) {
-                Label("Close the operations panel when done", systemImage: "arrow.left.arrow.right.circle")
+        if shows("panels") {
+            Section("Panels") {
+                Toggle(isOn: $showsCreated) {
+                    Label("“Date Created” column in List view", systemImage: "calendar.badge.plus")
+                }
+                Toggle(isOn: $previewVisible) {
+                    Label("Image preview pane", systemImage: "sidebar.right")
+                    Text("Panel on the right that shows the selected image.")
+                }
+                Toggle(isOn: $autoFolderSizes) {
+                    Label("Calculate folder sizes automatically", systemImage: "scalemass")
+                    Text("Off: the Size column shows “—” for folders; right-click → Calculate Size when you need it.")
+                }
+                Toggle(isOn: $autoClose) {
+                    Label("Close the operations panel when done", systemImage: "arrow.left.arrow.right.circle")
+                }
             }
         }
     }
 }
 
 struct AppearanceSection: View {
+    /// Fork: apartado a mostrar (nil = todos).
+    var part: String? = nil
+    private func shows(_ name: String) -> Bool { part == nil || part == name }
     @AppStorage(AppearanceSettings.themeKey) private var theme = ""
     @AppStorage(AppearanceSettings.toolbarColorKey) private var toolbarColor = ""
     @AppStorage(AppearanceSettings.toolbarColorDarkKey) private var toolbarColorDark = ""
     @AppStorage(BehaviorSettings.showsLocationsKey) private var showsLocations = true
 
     var body: some View {
-        Section("Theme") {
-            Picker(selection: $theme) {
-                Label("System", systemImage: "circle.lefthalf.filled").tag("")
-                Label("Light", systemImage: "sun.max").tag("light")
-                Label("Dark", systemImage: "moon").tag("dark")
-            } label: { Label("Appearance", systemImage: "paintpalette") }
-                .pickerStyle(.segmented)
-                .onChange(of: theme) { _, _ in AppearanceSettings.apply() }
-            HStack(spacing: 16) {
-                themeSwatch("", "System")
-                themeSwatch("light", "Light")
-                themeSwatch("dark", "Dark")
-            }
-            .frame(maxWidth: .infinity)
-        }
-        Section("Toolbar Buttons") {
-            ToolbarColorRow(title: "Light mode", symbol: "sun.max", value: $toolbarColor, allowsSame: false)
-            ToolbarColorRow(title: "Dark mode", symbol: "moon", value: $toolbarColorDark, allowsSame: true)
-            SettingsPreviewBox(title: "Preview: the purple buttons of the window, in light and dark mode") {
-                HStack(spacing: 12) {
-                    toolbarSample(.light)
-                    toolbarSample(.dark)
+        if shows("theme") {
+            Section("Theme") {
+                Picker(selection: $theme) {
+                    Label("System", systemImage: "circle.lefthalf.filled").tag("")
+                    Label("Light", systemImage: "sun.max").tag("light")
+                    Label("Dark", systemImage: "moon").tag("dark")
+                } label: { Label("Appearance", systemImage: "paintpalette") }
+                    .pickerStyle(.segmented)
+                    .onChange(of: theme) { _, _ in AppearanceSettings.apply() }
+                HStack(spacing: 16) {
+                    themeSwatch("", "System")
+                    themeSwatch("light", "Light")
+                    themeSwatch("dark", "Dark")
                 }
+                .frame(maxWidth: .infinity)
             }
-            Text("These colors are used by the toolbar buttons, the up button, sorting, the gallery and the badges.")
-                .font(.caption).foregroundStyle(.secondary)
         }
-        Section("Sidebar") {
-            Toggle(isOn: $showsLocations) {
-                Label("Show “Locations” (disks and servers)", systemImage: "externaldrive")
+        if shows("buttons") {
+            Section("Toolbar Buttons") {
+                ToolbarColorRow(title: "Light mode", symbol: "sun.max", value: $toolbarColor, allowsSame: false)
+                ToolbarColorRow(title: "Dark mode", symbol: "moon", value: $toolbarColorDark, allowsSame: true)
+                SettingsPreviewBox(title: "Preview: the purple buttons of the window, in light and dark mode") {
+                    HStack(spacing: 12) {
+                        toolbarSample(.light)
+                        toolbarSample(.dark)
+                    }
+                }
+                Text("These colors are used by the toolbar buttons, the up button, sorting, the gallery and the badges.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
-            SidebarExtrasToggles()
+        }
+        if shows("sidebar") {
+            Section("Sidebar") {
+                Toggle(isOn: $showsLocations) {
+                    Label("Show “Locations” (disks and servers)", systemImage: "externaldrive")
+                }
+                SidebarExtrasToggles()
+            }
         }
     }
 
