@@ -68,6 +68,7 @@ struct FreeloaderApp: App {
     @AppStorage("previewPane.visible") private var previewVisible = true // Fork
     @AppStorage(ListColumnSettings.showsCreatedKey) private var showsCreatedColumn = false // Fork
     @AppStorage(MenuBarSettings.showsGoKey) private var showsGoMenu = false // Fork
+    @AppStorage(MenuExtras.view.key) private var viewMenuExtras = true // Fork
     @AppStorage(MenuBarSettings.showsCommandsKey) private var showsCommandsMenu = false // Fork
 
     var body: some Scene {
@@ -182,10 +183,12 @@ struct FreeloaderApp: App {
                 Toggle("Folder Tree in Sidebar", isOn: bind(\.showsTree))
                 Toggle("Preview Pane", isOn: $previewVisible)
                     .keyboardShortcut("p", modifiers: [.command, .option])
+                if !viewMenuExtras { // Fork: con los añadidos de Visualización ya están «Como lista/compacta/iconos» (⌘1–3)
                 Picker("View Mode", selection: bind(\.viewMode)) {
                     ForEach(FileViewMode.allCases) { mode in
                         Text(LocalizedStringKey(mode.rawValue)).tag(mode)
                     }
+                }
                 }
                 Menu("Columns") {
                     Toggle("Kind", isOn: bind(\.showsKindColumn))

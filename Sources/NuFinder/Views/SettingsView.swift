@@ -10,9 +10,10 @@ struct SettingsView: View {
     @AppStorage("shortcut.commandPalette") private var commandPaletteKey = "p"
     @AppStorage("shortcut.terminal") private var terminalKey = "t"
     @AppStorage("gitStatusEnabled") private var gitStatusEnabled = false
+    @AppStorage("settings.tab") private var settingsTab = "general" // Fork: pestaña abierta (la eligen también los menús)
 
     var body: some View {
-        TabView { // Fork: Ajustes en pestañas, y dentro de cada una un panel con sus apartados
+        TabView(selection: $settingsTab) { // Fork: Ajustes en pestañas, y dentro de cada una un panel con sus apartados
             SettingsPagesView(tab: "general", pages: [
                 SettingsPage("terminal", "Terminal application", "terminal") { terminalSection },
                 SettingsPage("toolbar", "Toolbar", "menubar.rectangle") { toolbarSection },
@@ -21,19 +22,19 @@ struct SettingsView: View {
                 SettingsPage("menubar", "Menu Bar", "menubar.rectangle") { MenuBarSection() },
                 SettingsPage("language", "Language", "globe") { LanguageSection() }
             ])
-            .settingsTab("General", systemImage: "gearshape")
+            .settingsTab("General", systemImage: "gearshape").tag("general")
             SettingsPagesView(tab: "startup", pages: [
                 SettingsPage("opens", "When Explorer Opens", "power") { StartupSection(part: "opens") },
                 SettingsPage("tabs", "Tabs", "rectangle.stack") { StartupSection(part: "tabs") },
                 SettingsPage("view", "Default View", "eye") { StartupSection(part: "view") }
             ])
-            .settingsTab("Startup", systemImage: "power")
+            .settingsTab("Startup", systemImage: "power").tag("startup")
             SettingsPagesView(tab: "files", pages: [
                 SettingsPage("icons", "Icons and Selection", "square.grid.2x2") { ItemHitAreaSection() },
                 SettingsPage("opening", "Opening and Deleting", "trash") { FileBehaviorSection(part: "opening") },
                 SettingsPage("panels", "Panels", "sidebar.right") { FileBehaviorSection(part: "panels") }
             ])
-            .settingsTab("Files", systemImage: "doc")
+            .settingsTab("Files", systemImage: "doc").tag("files")
             SettingsPagesView(tab: "appearance", pages: [
                 SettingsPage("theme", "Theme", "circle.lefthalf.filled") { AppearanceSection(part: "theme") },
                 SettingsPage("buttons", "Toolbar Buttons", "paintbrush") { AppearanceSection(part: "buttons") },
@@ -42,15 +43,15 @@ struct SettingsView: View {
                 SettingsPage("window", "Window", "macwindow") { WindowLayoutSection() },
                 SettingsPage("status", "Status Bar", "rectangle.bottomthird.inset.filled") { StatusBarSection() }
             ])
-            .settingsTab("Appearance", systemImage: "paintpalette")
-            Form { FavoritesSection() }.settingsTab("Favorites", systemImage: "star")
-            Form { ContextMenuSection() }.settingsTab("Context Menu", systemImage: "contextualmenu.and.cursorarrow")
+            .settingsTab("Appearance", systemImage: "paintpalette").tag("appearance")
+            Form { FavoritesSection() }.settingsTab("Favorites", systemImage: "star").tag("favorites")
+            Form { ContextMenuSection() }.settingsTab("Context Menu", systemImage: "contextualmenu.and.cursorarrow").tag("contextmenu")
             SettingsPagesView(tab: "system", pages: [
                 SettingsPage("permissions", "Permissions", "lock.shield") { PermissionsSection() },
                 SettingsPage("finder", "Finder", "face.smiling") { FinderRedirectSection() },
                 SettingsPage("updates", "Updates", "arrow.down.circle") { UpdatesSection() }
             ])
-            .settingsTab("System", systemImage: "lock.shield")
+            .settingsTab("System", systemImage: "lock.shield").tag("system")
         }
         .onChange(of: commandPaletteKey) { _, value in commandPaletteKey = sanitized(value, fallback: "p") }
         .onChange(of: terminalKey) { _, value in terminalKey = sanitized(value, fallback: "t") }

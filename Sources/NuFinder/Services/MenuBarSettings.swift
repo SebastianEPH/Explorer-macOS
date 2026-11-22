@@ -52,28 +52,160 @@ enum MenuBarSettings {
     }
 }
 
-/// Menú «Opciones» y navegación, sin depender del código del autor.
+/// Añadidos de Explorer en cada menú de arriba. Cada grupo se puede quitar en Ajustes → General → Barra de menús.
+enum MenuExtras: String, CaseIterable, Identifiable {
+    case app, file, edit, view, window, help, options
+    var id: String { rawValue }
+    var key: String { "menu.extras.\(rawValue)" }
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .app: "Explorer menu: Permissions and Finder replacement"
+        case .file: "File menu: compress, extract, AirDrop, empty Trash"
+        case .edit: "Edit menu: copy name, rename, tags, paste as alias"
+        case .view: "View menu: view modes, sort, icon size, bars, path, theme"
+        case .window: "Window menu: next/previous tab, pin, duplicate, close other tabs, split pane"
+        case .help: "Help menu: keyboard shortcuts"
+        case .options: "“Options” menu: behaviour (folder sizes, Trash, new tabs, hidden files)"
+        }
+    }
+
+    var menuName: String {
+        switch self {
+        case .app: "Explorer"
+        case .file: "File"
+        case .edit: "Edit"
+        case .view: "View"
+        case .window: "Window"
+        case .help: "Help"
+        case .options: "Options"
+        }
+    }
+}
+
+/// Menús de Explorer, sin depender del código del autor.
 struct ExplorerMenus: Commands {
-    /// Ventana activa: atrás, adelante, carpeta superior, recientes y paleta de comandos.
+    /// Ventana activa.
     let browser: () -> BrowserModel
     let commandPaletteKey: String
 
-    @AppStorage(MenuBarSettings.showsOptionsKey) private var showsOptions = true
+    @AppStorage(MenuExtras.app.key) private var appExtras = true
+    @AppStorage(MenuExtras.file.key) private var fileExtras = true
+    @AppStorage(MenuExtras.edit.key) private var editExtras = true
+    @AppStorage(MenuExtras.view.key) private var viewExtras = true
+    @AppStorage(MenuExtras.window.key) private var windowExtras = true
+    @AppStorage(MenuExtras.help.key) private var helpExtras = true
+    @AppStorage(MenuExtras.options.key) private var showsOptions = true
     @AppStorage(MenuBarSettings.showsGoKey) private var showsGo = false
     @AppStorage(MenuBarSettings.showsCommandsKey) private var showsCommands = false
     @AppStorage(AppearanceSettings.themeKey) private var theme = ""
     @AppStorage(LayoutSettings.compactTopKey) private var compactTop = false
     @AppStorage(LayoutSettings.showsSearchKey) private var showsSearch = true
     @AppStorage(LayoutSettings.pathKey) private var path = "both"
+    @AppStorage(LayoutSettings.tabBarKey) private var tabBar = "always"
     @AppStorage(StatusBarSettings.visibleKey) private var statusBar = true
     @AppStorage(FolderSizeQueue.autoKey) private var folderSizes = true
     @AppStorage(BehaviorSettings.confirmTrashKey) private var confirmTrash = false
     @AppStorage(BehaviorSettings.foldersInNewTabKey) private var foldersInNewTab = false
-    @AppStorage(AppIconService.key) private var appIcon = AppIconService.defaultID
+    @AppStorage(BehaviorSettings.hiddenByDefaultKey) private var hiddenByDefault = false
+    @AppStorage(BehaviorSettings.iconSizeKey) private var iconSize = BehaviorSettings.defaultIconSize
+    @AppStorage("showsSplitPane") private var splitPane = false
+
+    private var hasSelection: Bool { !browser().selection.isEmpty }
 
     var body: some Commands {
-        // Navegación (antes en «Ir»): se queda en Visualización para no perder los atajos.
+        // MARK: Explorer (menú de la app)
+        CommandGroup(after: .appSettings) {
+            if appExtras {
+                Button("Permissions…") { SettingsOpener.open(tab: "system", page: "permissions") }
+                Button("Finder Replacement…") { SettingsOpener.open(tab: "system", page: "finder") }
+            }
+        }
+        // MARK: Archivo
+        CommandGroup(after: .saveItem) {
+            if fileExtras {
+                Divider()
+                Button("Compress to ZIP") { browser().createArchiveFromSelection() }
+                    .disabled(!hasSelection)
+                Button("Extract Here") { browser().extractSelectedArchives() }
+                    .disabled(!browser().selection.contains(where: ArchiveService.isArchive))
+                Button("Send with AirDrop") {
+                    let urls = Array(browser().selection)
+                    if let service = NSSharingService(named: .sendViaAirDrop), service.canPerform(withItems: urls) { service.perform(withItems: urls) }
+                }
+                .disabled(!hasSelection)
+                Button("Calculate Size") { browser().calculateSelectedSizes() }
+                    .disabled(!hasSelection)
+                Button("Reveal in Finder") { browser().revealSelectionInFinder() }
+                    .disabled(!hasSelection)
+                Divider()
+                Button("Empty Trash…") {
+                    if let error = SidebarExtras.emptyTrash() { browser().errorMessage = error }
+                }
+            }
+        }
+        // MARK: Edición
+        CommandGroup(after: .pasteboard) {
+            if editExtras {
+                Divider()
+                Button("Copy Filename") { FileActionService.copyNames(Array(browser().selection)) }
+                    .keyboardShortcut("c", modifiers: [.command, .option, .shift])
+                    .disabled(!hasSelection)
+                Menu("Paste As") {
+                    Button("Alias") { browser().pasteAsLinks(into: browser().currentURL, symbolic: false) }
+                    Button("Symbolic Link") { browser().pasteAsLinks(into: browser().currentURL, symbolic: true) }
+                }
+                .disabled(!browser().canPaste)
+                Divider()
+                Button("Rename") {
+                    if let url = browser().selection.first { browser().selection = [url]; browser().renameTarget = url }
+                }
+                .disabled(browser().selection.count != 1)
+                Button("Tags…") { browser().tagText = ""; browser().showsTagPrompt = true }
+                    .disabled(!hasSelection)
+            }
+        }
+        // MARK: Visualización (incluye la navegación de «Ir» si ese menú está oculto)
         CommandGroup(after: .sidebar) {
+            if viewExtras {
+                Divider()
+                Button("As List") { browser().viewMode = .list }.keyboardShortcut("1")
+                Button("As Compact") { browser().viewMode = .compact }.keyboardShortcut("2")
+                Button("As Icons") { browser().viewMode = .icons }.keyboardShortcut("3")
+                Menu("Sort By") {
+                    ForEach(SortField.allCases) { field in
+                        Button(LocalizedStringKey(field.rawValue)) {
+                            let model = browser()
+                            let ascending = model.sortCriteria.first?.field == field ? !(model.sortCriteria.first?.ascending ?? true) : true
+                            model.sortCriteria = [SortCriterion(field: field, ascending: ascending)]
+                            model.sortedAgain()
+                        }
+                    }
+                }
+                Button("Bigger Icons") { iconSize = min(128, iconSize + 8) }.keyboardShortcut("+")
+                Button("Smaller Icons") { iconSize = max(32, iconSize - 8) }.keyboardShortcut("-")
+                Divider()
+                Toggle("Split Pane", isOn: $splitPane).keyboardShortcut("s", modifiers: [.command, .option])
+                Toggle("Tabs in the top bar (one row)", isOn: $compactTop)
+                Picker("Tab bar", selection: $tabBar) {
+                    Text("Always").tag("always")
+                    Text("Only with 2 or more tabs").tag("multiple")
+                    Text("Never").tag("never")
+                }
+                Toggle("Search bar", isOn: $showsSearch)
+                Toggle("Status Bar", isOn: $statusBar)
+                Picker("Path", selection: $path) {
+                    Text("Buttons and text (two rows)").tag("both")
+                    Text("Buttons with copy (one row)").tag("buttons")
+                    Text("Text only").tag("text")
+                }
+                Picker("Theme", selection: $theme) {
+                    Text("System").tag("")
+                    Text("Light").tag("light")
+                    Text("Dark").tag("dark")
+                }
+                .onChange(of: theme) { _, _ in AppearanceSettings.apply() }
+            }
             if !showsGo {
                 Divider()
                 Button("Back") { browser().goBack() }.keyboardShortcut("[")
@@ -86,34 +218,37 @@ struct ExplorerMenus: Commands {
                 }
             }
         }
+        // MARK: Ventana
+        CommandGroup(before: .windowList) {
+            if windowExtras {
+                Button("Next Tab") { selectTab(offset: 1) }.keyboardShortcut(.tab, modifiers: .control)
+                Button("Previous Tab") { selectTab(offset: -1) }.keyboardShortcut(.tab, modifiers: [.control, .shift])
+                Button("Duplicate Tab") { browser().duplicateTab(browser().activeTabID) }
+                Button("Pin Tab") { browser().togglePinnedTab(browser().activeTabID) }
+                Button("Close Other Tabs") {
+                    let model = browser()
+                    for tab in model.tabs where tab.id != model.activeTabID && !tab.isPinned { model.closeTab(tab.id) }
+                }
+                .disabled(browser().tabs.count < 2)
+                Divider()
+            }
+        }
+        // MARK: Ayuda
+        // Sustituye «Ayuda de Explorer» (no abre nada útil) por los atajos de teclado.
+        CommandGroup(replacing: .help) {
+            if helpExtras {
+                Button("Keyboard Shortcuts") { SettingsOpener.open(tab: "general", page: "shortcuts") }
+                Divider()
+            }
+            HelpVersionItems() // versión, buscar actualizaciones y Acerca de (van en este mismo grupo)
+        }
+        // MARK: Opciones (comportamiento)
         if showsOptions {
-        CommandMenu("Options") {
-                Picker("Theme", selection: $theme) {
-                    Text("System").tag("")
-                    Text("Light").tag("light")
-                    Text("Dark").tag("dark")
-                }
-                .onChange(of: theme) { _, _ in AppearanceSettings.apply() }
-                Divider()
-                Toggle("Tabs in the top bar (one row)", isOn: $compactTop)
-                Toggle("Search bar", isOn: $showsSearch)
-                Toggle("Status Bar", isOn: $statusBar)
-                Picker("Path", selection: $path) {
-                    Text("Buttons and text (two rows)").tag("both")
-                    Text("Buttons with copy (one row)").tag("buttons")
-                    Text("Text only").tag("text")
-                }
-                Divider()
+            CommandMenu("Options") {
                 Toggle("Calculate folder sizes automatically", isOn: $folderSizes)
                 Toggle("Open folders in a new tab", isOn: $foldersInNewTab)
                 Toggle("Ask before moving to the Trash", isOn: $confirmTrash)
-                Divider()
-                Picker("App Icon", selection: $appIcon) {
-                    ForEach(AppIconDesign.all) { design in
-                        Text("\(design.number). \(Text(design.name))").tag(design.id)
-                    }
-                }
-                .onChange(of: appIcon) { _, _ in AppIconService.apply() }
+                Toggle("Show hidden files from the start", isOn: $hiddenByDefault)
                 Divider()
                 if !showsCommands {
                     Button("Command Palette…") { browser().showsCommandPalette = true }
@@ -123,11 +258,29 @@ struct ExplorerMenus: Commands {
             }
         }
     }
+
+    private func selectTab(offset: Int) {
+        let model = browser()
+        guard let index = model.tabs.firstIndex(where: { $0.id == model.activeTabID }), !model.tabs.isEmpty else { return }
+        let next = (index + offset + model.tabs.count) % model.tabs.count
+        model.selectTab(model.tabs[next].id)
+    }
+}
+
+/// Abre Ajustes en una pestaña y apartado concretos.
+enum SettingsOpener {
+    @MainActor
+    static func open(tab: String, page: String) {
+        UserDefaults.standard.set(page, forKey: "settings.page.\(tab)")
+        UserDefaults.standard.set(tab, forKey: "settings.tab")
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+    }
 }
 
 /// Apartado «Barra de menús» de Ajustes → General.
 struct MenuBarSection: View {
-    @AppStorage(MenuBarSettings.showsOptionsKey) private var showsOptions = true
+    @AppStorage(MenuExtras.options.key) private var showsOptions = true
     @AppStorage(MenuBarSettings.showsGoKey) private var showsGo = false
     @AppStorage(MenuBarSettings.showsCommandsKey) private var showsCommands = false
     @AppStorage(MenuBarSettings.hidesEmojiKey) private var hidesEmoji = true
@@ -144,10 +297,6 @@ struct MenuBarSection: View {
                 }
                 .animation(.default, value: menus)
             }
-            Toggle(isOn: $showsOptions) {
-                Label("“Options” menu", systemImage: "slider.horizontal.3")
-                Text("Theme, tabs, search bar, status bar, path, icon and more, one click away.")
-            }
             Toggle(isOn: $showsGo) {
                 Label("“Go” menu", systemImage: "arrow.right.circle")
                 Text("Off: Back, Forward and Enclosing Folder (⌘[ ⌘] ⌘↑) move to the View menu.")
@@ -156,6 +305,7 @@ struct MenuBarSection: View {
                 Label("“Commands” menu", systemImage: "command")
                 Text("Off: the Command Palette moves to the Options menu.")
             }
+            ForEach(MenuExtras.allCases) { extra in MenuExtraToggle(extra: extra) }
             Toggle(isOn: $hidesEmoji) {
                 Label("Remove Emoji & Symbols, Dictation and AutoFill from Edit", systemImage: "face.smiling")
                 Text("macOS adds them; takes effect when Explorer restarts.")
@@ -174,5 +324,17 @@ struct MenuBarSection: View {
         if showsOptions { list.append("Options") }
         list += ["Window", "Help"]
         return list
+    }
+}
+
+private struct MenuExtraToggle: View {
+    let extra: MenuExtras
+    @AppStorage private var on: Bool
+    init(extra: MenuExtras) {
+        self.extra = extra
+        _on = AppStorage(wrappedValue: true, extra.key)
+    }
+    var body: some View {
+        Toggle(isOn: $on) { Label(extra.title, systemImage: "checklist") }
     }
 }
