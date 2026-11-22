@@ -615,3 +615,23 @@
 "Empty space around the drawing. 0 % fills everything; 10 % matches Apple’s icons." = "Espacio libre alrededor del dibujo. 0 % llena todo; 10 % es como los iconos de Apple.";
 "Reset" = "Restablecer";
 "Git" = "Git";
+
+/* Fork: barra de menús */
+"Options" = "Opciones";
+"Menu Bar" = "Barra de menús";
+"All Settings…" = "Todos los ajustes…";
+"Preview: menus at the top of the screen" = "Vista previa: menús de la parte de arriba de la pantalla";
+"“Options” menu" = "Menú «Opciones»";
+"Theme, tabs, search bar, status bar, path, icon and more, one click away." = "Tema, pestañas, barra de búsqueda, barra de estado, ruta, icono y más, a un clic.";
+"“Go” menu" = "Menú «Ir»";
+"Off: Back, Forward and Enclosing Folder (⌘[ ⌘] ⌘↑) move to the View menu." = "Desactivado: Atrás, Adelante y Carpeta superior (⌘[ ⌘] ⌘↑) pasan al menú Visualización.";
+"“Commands” menu" = "Menú «Comandos»";
+"Off: the Command Palette moves to the Options menu." = "Desactivado: la paleta de comandos pasa al menú Opciones.";
+"macOS adds them; takes effect when Explorer restarts." = "Los añade macOS; se aplica al volver a abrir Explorer.";
+"Explorer" = "Explorer";
+"Edit" = "Edición";
+"View" = "Visualización";
+"Help" = "Ayuda";
+"Remove Emoji & Symbols, Dictation and AutoFill from Edit" = "Quitar «Emoji y símbolos», «Dictado» y «Autorrelleno» de Edición";
+"Remove macOS window tabs" = "Quitar las pestañas de ventana de macOS";
+"Hides “Show Tab Bar” in View and stops macOS from grouping Explorer windows as tabs. Explorer’s own tabs are not affected. Takes effect when Explorer restarts." = "Quita «Mostrar barra de pestañas» de Visualización y evita que macOS agrupe las ventanas de Explorer como pestañas. Las pestañas de Explorer no cambian. Se aplica al volver a abrir Explorer.";

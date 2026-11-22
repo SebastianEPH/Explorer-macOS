@@ -18,6 +18,7 @@ struct SettingsView: View {
                 SettingsPage("toolbar", "Toolbar", "menubar.rectangle") { toolbarSection },
                 SettingsPage("shortcuts", "Keyboard Shortcuts", "command") { shortcutsSection },
                 SettingsPage("git", "Git", "arrow.triangle.branch") { gitSection },
+                SettingsPage("menubar", "Menu Bar", "menubar.rectangle") { MenuBarSection() },
                 SettingsPage("language", "Language", "globe") { LanguageSection() }
             ])
             .settingsTab("General", systemImage: "gearshape")

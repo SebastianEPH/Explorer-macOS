@@ -2,12 +2,18 @@ import SwiftUI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        MenuBarSettings.applySystemItems() // Fork: sin Emoji y dictado en Edición (antes de crear el menú)
+        MenuBarSettings.applyWindowTabbing() // Fork: sin pestañas de ventana de macOS
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         FinderRedirectService.start()
         AppearanceSettings.apply() // Fork
         TextPredictionSettings.apply() // Fork: sin texto gris de predicción al escribir nombres
         AppIconService.start() // Fork: icono elegido en Ajustes (claro/oscuro)
+        DispatchQueue.main.async { MenuBarSettings.startCleaning() } // Fork: sin «Autorrelleno» en Edición
         // A SwiftPM executable reaches didFinishLaunching before SwiftUI has
         // necessarily installed its WindowGroup. Activate on the next run-loop
         // turn so `swift run Freeloader` reliably comes in front of Terminal.
@@ -61,6 +67,8 @@ struct FreeloaderApp: App {
     @AppStorage("shortcut.terminal") private var terminalKey = "t"
     @AppStorage("previewPane.visible") private var previewVisible = true // Fork
     @AppStorage(ListColumnSettings.showsCreatedKey) private var showsCreatedColumn = false // Fork
+    @AppStorage(MenuBarSettings.showsGoKey) private var showsGoMenu = false // Fork
+    @AppStorage(MenuBarSettings.showsCommandsKey) private var showsCommandsMenu = false // Fork
 
     var body: some Scene {
         WindowGroup {
@@ -185,13 +193,14 @@ struct FreeloaderApp: App {
                     Toggle("Date Modified", isOn: bind(\.showsModifiedColumn))
                     Toggle("Date Created", isOn: $showsCreatedColumn)
                 }
-                Button(browser.showsHiddenFiles ? String(localized: "Hide Hidden Files") : "Show Hidden Files") {
+                Button(browser.showsHiddenFiles ? String(localized: "Hide Hidden Files") : String(localized: "Show Hidden Files")) { // Fork: traducido
                     browser.toggleHiddenFiles()
                 }
                 .keyboardShortcut(".", modifiers: [.command, .shift])
                 Button("Reload") { browser.reload() }
                     .keyboardShortcut("r")
             }
+            if showsGoMenu { // Fork: oculto por defecto (Ajustes → General → Barra de menús)
             CommandMenu("Go") {
                 Menu("Recent Locations") {
                     ForEach(browser.recentLocations, id: \.self) { url in
@@ -207,13 +216,17 @@ struct FreeloaderApp: App {
                 Button("Enclosing Folder") { browser.goUp() }
                     .keyboardShortcut(.upArrow, modifiers: .command)
             }
+            }
             CommandGroup(after: .help) {
                 HelpVersionItems()
             }
+            if showsCommandsMenu { // Fork: oculto por defecto
             CommandMenu("Commands") {
                 Button("Command Palette…") { browser.showsCommandPalette = true }
                     .keyboardShortcut(shortcutKey(commandPaletteKey, fallback: "p"), modifiers: [.command, .shift])
             }
+            }
+            ExplorerMenus(browser: { browser }, commandPaletteKey: commandPaletteKey) // Fork: menú Opciones y navegación
         }
         Settings {
             SettingsView()

@@ -831,7 +831,7 @@ struct FileListView: View {
             }
             .disabled(!browser.canPaste)
         case .bgHiddenFiles:
-            Button(browser.showsHiddenFiles ? String(localized: "Hide Hidden Files") : "Show Hidden Files") {
+            Button(browser.showsHiddenFiles ? String(localized: "Hide Hidden Files") : String(localized: "Show Hidden Files")) {
                 browser.toggleHiddenFiles()
             }
         case .bgRevealHidden:
