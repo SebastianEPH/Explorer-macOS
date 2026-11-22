@@ -588,7 +588,7 @@
 
 /* Fork: iconos de la app */
 "App Icon" = "Icono de la app";
-"Each icon has a light and a dark version (left and right) that change with macOS. It is shown in the Dock and ⌘Tab while Explorer is open; Finder keeps the original so macOS doesn’t ask for the permissions again." = "Cada icono tiene versión clara y oscura (izquierda y derecha) que cambian con macOS. Se ve en el Dock y en ⌘Tab mientras Explorer está abierto; Finder conserva el original para que macOS no vuelva a pedir los permisos.";
+"Each icon has a light and a dark version that change with macOS. It is shown in the Dock and ⌘Tab while Explorer is open; Finder keeps the original so macOS doesn’t ask for the permissions again." = "Cada icono tiene versión clara y oscura que cambian con macOS. Se ve en el Dock y en ⌘Tab mientras Explorer está abierto; Finder conserva el original para que macOS no vuelva a pedir los permisos.";
 "Tiles" = "Mosaico";
 "Colored background" = "Fondo de color";
 "Off: only the drawing, without the rounded colored square." = "Desactivado: solo el dibujo, sin el cuadrado redondeado de color.";
@@ -606,3 +606,4 @@
 "Hand-Drawn" = "Dibujado a mano";
 "Soft 3D" = "3D suave";
 "Minimal Gradient" = "Degradado minimalista";
+"See how each icon looks in light or dark mode." = "Mira cómo se ve cada icono en modo claro u oscuro.";

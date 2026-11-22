@@ -763,28 +763,43 @@ struct AppIconSection: View {
     @AppStorage(AppIconService.key) private var selected = ""
     @AppStorage(AppIconService.backgroundKey) private var background = false
     @Environment(\.colorScheme) private var colorScheme
+    /// Qué versión se ve en la vista previa (nil = la del modo actual de macOS).
+    @State private var previewDark: Bool?
+    private var showsDark: Bool { previewDark ?? (colorScheme == .dark) }
 
     private let columns = [GridItem(.adaptive(minimum: 120), spacing: 12)]
 
     var body: some View {
         Section("App Icon") {
+            Picker(selection: Binding(get: { showsDark }, set: { previewDark = $0 })) {
+                Label("Light", systemImage: "sun.max").tag(false)
+                Label("Dark", systemImage: "moon").tag(true)
+            } label: {
+                Label("Preview", systemImage: "eye")
+                Text("See how each icon looks in light or dark mode.")
+            }
+            .pickerStyle(.segmented)
             Toggle(isOn: $background) {
                 Label("Colored background", systemImage: "app")
                 Text("Off: only the drawing, without the rounded colored square.")
             }
             LazyVGrid(columns: columns, spacing: 12) {
+                // Fondo de la cuadrícula según la versión elegida, para ver el icono como en el Dock.
                 option(id: "", name: "Original") {
                     Image(nsImage: NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath)).resizable().frame(width: 60, height: 60)
                 }
                 ForEach(AppIconDesign.all) { design in
                     option(id: design.id, name: design.name, number: design.number) {
                         // Uno solo, en el modo actual (dos copias claro/oscuro parecían iconos repetidos).
-                        AppIconArt(design: design, dark: colorScheme == .dark, background: background).frame(width: 60, height: 60)
+                        AppIconArt(design: design, dark: showsDark, background: background).frame(width: 60, height: 60)
                     }
                 }
             }
-            .padding(.vertical, 4)
-            Text("Each icon has a light and a dark version (left and right) that change with macOS. It is shown in the Dock and ⌘Tab while Explorer is open; Finder keeps the original so macOS doesn’t ask for the permissions again.")
+            .padding(8)
+            .background(showsDark ? Color(white: 0.14) : Color(white: 0.97), in: RoundedRectangle(cornerRadius: 10))
+            .environment(\.colorScheme, showsDark ? .dark : .light)
+            .animation(.easeInOut(duration: 0.2), value: showsDark)
+            Text("Each icon has a light and a dark version that change with macOS. It is shown in the Dock and ⌘Tab while Explorer is open; Finder keeps the original so macOS doesn’t ask for the permissions again.")
                 .font(.caption).foregroundStyle(.secondary)
         }
         .onChange(of: selected) { _, _ in AppIconService.apply() }
