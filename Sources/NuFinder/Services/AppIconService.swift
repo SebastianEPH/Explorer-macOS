@@ -55,7 +55,7 @@ struct AppIconDesign: Identifiable {
 
     enum Glyph {
         /// Ventana de Mac con barra lateral. `tint` = color de las carpetas; `darkWindow` = ventana oscura también en modo claro.
-        case window(WindowContent, tint: UInt32, darkWindow: Bool = false)
+        case window(WindowContent, tint: UInt32, darkWindow: Bool = false, square: Bool = false)
         /// Cuadros de colores.
         case tiles(TilesLayout, colors: [UInt32])
         /// Ideas nuevas, cada una distinta (inspiradas en el cristal en capas de macOS Tahoe y en los exploradores de dos paneles).
@@ -96,7 +96,8 @@ struct AppIconDesign: Identifiable {
         .init(id: "duotone", name: "Two-Tone", light: [.init(hex: 0x5EEAD4), .init(hex: 0x0D9488)], dark: [.init(hex: 0x0F2725), .init(hex: 0x071412)], glyph: .duotone),
         .init(id: "sketch", name: "Hand-Drawn", light: [.init(hex: 0xFEF3C7), .init(hex: 0xFDE68A)], dark: [.init(hex: 0x2A2410), .init(hex: 0x141106)], glyph: .sketch),
         .init(id: "soft3d", name: "Soft 3D", light: [.init(hex: 0xFDBA74), .init(hex: 0xF97316)], dark: [.init(hex: 0x2E1A0E), .init(hex: 0x170C06)], glyph: .soft3D),
-        .init(id: "gradient", name: "Minimal Gradient", light: [.init(hex: 0xF472B6), .init(hex: 0x8B5CF6)], dark: [.init(hex: 0x24112E), .init(hex: 0x110817)], glyph: .gradientMinimal)
+        .init(id: "gradient", name: "Minimal Gradient", light: [.init(hex: 0xF472B6), .init(hex: 0x8B5CF6)], dark: [.init(hex: 0x24112E), .init(hex: 0x110817)], glyph: .gradientMinimal),
+        .init(id: "window-square", name: "Square Window", light: [.init(hex: 0x6FD3FF), .init(hex: 0x2E8BEF)], dark: windowDark, glyph: .window(.list, tint: 0x2E8BEF, square: true))
     ]
 }
 
@@ -140,8 +141,8 @@ struct AppIconArt: View {
     @ViewBuilder
     private func glyph(u: CGFloat) -> some View {
         switch design.glyph {
-        case let .window(content, tint, darkWindow):
-            WindowGlyph(content: content, tint: Color(hex: tint), dark: dark || darkWindow, u: u)
+        case let .window(content, tint, darkWindow, square):
+            WindowGlyph(content: content, tint: Color(hex: tint), dark: dark || darkWindow, u: u, square: square)
         case let .tiles(layout, colors):
             TilesGlyph(layout: layout, colors: colors.map { Color(hex: $0).opacity(dark ? 0.9 : 1) }, dark: dark, u: u)
         default:
@@ -156,6 +157,7 @@ private struct WindowGlyph: View {
     let tint: Color
     let dark: Bool
     let u: CGFloat
+    var square = false
 
     private var paper: Color { dark ? Color(hex: 0x2A3442) : .white }
     private var folderColor: Color { dark ? tint.mix(with: .white, by: 0.35) : tint }
@@ -187,8 +189,8 @@ private struct WindowGlyph: View {
             }
             body(kind).padding(.top, 14 * u)
         }
-        .frame(width: 66 * u, height: 54 * u)
-        .clipShape(RoundedRectangle(cornerRadius: 7 * u))
+        .frame(width: (square ? 62 : 66) * u, height: (square ? 62 : 54) * u)
+        .clipShape(RoundedRectangle(cornerRadius: (square ? 9 : 7) * u))
         .shadow(color: .black.opacity(0.2), radius: 2 * u, y: 1 * u)
     }
 
@@ -196,7 +198,7 @@ private struct WindowGlyph: View {
     private func body(_ kind: AppIconDesign.WindowContent) -> some View {
         switch kind {
         case .list, .stacked:
-            rows(3).padding(.leading, 22 * u).padding(.top, 4 * u)
+            rows(3).padding(.leading, 22 * u).padding(.top, (square ? 7 : 4) * u)
         case .icons:
             VStack(spacing: 4 * u) {
                 ForEach(0..<2) { _ in
@@ -253,7 +255,7 @@ private struct WindowGlyph: View {
     }
 
     private func rows(_ count: Int) -> some View {
-        VStack(alignment: .leading, spacing: 5 * u) {
+        VStack(alignment: .leading, spacing: (square ? 9 : 5) * u) {
             ForEach(0..<count, id: \.self) { _ in
                 HStack(spacing: 3 * u) {
                     FolderShape().fill(folderColor).frame(width: 9 * u, height: 7 * u)
