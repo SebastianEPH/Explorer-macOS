@@ -7,7 +7,9 @@ import SwiftUI
 /// Cada uno tiene versión clara y oscura y cambia solo con el modo de macOS. Se aplica al Dock y a
 /// ⌘Tab mientras Explorer está abierto; no se toca el .app para no romper la firma (y los permisos).
 enum AppIconService {
-    static let key = "appearance.appIcon"   // "" = original
+    static let key = "appearance.appIcon"
+    /// Icono por defecto: el n.º 21 «Ventana cuadrada», que también es el icono oficial del .app.
+    static let defaultID = "window-square"
     /// Fondo de color detrás del dibujo (el usuario lo prefiere sin fondo).
     static let backgroundKey = "appearance.appIconBackground"
     /// Espacio libre a cada lado del icono (0 = llena todo; 0,10 = como los iconos de Apple).
@@ -27,11 +29,8 @@ enum AppIconService {
 
     @MainActor
     static func apply() {
-        let id = UserDefaults.standard.string(forKey: key) ?? ""
-        guard let design = AppIconDesign.all.first(where: { $0.id == id }) else {
-            NSApp.applicationIconImage = nil // vuelve al icono original del .app
-            return
-        }
+        let saved = UserDefaults.standard.string(forKey: key) ?? defaultID
+        guard let design = AppIconDesign.all.first(where: { $0.id == saved }) ?? AppIconDesign.all.first(where: { $0.id == defaultID }) else { return }
         let dark = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
         let background = UserDefaults.standard.bool(forKey: backgroundKey)
         NSApp.applicationIconImage = image(design, dark: dark, background: background, margin: margin, size: 512)
@@ -792,7 +791,7 @@ struct FolderShape: Shape {
 
 /// Sección «Icono de la app» de Ajustes → Apariencia.
 struct AppIconSection: View {
-    @AppStorage(AppIconService.key) private var selected = ""
+    @AppStorage(AppIconService.key) private var selected = AppIconService.defaultID
     @AppStorage(AppIconService.backgroundKey) private var background = false
     @AppStorage(AppIconService.marginKey) private var margin = AppIconService.defaultMargin
     @Environment(\.colorScheme) private var colorScheme
@@ -828,9 +827,6 @@ struct AppIconSection: View {
             }
             LazyVGrid(columns: columns, spacing: 12) {
                 // Fondo de la cuadrícula según la versión elegida, para ver el icono como en el Dock.
-                option(id: "", name: "Original") {
-                    Image(nsImage: NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath)).resizable().frame(width: 60, height: 60)
-                }
                 ForEach(AppIconDesign.all) { design in
                     option(id: design.id, name: design.name, number: design.number) {
                         // Uno solo, en el modo actual (dos copias claro/oscuro parecían iconos repetidos).

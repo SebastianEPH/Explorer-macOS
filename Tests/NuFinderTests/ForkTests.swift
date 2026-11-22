@@ -238,6 +238,11 @@ struct ForkTests {
         }
     }
 
+    @Test func appIconDefaultIsSquareWindow() {
+        #expect(AppIconService.defaultID == "window-square")
+        #expect(AppIconDesign.all.contains { $0.id == AppIconService.defaultID })
+    }
+
     @Test func appIconMarginDefault() {
         #expect(AppIconService.defaultMargin == 0.10)
         #expect(UserDefaults.standard.object(forKey: AppIconService.marginKey) == nil || AppIconService.margin >= 0)
