@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "Freeloader",
     platforms: [.macOS(.v15)],
-    products: [.executable(name: "Freeloader", targets: ["NuFinder"])],
+    products: [.executable(name: "Explorer", targets: ["NuFinder"])], // Fork: el ejecutable de pruebas también se llama Explorer
     targets: [
         .executableTarget(
             name: "NuFinder",

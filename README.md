@@ -49,7 +49,7 @@ then press `⌘R`.
 ## Run with Swift Package Manager
 
 ```sh
-swift run Freeloader
+swift run Explorer
 ```
 
 ## Tests
