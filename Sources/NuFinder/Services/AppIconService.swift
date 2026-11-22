@@ -128,7 +128,7 @@ struct AppIconArt: View {
                         .shadow(color: .black.opacity(0.28), radius: s * 0.02, y: s * 0.012)
                 }
                 // Sin fondo, el dibujo crece para ocupar el espacio y lo blanco toma el color del icono.
-                glyph(u: box / 100 * (background ? 1 : 1.3))
+                glyph(u: box / 100 * (background ? 1 : 1.5)) // sin fondo: el dibujo ocupa ~80 % del icono, como los de Apple
                     .environment(\.iconTint, background ? nil : design.light)
                     .shadow(color: .black.opacity(background ? 0 : 0.18), radius: s * 0.015, y: s * 0.01)
             }
