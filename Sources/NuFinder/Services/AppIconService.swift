@@ -44,21 +44,39 @@ struct AppIconDesign: Identifiable {
     let name: LocalizedStringKey
     let light: [Color]
     let dark: [Color]
+    /// Color de acento del dibujo (detalles sobre la carpeta).
+    let accent: Color
     let glyph: Glyph
 
-    enum Glyph { case folderLens, compass, window, stack, tree, bolt, tiles, orbit, outline, paperPlane }
+    enum Glyph {
+        case stack, orbit, fan, open, cloud, star, lock, download, gear, tags
+        case doubleOrbit, leaf, moon, grid, terminal, glass, heart, drive, sparkle, wave
+    }
+
+    /// Número que se muestra en Ajustes (1…20).
+    var number: Int { (Self.all.firstIndex { $0.id == id } ?? 0) + 1 }
 
     nonisolated(unsafe) static let all: [AppIconDesign] = [
-        .init(id: "classic", name: "Classic", light: [.init(hex: 0x5AB0FF), .init(hex: 0x1F6FE0)], dark: [.init(hex: 0x16233A), .init(hex: 0x0B1220)], glyph: .folderLens),
-        .init(id: "compass", name: "Compass", light: [.init(hex: 0xFFB24D), .init(hex: 0xF0642E)], dark: [.init(hex: 0x2A1A12), .init(hex: 0x120A06)], glyph: .compass),
-        .init(id: "window", name: "Window", light: [.init(hex: 0x6FD3FF), .init(hex: 0x2E8BEF)], dark: [.init(hex: 0x1C2633), .init(hex: 0x0D131B)], glyph: .window),
-        .init(id: "stack", name: "Stack", light: [.init(hex: 0xB78CFF), .init(hex: 0x6A3DE8)], dark: [.init(hex: 0x231A38), .init(hex: 0x110B1E)], glyph: .stack),
-        .init(id: "tree", name: "Tree", light: [.init(hex: 0x7BE495), .init(hex: 0x1FA463)], dark: [.init(hex: 0x14271C), .init(hex: 0x09140E)], glyph: .tree),
-        .init(id: "bolt", name: "Fast", light: [.init(hex: 0xFFE066), .init(hex: 0xFFAA00)], dark: [.init(hex: 0x2B2410), .init(hex: 0x141006)], glyph: .bolt),
-        .init(id: "tiles", name: "Tiles", light: [.init(hex: 0xF4F6FA), .init(hex: 0xD9DEE8)], dark: [.init(hex: 0x2A2D34), .init(hex: 0x15171B)], glyph: .tiles),
-        .init(id: "orbit", name: "Orbit", light: [.init(hex: 0xFF7EB3), .init(hex: 0xC2185B)], dark: [.init(hex: 0x2E1220), .init(hex: 0x16080F)], glyph: .orbit),
-        .init(id: "minimal", name: "Minimal", light: [.init(hex: 0xFFFFFF), .init(hex: 0xECEEF2)], dark: [.init(hex: 0x1E1F23), .init(hex: 0x0E0F11)], glyph: .outline),
-        .init(id: "plane", name: "Paper Plane", light: [.init(hex: 0x4DE0D2), .init(hex: 0x1A8FA8)], dark: [.init(hex: 0x10282B), .init(hex: 0x071315)], glyph: .paperPlane)
+        .init(id: "stack", name: "Stack", light: [.init(hex: 0xB78CFF), .init(hex: 0x6A3DE8)], dark: [.init(hex: 0x231A38), .init(hex: 0x110B1E)], accent: .init(hex: 0x8B5CF6), glyph: .stack),
+        .init(id: "orbit", name: "Orbit", light: [.init(hex: 0xFF7EB3), .init(hex: 0xC2185B)], dark: [.init(hex: 0x2E1220), .init(hex: 0x16080F)], accent: .init(hex: 0xFF7EB3), glyph: .orbit),
+        .init(id: "ocean", name: "Ocean Stack", light: [.init(hex: 0x5EC8FF), .init(hex: 0x1F5FD8)], dark: [.init(hex: 0x10223B), .init(hex: 0x07101D)], accent: .init(hex: 0x3B82F6), glyph: .fan),
+        .init(id: "sunset", name: "Sunset", light: [.init(hex: 0xFFB36B), .init(hex: 0xF0517A)], dark: [.init(hex: 0x33171C), .init(hex: 0x180A0D)], accent: .init(hex: 0xF97362), glyph: .open),
+        .init(id: "cloud", name: "Cloud", light: [.init(hex: 0x8FD3FF), .init(hex: 0x4A8DF0)], dark: [.init(hex: 0x15243A), .init(hex: 0x0A121E)], accent: .init(hex: 0x60A5FA), glyph: .cloud),
+        .init(id: "star", name: "Favorites", light: [.init(hex: 0xFFD66B), .init(hex: 0xF59E0B)], dark: [.init(hex: 0x2E2510), .init(hex: 0x161106)], accent: .init(hex: 0xF59E0B), glyph: .star),
+        .init(id: "lock", name: "Private", light: [.init(hex: 0x8A95A8), .init(hex: 0x3E4757)], dark: [.init(hex: 0x23262D), .init(hex: 0x111317)], accent: .init(hex: 0x64748B), glyph: .lock),
+        .init(id: "download", name: "Downloads", light: [.init(hex: 0x6EE7B7), .init(hex: 0x0EA5A0)], dark: [.init(hex: 0x0F2A27), .init(hex: 0x071513)], accent: .init(hex: 0x14B8A6), glyph: .download),
+        .init(id: "gear", name: "Utility", light: [.init(hex: 0xA5B4FC), .init(hex: 0x4F46E5)], dark: [.init(hex: 0x1C1B3A), .init(hex: 0x0D0C1D)], accent: .init(hex: 0x6366F1), glyph: .gear),
+        .init(id: "tags", name: "Tags", light: [.init(hex: 0xF5F7FA), .init(hex: 0xD6DCE5)], dark: [.init(hex: 0x2A2D34), .init(hex: 0x141519)], accent: .init(hex: 0x3B82F6), glyph: .tags),
+        .init(id: "doubleOrbit", name: "Galaxy", light: [.init(hex: 0x67E8F9), .init(hex: 0x6D28D9)], dark: [.init(hex: 0x16163A), .init(hex: 0x0A0A1C)], accent: .init(hex: 0x22D3EE), glyph: .doubleOrbit),
+        .init(id: "leaf", name: "Leaf", light: [.init(hex: 0xA3E635), .init(hex: 0x16A34A)], dark: [.init(hex: 0x15270F), .init(hex: 0x0A1407)], accent: .init(hex: 0x22C55E), glyph: .leaf),
+        .init(id: "moon", name: "Night", light: [.init(hex: 0x818CF8), .init(hex: 0x312E81)], dark: [.init(hex: 0x14132E), .init(hex: 0x080817)], accent: .init(hex: 0xFDE68A), glyph: .moon),
+        .init(id: "grid", name: "Folders", light: [.init(hex: 0xFDA4AF), .init(hex: 0xE11D48)], dark: [.init(hex: 0x2E1018), .init(hex: 0x16070B)], accent: .init(hex: 0xF43F5E), glyph: .grid),
+        .init(id: "terminal", name: "Terminal", light: [.init(hex: 0x4B5563), .init(hex: 0x111827)], dark: [.init(hex: 0x1F2227), .init(hex: 0x0A0B0D)], accent: .init(hex: 0x4ADE80), glyph: .terminal),
+        .init(id: "glass", name: "Glass", light: [.init(hex: 0xC4B5FD), .init(hex: 0x38BDF8)], dark: [.init(hex: 0x1B1F3A), .init(hex: 0x0B0E1C)], accent: .init(hex: 0x818CF8), glyph: .glass),
+        .init(id: "heart", name: "Loved", light: [.init(hex: 0xFF9EAD), .init(hex: 0xEF4469)], dark: [.init(hex: 0x30121A), .init(hex: 0x18080D)], accent: .init(hex: 0xF43F5E), glyph: .heart),
+        .init(id: "drive", name: "Drive", light: [.init(hex: 0xD1D5DB), .init(hex: 0x6B7280)], dark: [.init(hex: 0x26282C), .init(hex: 0x121315)], accent: .init(hex: 0x22C55E), glyph: .drive),
+        .init(id: "sparkle", name: "Sparkle", light: [.init(hex: 0xF0ABFC), .init(hex: 0x9333EA)], dark: [.init(hex: 0x2A1236), .init(hex: 0x14081B)], accent: .init(hex: 0xE879F9), glyph: .sparkle),
+        .init(id: "wave", name: "Wave", light: [.init(hex: 0x5EEAD4), .init(hex: 0x2563EB)], dark: [.init(hex: 0x0F2233), .init(hex: 0x07111A)], accent: .init(hex: 0x38BDF8), glyph: .wave)
     ]
 }
 
@@ -81,11 +99,16 @@ struct AppIconArt: View {
                 RoundedRectangle(cornerRadius: box * 0.225, style: .continuous)
                     .fill(LinearGradient(colors: dark ? design.dark : design.light, startPoint: .top, endPoint: .bottom))
                     .overlay(
+                        // Brillo suave arriba, como los iconos de macOS.
+                        RoundedRectangle(cornerRadius: box * 0.225, style: .continuous)
+                            .fill(LinearGradient(colors: [.white.opacity(dark ? 0.06 : 0.22), .clear], startPoint: .top, endPoint: .center))
+                    )
+                    .overlay(
                         RoundedRectangle(cornerRadius: box * 0.225, style: .continuous)
                             .strokeBorder(.white.opacity(dark ? 0.12 : 0.35), lineWidth: box * 0.008)
                     )
                     .shadow(color: .black.opacity(0.28), radius: s * 0.02, y: s * 0.012)
-                glyph(box: box)
+                glyph(u: box / 100)
             }
             .frame(width: box, height: box)
             .position(x: geo.size.width / 2, y: geo.size.height / 2)
@@ -93,120 +116,153 @@ struct AppIconArt: View {
         .aspectRatio(1, contentMode: .fit)
     }
 
-    /// Color principal del dibujo: claro en fondos oscuros, y al revés.
-    private var ink: Color {
-        switch design.glyph {
-        case .tiles, .outline: return dark ? .white : Color(hex: 0x2B6CF0)
-        default: return dark ? (design.light.last ?? .white) : .white
+    // Carpeta «de Mac»: blanca con degradado en claro; teñida del color del icono en oscuro.
+    private var folderFill: LinearGradient {
+        dark
+            ? LinearGradient(colors: [design.accent.mix(with: .white, by: 0.15), design.accent.mix(with: .black, by: 0.25)], startPoint: .top, endPoint: .bottom)
+            : LinearGradient(colors: [.white, Color(white: 0.9)], startPoint: .top, endPoint: .bottom)
+    }
+    private var folderBack: Color { dark ? design.accent.mix(with: .black, by: 0.45) : Color.white.opacity(0.55) }
+    /// Detalles encima de la carpeta: color del icono en claro, blanco en oscuro.
+    private var mark: Color { dark ? .white : design.accent }
+
+    private func folder(_ w: CGFloat, _ h: CGFloat, _ u: CGFloat) -> some View {
+        ZStack {
+            FolderShape().fill(folderBack).offset(y: -h * 0.04)
+            FolderBodyShape().fill(folderFill)
         }
+        .frame(width: w * u, height: h * u)
+        .shadow(color: .black.opacity(dark ? 0.35 : 0.18), radius: 2 * u, y: 1.5 * u)
     }
 
-    private var accent: Color { dark ? .white.opacity(0.92) : Color.white.opacity(0.75) }
-
     @ViewBuilder
-    private func glyph(box: CGFloat) -> some View {
-        let u = box / 100
+    private func glyph(u: CGFloat) -> some View {
         switch design.glyph {
-        case .folderLens:
-            ZStack {
-                FolderShape().fill(ink).frame(width: 62 * u, height: 46 * u).offset(x: -6 * u, y: -2 * u)
-                Circle().stroke(dark ? Color.white : Color(hex: 0x1F6FE0), lineWidth: 6 * u)
-                    .background(Circle().fill(dark ? Color(hex: 0x16233A) : .white))
-                    .frame(width: 26 * u, height: 26 * u).offset(x: 14 * u, y: 10 * u)
-                Capsule().fill(dark ? Color.white : Color(hex: 0x1F6FE0))
-                    .frame(width: 6 * u, height: 16 * u).rotationEffect(.degrees(-45)).offset(x: 27 * u, y: 23 * u)
-            }
-        case .compass:
-            ZStack {
-                Circle().stroke(ink, lineWidth: 6 * u).frame(width: 64 * u, height: 64 * u)
-                ForEach(0..<4) { i in
-                    Capsule().fill(ink.opacity(0.7)).frame(width: 3 * u, height: 8 * u)
-                        .offset(y: -26 * u).rotationEffect(.degrees(Double(i) * 90))
-                }
-                NeedleShape().fill(dark ? Color(hex: 0xFF7A45) : .white).frame(width: 16 * u, height: 50 * u).rotationEffect(.degrees(40))
-                Circle().fill(ink).frame(width: 7 * u, height: 7 * u)
-            }
-        case .window:
-            ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 7 * u).fill(dark ? Color(hex: 0x2A3442) : .white)
-                RoundedRectangle(cornerRadius: 7 * u).fill(ink.opacity(dark ? 0.9 : 0.0)).frame(height: 0)
-                HStack(spacing: 3 * u) {
-                    ForEach([Color(hex: 0xFF5F57), Color(hex: 0xFEBC2E), Color(hex: 0x28C840)], id: \.self) { Circle().fill($0).frame(width: 5 * u) }
-                }
-                .padding(5 * u)
-                Rectangle().fill((dark ? Color.white : Color(hex: 0x2E8BEF)).opacity(0.18)).frame(width: 18 * u).padding(.top, 14 * u)
-                VStack(alignment: .leading, spacing: 5 * u) {
-                    ForEach(0..<3) { _ in
-                        HStack(spacing: 3 * u) {
-                            FolderShape().fill(dark ? Color(hex: 0x6FD3FF) : Color(hex: 0x2E8BEF)).frame(width: 9 * u, height: 7 * u)
-                            RoundedRectangle(cornerRadius: 1.5 * u).fill((dark ? Color.white : Color.black).opacity(0.25)).frame(width: 22 * u, height: 3 * u)
-                        }
-                    }
-                }
-                .padding(.leading, 22 * u).padding(.top, 18 * u)
-            }
-            .frame(width: 66 * u, height: 54 * u)
-            .shadow(color: .black.opacity(0.2), radius: 2 * u, y: 1 * u)
         case .stack:
             ZStack {
-                FolderShape().fill(ink.opacity(0.45)).frame(width: 56 * u, height: 40 * u).offset(x: -8 * u, y: -10 * u)
-                FolderShape().fill(ink.opacity(0.7)).frame(width: 56 * u, height: 40 * u).offset(x: 0, y: 0)
-                FolderShape().fill(ink).frame(width: 56 * u, height: 40 * u).offset(x: 8 * u, y: 10 * u)
-            }
-        case .tree:
-            ZStack(alignment: .topLeading) {
-                Path { p in
-                    p.move(to: CGPoint(x: 10 * u, y: 12 * u)); p.addLine(to: CGPoint(x: 10 * u, y: 52 * u))
-                    for y in [24.0, 38.0, 52.0] { p.move(to: CGPoint(x: 10 * u, y: y * u)); p.addLine(to: CGPoint(x: 22 * u, y: y * u)) }
-                    p.move(to: CGPoint(x: 30 * u, y: 38 * u)); p.addLine(to: CGPoint(x: 30 * u, y: 50 * u)); p.addLine(to: CGPoint(x: 40 * u, y: 50 * u))
-                }
-                .stroke(ink.opacity(0.85), style: StrokeStyle(lineWidth: 3.5 * u, lineCap: .round, lineJoin: .round))
-                FolderShape().fill(ink).frame(width: 16 * u, height: 12 * u).offset(x: 2 * u, y: 2 * u)
-                ForEach([24.0, 38.0], id: \.self) { y in
-                    FolderShape().fill(ink).frame(width: 14 * u, height: 10 * u).offset(x: 22 * u, y: (y - 5) * u)
-                }
-                RoundedRectangle(cornerRadius: 2 * u).fill(accent).frame(width: 12 * u, height: 9 * u).offset(x: 22 * u, y: 47.5 * u)
-                RoundedRectangle(cornerRadius: 2 * u).fill(accent).frame(width: 12 * u, height: 9 * u).offset(x: 40 * u, y: 45.5 * u)
-            }
-            .frame(width: 56 * u, height: 60 * u)
-        case .bolt:
-            ZStack {
-                FolderShape().fill(dark ? Color(hex: 0xFFC233).opacity(0.25) : Color.white.opacity(0.35)).frame(width: 66 * u, height: 50 * u)
-                BoltShape().fill(dark ? Color(hex: 0xFFC233) : .white).frame(width: 28 * u, height: 44 * u)
-                    .shadow(color: .black.opacity(0.15), radius: 1.5 * u, y: 1 * u)
-            }
-        case .tiles:
-            let colors: [UInt32] = [0x2B6CF0, 0x22B573, 0xF5A623, 0xE5484D]
-            VStack(spacing: 6 * u) {
-                ForEach(0..<2) { r in
-                    HStack(spacing: 6 * u) {
-                        ForEach(0..<2) { c in
-                            RoundedRectangle(cornerRadius: 6 * u, style: .continuous)
-                                .fill(Color(hex: colors[r * 2 + c]).opacity(dark ? 0.9 : 1))
-                                .frame(width: 26 * u, height: 26 * u)
-                        }
-                    }
-                }
+                FolderShape().fill(dark ? design.accent.opacity(0.35) : Color.white.opacity(0.45)).frame(width: 56 * u, height: 40 * u).offset(x: -8 * u, y: -10 * u)
+                FolderShape().fill(dark ? design.accent.opacity(0.6) : Color.white.opacity(0.7)).frame(width: 56 * u, height: 40 * u)
+                FolderShape().fill(dark ? design.accent : Color.white).frame(width: 56 * u, height: 40 * u).offset(x: 8 * u, y: 10 * u)
+                    .shadow(color: .black.opacity(0.2), radius: 2 * u, y: 1 * u)
             }
         case .orbit:
             ZStack {
-                Ellipse().stroke(ink.opacity(0.8), lineWidth: 3.5 * u).frame(width: 72 * u, height: 26 * u).rotationEffect(.degrees(-25))
-                FolderShape().fill(ink).frame(width: 40 * u, height: 30 * u)
-                Circle().fill(dark ? Color(hex: 0xFF7EB3) : .white).frame(width: 9 * u, height: 9 * u).offset(x: 30 * u, y: -14 * u)
+                Ellipse().stroke((dark ? design.accent : .white).opacity(0.85), lineWidth: 3.5 * u).frame(width: 72 * u, height: 26 * u).rotationEffect(.degrees(-25))
+                FolderShape().fill(dark ? design.accent.mix(with: .black, by: 0.2) : .white).frame(width: 40 * u, height: 30 * u)
+                Circle().fill(dark ? design.accent : .white).frame(width: 9 * u, height: 9 * u).offset(x: 30 * u, y: -14 * u)
             }
-        case .outline:
+        case .fan:
             ZStack {
-                FolderShape().stroke(ink, style: StrokeStyle(lineWidth: 6 * u, lineJoin: .round)).frame(width: 60 * u, height: 46 * u)
-                Capsule().fill(ink).frame(width: 22 * u, height: 5 * u).offset(y: 6 * u)
+                folder(46, 34, u).rotationEffect(.degrees(-16)).offset(x: -12 * u, y: 2 * u).opacity(0.75)
+                folder(46, 34, u).rotationEffect(.degrees(16)).offset(x: 12 * u, y: 2 * u).opacity(0.85)
+                folder(50, 37, u).offset(y: 6 * u)
             }
-        case .paperPlane:
+        case .open:
             ZStack {
-                PlaneShape().fill(dark ? Color(hex: 0x4DE0D2) : .white).frame(width: 60 * u, height: 50 * u).offset(x: 2 * u, y: -2 * u)
-                Path { p in
-                    p.move(to: CGPoint(x: 0, y: 0)); p.addQuadCurve(to: CGPoint(x: 30 * u, y: 8 * u), control: CGPoint(x: 10 * u, y: 14 * u))
+                FolderShape().fill(folderBack).frame(width: 62 * u, height: 46 * u)
+                RoundedRectangle(cornerRadius: 2 * u).fill(.white).frame(width: 40 * u, height: 34 * u).rotationEffect(.degrees(-6)).offset(x: -3 * u, y: -8 * u)
+                    .shadow(color: .black.opacity(0.12), radius: 1 * u)
+                RoundedRectangle(cornerRadius: 2 * u).fill(Color(white: 0.96)).frame(width: 40 * u, height: 34 * u).rotationEffect(.degrees(5)).offset(x: 4 * u, y: -6 * u)
+                FolderBodyShape().fill(folderFill).frame(width: 62 * u, height: 46 * u).offset(y: 0)
+                    .shadow(color: .black.opacity(0.18), radius: 2 * u, y: 1 * u)
+            }
+        case .cloud:
+            ZStack {
+                folder(62, 46, u)
+                CloudShape().fill(mark).frame(width: 28 * u, height: 17 * u).offset(y: 5 * u)
+            }
+        case .star:
+            ZStack {
+                folder(62, 46, u)
+                StarShape(points: 5).fill(mark).frame(width: 22 * u, height: 22 * u).offset(y: 5 * u)
+            }
+        case .lock:
+            ZStack {
+                folder(62, 46, u)
+                Circle().trim(from: 0.5, to: 1).stroke(mark, lineWidth: 3.5 * u).frame(width: 13 * u, height: 13 * u).offset(y: 1.5 * u)
+                Rectangle().fill(mark).frame(width: 3.5 * u, height: 5 * u).offset(x: -4.75 * u, y: 4 * u)
+                Rectangle().fill(mark).frame(width: 3.5 * u, height: 5 * u).offset(x: 4.75 * u, y: 4 * u)
+                RoundedRectangle(cornerRadius: 2.5 * u).fill(mark).frame(width: 20 * u, height: 14 * u).offset(y: 12 * u)
+            }
+        case .download:
+            ZStack {
+                folder(62, 46, u)
+                ArrowDownShape().fill(mark).frame(width: 18 * u, height: 22 * u).offset(y: 5 * u)
+            }
+        case .gear:
+            ZStack {
+                folder(62, 46, u)
+                GearShape(teeth: 8).fill(mark, style: FillStyle(eoFill: true)).frame(width: 24 * u, height: 24 * u).offset(y: 5 * u)
+            }
+        case .tags:
+            ZStack {
+                folder(62, 46, u)
+                HStack(spacing: 3 * u) {
+                    ForEach([0xEF4444, 0xF59E0B, 0x22C55E, 0x3B82F6, 0xA855F7] as [UInt32], id: \.self) { Circle().fill(Color(hex: $0)).frame(width: 7 * u, height: 7 * u) }
                 }
-                .stroke((dark ? Color(hex: 0x4DE0D2) : Color.white).opacity(0.6), style: StrokeStyle(lineWidth: 2.5 * u, lineCap: .round, dash: [4 * u, 4 * u]))
-                .frame(width: 30 * u, height: 14 * u).offset(x: -24 * u, y: 22 * u)
+                .offset(y: 6 * u)
+            }
+        case .doubleOrbit:
+            ZStack {
+                Ellipse().stroke((dark ? design.accent : .white).opacity(0.8), lineWidth: 3 * u).frame(width: 74 * u, height: 24 * u).rotationEffect(.degrees(-28))
+                Ellipse().stroke((dark ? Color(hex: 0xA78BFA) : .white).opacity(0.6), lineWidth: 3 * u).frame(width: 74 * u, height: 24 * u).rotationEffect(.degrees(28))
+                folder(38, 28, u)
+                Circle().fill(dark ? design.accent : .white).frame(width: 7 * u).offset(x: 31 * u, y: -16 * u)
+                Circle().fill(dark ? Color(hex: 0xA78BFA) : .white).frame(width: 6 * u).offset(x: -31 * u, y: -16 * u)
+            }
+        case .leaf:
+            ZStack {
+                folder(62, 46, u)
+                LeafShape().fill(mark).frame(width: 18 * u, height: 24 * u).rotationEffect(.degrees(35)).offset(y: 5 * u)
+            }
+        case .moon:
+            ZStack {
+                folder(62, 46, u)
+                MoonShape().fill(dark ? design.accent : design.accent.mix(with: .orange, by: 0.3)).frame(width: 20 * u, height: 20 * u).offset(y: 5 * u)
+                StarShape(points: 4).fill(dark ? design.accent : Color(hex: 0xF59E0B)).frame(width: 7 * u, height: 7 * u).offset(x: 13 * u, y: -2 * u)
+            }
+        case .grid:
+            VStack(spacing: 5 * u) {
+                ForEach(0..<2) { _ in HStack(spacing: 5 * u) { folder(28, 21, u); folder(28, 21, u) } }
+            }
+        case .terminal:
+            ZStack {
+                folder(62, 46, u)
+                HStack(spacing: 2 * u) {
+                    ChevronShape().stroke(dark ? design.accent : Color(hex: 0x111827), style: StrokeStyle(lineWidth: 3.5 * u, lineCap: .round, lineJoin: .round)).frame(width: 8 * u, height: 12 * u)
+                    Capsule().fill(dark ? design.accent : Color(hex: 0x111827)).frame(width: 11 * u, height: 3.5 * u).offset(y: 5 * u)
+                }
+                .offset(y: 5 * u)
+            }
+        case .glass:
+            ZStack {
+                FolderShape().fill(.white.opacity(dark ? 0.12 : 0.3)).frame(width: 56 * u, height: 40 * u).offset(x: -6 * u, y: -8 * u)
+                FolderShape().fill(.white.opacity(dark ? 0.2 : 0.45)).frame(width: 56 * u, height: 40 * u).offset(x: 6 * u, y: 6 * u)
+                    .overlay(FolderShape().stroke(.white.opacity(0.7), lineWidth: 1.5 * u).frame(width: 56 * u, height: 40 * u).offset(x: 6 * u, y: 6 * u))
+            }
+        case .heart:
+            ZStack {
+                folder(62, 46, u)
+                HeartShape().fill(mark).frame(width: 20 * u, height: 18 * u).offset(y: 6 * u)
+            }
+        case .drive:
+            ZStack {
+                RoundedRectangle(cornerRadius: 7 * u, style: .continuous).fill(LinearGradient(colors: dark ? [Color(white: 0.42), Color(white: 0.26)] : [.white, Color(white: 0.88)], startPoint: .top, endPoint: .bottom)).frame(width: 66 * u, height: 30 * u).offset(y: 10 * u)
+                    .shadow(color: .black.opacity(0.2), radius: 2 * u, y: 1 * u)
+                Circle().fill(design.accent).frame(width: 5 * u).offset(x: 24 * u, y: 10 * u)
+                folder(36, 27, u).offset(y: -14 * u)
+            }
+        case .sparkle:
+            ZStack {
+                folder(62, 46, u)
+                StarShape(points: 4, inner: 0.3).fill(mark).frame(width: 22 * u, height: 22 * u).offset(y: 5 * u)
+                StarShape(points: 4, inner: 0.3).fill(mark.opacity(0.8)).frame(width: 9 * u, height: 9 * u).offset(x: 14 * u, y: -3 * u)
+            }
+        case .wave:
+            ZStack {
+                folder(62, 46, u)
+                WaveShape().stroke(mark, style: StrokeStyle(lineWidth: 3.5 * u, lineCap: .round)).frame(width: 34 * u, height: 10 * u).offset(y: 2 * u)
+                WaveShape().stroke(mark.opacity(0.6), style: StrokeStyle(lineWidth: 3.5 * u, lineCap: .round)).frame(width: 34 * u, height: 10 * u).offset(y: 11 * u)
             }
         }
     }
@@ -233,37 +289,124 @@ struct FolderShape: Shape {
     }
 }
 
-struct NeedleShape: Shape {
+/// Parte delantera de la carpeta (sin pestaña), para dar volumen.
+struct FolderBodyShape: Shape {
+    func path(in r: CGRect) -> Path {
+        RoundedRectangle(cornerRadius: min(r.width, r.height) * 0.12, style: .continuous)
+            .path(in: CGRect(x: r.minX, y: r.minY + r.height * 0.2, width: r.width, height: r.height * 0.8))
+    }
+}
+
+struct StarShape: Shape {
+    var points: Int
+    var inner: CGFloat = 0.45
+    func path(in r: CGRect) -> Path {
+        let c = CGPoint(x: r.midX, y: r.midY), R = min(r.width, r.height) / 2
+        var p = Path()
+        for i in 0..<(points * 2) {
+            let a = Double(i) * .pi / Double(points) - .pi / 2
+            let rad = i.isMultiple(of: 2) ? R : R * inner
+            let pt = CGPoint(x: c.x + rad * cos(a), y: c.y + rad * sin(a))
+            if i == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
+        }
+        p.closeSubpath()
+        return p
+    }
+}
+
+struct CloudShape: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        let w = r.width, h = r.height
+        p.addEllipse(in: CGRect(x: r.minX, y: r.minY + h * 0.35, width: w * 0.45, height: h * 0.65))
+        p.addEllipse(in: CGRect(x: r.minX + w * 0.22, y: r.minY, width: w * 0.5, height: h * 0.85))
+        p.addEllipse(in: CGRect(x: r.minX + w * 0.5, y: r.minY + h * 0.25, width: w * 0.5, height: h * 0.75))
+        p.addRect(CGRect(x: r.minX + w * 0.2, y: r.minY + h * 0.6, width: w * 0.6, height: h * 0.4))
+        return p
+    }
+}
+
+struct ArrowDownShape: Shape {
+    func path(in r: CGRect) -> Path {
+        let w = r.width, h = r.height
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX + w * 0.35, y: r.minY))
+        p.addLine(to: CGPoint(x: r.minX + w * 0.65, y: r.minY))
+        p.addLine(to: CGPoint(x: r.minX + w * 0.65, y: r.minY + h * 0.5))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.minY + h * 0.5))
+        p.addLine(to: CGPoint(x: r.midX, y: r.maxY))
+        p.addLine(to: CGPoint(x: r.minX, y: r.minY + h * 0.5))
+        p.addLine(to: CGPoint(x: r.minX + w * 0.35, y: r.minY + h * 0.5))
+        p.closeSubpath()
+        return p
+    }
+}
+
+struct GearShape: Shape {
+    var teeth: Int
+    func path(in r: CGRect) -> Path {
+        let c = CGPoint(x: r.midX, y: r.midY), R = min(r.width, r.height) / 2, r1 = R * 0.78
+        var p = Path()
+        let steps = teeth * 4
+        for i in 0..<steps {
+            let a = Double(i) / Double(steps) * 2 * .pi
+            let rad = (i % 4 == 1 || i % 4 == 2) ? R : r1
+            let pt = CGPoint(x: c.x + rad * cos(a), y: c.y + rad * sin(a))
+            if i == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
+        }
+        p.closeSubpath()
+        p.addEllipse(in: CGRect(x: c.x - R * 0.32, y: c.y - R * 0.32, width: R * 0.64, height: R * 0.64))
+        return p
+    }
+}
+
+struct LeafShape: Shape {
     func path(in r: CGRect) -> Path {
         var p = Path()
         p.move(to: CGPoint(x: r.midX, y: r.minY))
+        p.addQuadCurve(to: CGPoint(x: r.midX, y: r.maxY), control: CGPoint(x: r.maxX + r.width * 0.3, y: r.midY))
+        p.addQuadCurve(to: CGPoint(x: r.midX, y: r.minY), control: CGPoint(x: r.minX - r.width * 0.3, y: r.midY))
+        return p
+    }
+}
+
+struct MoonShape: Shape {
+    func path(in r: CGRect) -> Path {
+        let outer = Path(ellipseIn: r)
+        let inner = Path(ellipseIn: r.offsetBy(dx: r.width * 0.32, dy: -r.height * 0.18))
+        return outer.subtracting(inner)
+    }
+}
+
+struct HeartShape: Shape {
+    func path(in r: CGRect) -> Path {
+        let w = r.width, h = r.height
+        var p = Path()
+        p.move(to: CGPoint(x: r.midX, y: r.maxY))
+        p.addCurve(to: CGPoint(x: r.minX, y: r.minY + h * 0.3), control1: CGPoint(x: r.minX + w * 0.2, y: r.minY + h * 0.75), control2: CGPoint(x: r.minX, y: r.minY + h * 0.55))
+        p.addArc(center: CGPoint(x: r.minX + w * 0.25, y: r.minY + h * 0.27), radius: w * 0.25, startAngle: .degrees(180), endAngle: .degrees(0), clockwise: false)
+        p.addArc(center: CGPoint(x: r.minX + w * 0.75, y: r.minY + h * 0.27), radius: w * 0.25, startAngle: .degrees(180), endAngle: .degrees(0), clockwise: false)
+        p.addCurve(to: CGPoint(x: r.midX, y: r.maxY), control1: CGPoint(x: r.maxX, y: r.minY + h * 0.55), control2: CGPoint(x: r.maxX - w * 0.2, y: r.minY + h * 0.75))
+        return p
+    }
+}
+
+struct ChevronShape: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX, y: r.minY))
         p.addLine(to: CGPoint(x: r.maxX, y: r.midY))
-        p.addLine(to: CGPoint(x: r.midX, y: r.maxY))
-        p.addLine(to: CGPoint(x: r.minX, y: r.midY))
-        p.closeSubpath()
+        p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
         return p
     }
 }
 
-struct BoltShape: Shape {
-    func path(in r: CGRect) -> Path {
-        let pts: [(CGFloat, CGFloat)] = [(0.62, 0), (0.08, 0.56), (0.46, 0.56), (0.34, 1), (0.92, 0.40), (0.54, 0.40)]
-        var p = Path()
-        p.move(to: CGPoint(x: r.minX + pts[0].0 * r.width, y: r.minY + pts[0].1 * r.height))
-        for pt in pts.dropFirst() { p.addLine(to: CGPoint(x: r.minX + pt.0 * r.width, y: r.minY + pt.1 * r.height)) }
-        p.closeSubpath()
-        return p
-    }
-}
-
-struct PlaneShape: Shape {
+struct WaveShape: Shape {
     func path(in r: CGRect) -> Path {
         var p = Path()
-        p.move(to: CGPoint(x: r.minX, y: r.midY * 0.95))
-        p.addLine(to: CGPoint(x: r.maxX, y: r.minY))
-        p.addLine(to: CGPoint(x: r.minX + r.width * 0.62, y: r.maxY))
-        p.addLine(to: CGPoint(x: r.minX + r.width * 0.45, y: r.minY + r.height * 0.62))
-        p.closeSubpath()
+        p.move(to: CGPoint(x: r.minX, y: r.midY))
+        p.addCurve(to: CGPoint(x: r.midX, y: r.midY), control1: CGPoint(x: r.minX + r.width * 0.15, y: r.minY), control2: CGPoint(x: r.minX + r.width * 0.35, y: r.minY))
+        p.addCurve(to: CGPoint(x: r.maxX, y: r.midY), control1: CGPoint(x: r.midX + r.width * 0.15, y: r.maxY), control2: CGPoint(x: r.midX + r.width * 0.35, y: r.maxY))
         return p
     }
 }
@@ -283,7 +426,7 @@ struct AppIconSection: View {
                     Image(nsImage: NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath)).resizable().frame(width: 52, height: 52)
                 }
                 ForEach(AppIconDesign.all) { design in
-                    option(id: design.id, name: design.name) {
+                    option(id: design.id, name: design.name, number: design.number) {
                         HStack(spacing: 2) {
                             AppIconArt(design: design, dark: false).frame(width: 52, height: 52)
                             AppIconArt(design: design, dark: true).frame(width: 52, height: 52)
@@ -298,11 +441,14 @@ struct AppIconSection: View {
         .onChange(of: selected) { _, _ in AppIconService.apply() }
     }
 
-    private func option<Content: View>(id: String, name: LocalizedStringKey, @ViewBuilder _ preview: () -> Content) -> some View {
+    private func option<Content: View>(id: String, name: LocalizedStringKey, number: Int? = nil, @ViewBuilder _ preview: () -> Content) -> some View {
         Button { selected = id } label: {
             VStack(spacing: 4) {
                 preview()
-                Text(name).font(.caption)
+                HStack(spacing: 3) {
+                    if let number { Text(verbatim: "\(number).").font(.caption.weight(.bold)).foregroundStyle(.secondary) }
+                    Text(name).font(.caption)
+                }
             }
             .padding(6)
             .frame(maxWidth: .infinity)
