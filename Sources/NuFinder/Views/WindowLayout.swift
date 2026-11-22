@@ -214,7 +214,7 @@ struct WindowLayoutSection: View {
                 Label("Window title “Explorer”", systemImage: "textformat")
                 Text("The buttons on the right stay.")
             }
-            .disabled(compactTop)
+            .lockedSetting(compactTop)
             if compactTop {
                 DisabledReason("Not available while the tabs are in the top bar: they take the title’s place. Turn off “Tabs in the top bar” to show it.")
             }

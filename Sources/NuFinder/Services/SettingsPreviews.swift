@@ -313,3 +313,15 @@ struct DisabledReason: View {
             .foregroundStyle(.orange)
     }
 }
+
+extension View {
+    /// Fork: control bloqueado que se nota: medio transparente, con candado y sin responder.
+    func lockedSetting(_ locked: Bool) -> some View {
+        disabled(locked)
+            .opacity(locked ? 0.4 : 1)
+            .overlay(alignment: .trailing) {
+                if locked { Image(systemName: "lock.fill").foregroundStyle(.orange).padding(.trailing, 56) }
+            }
+            .animation(.easeInOut(duration: 0.15), value: locked)
+    }
+}

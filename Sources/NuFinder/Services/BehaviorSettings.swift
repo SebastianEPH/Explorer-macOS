@@ -167,7 +167,7 @@ struct StartupSection: View {
                 Text("Off: always starts with one tab in the folder below.")
             }
             FolderChoicePicker(title: "Start folder", symbol: "house", emptyLabel: "Home", value: $startFolder)
-                .disabled(restoresTabs)
+                .lockedSetting(restoresTabs)
             if restoresTabs {
                 DisabledReason("Not used while “Reopen the tabs from last time” is on. Turn it off to choose a start folder.")
             }

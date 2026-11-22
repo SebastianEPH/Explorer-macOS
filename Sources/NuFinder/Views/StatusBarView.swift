@@ -200,7 +200,7 @@ struct StatusBarSection: View {
                 Toggle(isOn: $showsFreeSpace) { Label("Free space on the disk", systemImage: "internaldrive") }
                 Toggle(isOn: $showsViewButtons) { Label("View buttons (List, Compact, Icons)", systemImage: "square.grid.2x2") }
             }
-            .disabled(!visible)
+            .lockedSetting(!visible)
             if !visible {
                 DisabledReason("Turn on the status bar above to choose what it shows.")
             }
