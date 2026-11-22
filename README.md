@@ -1,3 +1,15 @@
+# Explorer
+
+**Explorador de archivos para macOS, basado en Freeloader y con todo configurable.**
+
+[Descargar la última versión](https://github.com/SebastianEPH/Explorer-macOS/releases/latest) · cada Release lista qué se añadió y qué se quitó.
+
+Qué añade este fork: Ajustes en pestañas con vista previa de cada opción, menú contextual configurable por tipo de archivo (ocultar y ordenar), barra de estado como en Windows, clic derecho y recuadro de selección como en Windows, pestañas en la barra de arriba, ruta en botones con copiar, Papelera, AirDrop, red y nubes en la barra lateral, iconos de la app con versión clara y oscura, carpetas enormes mucho más rápidas y la interfaz en español.
+
+Basado en [Freeloader](https://github.com/KopitarFan/Freeloader), de KopitarFan (licencia MIT, ver `LICENSE`). Lo que sigue es el README original del proyecto.
+
+---
+
 # Freeloader
 
 **A free file manager that actually pulls its weight.**

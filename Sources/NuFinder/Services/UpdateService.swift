@@ -8,7 +8,7 @@ import SwiftUI
 @Observable
 final class UpdateService {
     static let shared = UpdateService()
-    static let repository = "SebastianEPH/Freeloader"
+    static let repository = "SebastianEPH/Explorer-macOS"
 
     enum State: Equatable {
         case idle

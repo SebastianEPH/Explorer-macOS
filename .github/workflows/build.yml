@@ -101,8 +101,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Notas: qué se añadió y qué se quitó desde la Release anterior (los commits con su detalle).
+          git fetch --tags --quiet origin || true
+          PREV=$(gh release view --json tagName -q .tagName 2>/dev/null || true)
+          sh Scripts/release_notes.sh "$PREV" > notes.md
+          printf '\n---\nCompilación %s, desde %s.\n' "${{ github.run_number }}" "${{ github.sha }}" >> notes.md
           gh release create "v$VERSION" Explorer.zip \
             --title "Explorer $VERSION" \
-            --notes "Compilación ${{ github.run_number }}, desde ${{ github.sha }}." \
+            --notes-file notes.md \
             --target "${{ github.sha }}" \
             --latest

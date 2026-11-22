@@ -4,7 +4,7 @@ Fork personal de [Freeloader](https://github.com/KopitarFan/Freeloader) (reempla
 
 ## Reglas
 
-- **Idioma:** responde al usuario en español. Commits en español: una línea de resumen y una lista de cambios, sin `Co-Authored-By` ni menciones a herramientas. Haz commit y push a `main` (de `origin`) después de cada cambio terminado.
+- **Idioma:** responde al usuario en español. Commits en español: una línea de resumen que empieza por `feat:` (algo nuevo), `fix:` (arreglo) o `remove:` (algo que se quita) y una lista de cambios, sin `Co-Authored-By` ni menciones a herramientas. Haz commit y push a `main` (de `origin`) después de cada cambio terminado.
 - **Todo lo que se añada debe poder configurarse:** cada función, efecto, tamaño, margen o elemento visual nuevo lleva su opción en Ajustes (con vista previa y explicación), y si se desactiva el resultado es el comportamiento original. No dejar valores fijos que el usuario no pueda cambiar.
 - **Conservar el aviso de copyright** del autor original (`LICENSE`, MIT).
 - **Pocos conflictos con el original:** lo nuevo va en archivos propios (p. ej. `Services/UpdateService.swift`) y en los archivos del autor solo se añade lo mínimo (una línea que lo enganche). No reformatees ni reescribas código suyo.
@@ -13,7 +13,7 @@ Fork personal de [Freeloader](https://github.com/KopitarFan/Freeloader) (reempla
 
 ## Remotos y sincronización
 
-- `origin` = `SebastianEPH/Freeloader` (este fork) · `upstream` = `KopitarFan/Freeloader`.
+- `origin` = `SebastianEPH/Explorer-macOS` (este fork; antes se llamaba `SebastianEPH/Freeloader` y GitHub redirige el nombre viejo: no crear nunca otro repo con ese nombre) · `upstream` = `KopitarFan/Freeloader`.
 - Traer novedades del autor: `git pull upstream main && git push origin main`. Si hay conflictos, se resuelven conservando las dos partes.
 
 ## Compilar
@@ -22,7 +22,7 @@ Fork personal de [Freeloader](https://github.com/KopitarFan/Freeloader) (reempla
 
 - Xcode 27.2 instalado en `/Applications/Xcode.app` (desde el 2026-11-20). Antes de subir: `swift test` y la compilación `xcodebuild` igual que el pipeline (`ruby Scripts/generate_xcode_project.rb` primero; no commitear `project.pbxproj` ni `build/`).
 - Pipeline `.github/workflows/build.yml` (macos-latest): `swift test` → regenerar proyecto → `xcodebuild` Release sin firmar → escribe `FLBuildNumber` = `run_number` en el Info.plist → firma con el certificado propio «Explorer Firma» (secretos `SIGN_P12` y `SIGN_P12_PASSWORD`; copia en el llavero de inicio de sesión del Mac, válido hasta 2036) para que macOS conserve los permisos al actualizar; ad hoc en pull requests → sube `Explorer.zip` como artefacto y, en `main`, lo publica como Release `vX.Y.Z` (`--latest`).
-- Ver el resultado: `gh run list -R SebastianEPH/Freeloader -L 1` y `gh run watch <id> --exit-status`.
+- Ver el resultado: `gh run list -R SebastianEPH/Explorer-macOS -L 1` y `gh run watch <id> --exit-status`.
 
 ## Actualizaciones dentro de la app
 
@@ -33,7 +33,7 @@ Fork personal de [Freeloader](https://github.com/KopitarFan/Freeloader) (reempla
 ## Instalar a mano la última compilación
 
 ```bash
-gh release download -R SebastianEPH/Freeloader --pattern Explorer.zip
+gh release download -R SebastianEPH/Explorer-macOS --pattern Explorer.zip
 ditto -x -k Explorer.zip . && rm -rf /Applications/Explorer.app && mv Explorer.app /Applications/
 xattr -dr com.apple.quarantine /Applications/Explorer.app
 ```
@@ -54,7 +54,7 @@ xattr -dr com.apple.quarantine /Applications/Explorer.app
 ## Versiones
 
 - Formato **X.Y.Z**. `X.Y` está en el archivo `VERSION` (súbelo a mano para cambios grandes: `1.1`, `2.0`); `Z` = commits desde el último cambio de `VERSION`, así que vuelve a 0 al subirla. Lo calcula el pipeline (`fetch-depth: 0`) y lo escribe en `CFBundleShortVersionString`; `CFBundleVersion` y `FLBuildNumber` = número de ejecución.
-- Releases: etiqueta `vX.Y.Z`, título «Explorer X.Y.Z».
+- Releases: etiqueta `vX.Y.Z`, título «Explorer X.Y.Z». Notas generadas por `Scripts/release_notes.sh`: solo Features / Fix / Remove, una línea por commit desde la Release anterior (el usuario las quiere al grano).
 - iTerm (`Services/ITermService.swift`): si la terminal elegida es iTerm, «Abrir terminal aquí» le pide por AppleScript (`osascript`) una ventana nueva y hace `cd`; abrir la carpeta con NSWorkspace solo ponía delante la ventana existente. Necesita `NSAppleEventsUsageDescription` en `App-Info.plist`. Si la ventana de iTerm previa está en pantalla completa, la nueva también: se le quita con System Events (`AXFullScreen`), solo si Explorer tiene permiso de Accesibilidad.
 - Menú Ayuda (`HelpVersionItems`): versión instalada, «Acerca de Explorer» (`AboutPanel`) y «Buscar actualizaciones…». El usuario no quiere enlaces a GitHub ahí.
 - Ajustes en pestañas (General, Archivos, Favoritos, Menú contextual, Sistema): `TabView` en `SettingsView` con `.settingsTab(...)` (definido en `ContextMenuSettings.swift`). Sección nueva → en la pestaña que le toque.
