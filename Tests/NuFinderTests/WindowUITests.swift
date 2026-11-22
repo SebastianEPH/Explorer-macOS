@@ -157,4 +157,14 @@ struct WindowUITests {
         for _ in 0..<40 where browser2.displayedItems.isEmpty { try await spin(0.1) }
         #expect(browser2.viewMode == .list, "lo que cambié no se usa en la ventana nueva")
     }
+
+    /// Bug: a veces la parte de arriba de la barra lateral (con los 3 botones) salía
+    /// en blanco: las ventanas de `WindowService` no dejaban el contenido bajo la barra.
+    @Test func newWindowSidebarReachesUnderTitlebar() async throws {
+        let window = try await openWindow(at: try folder("titlebar"))
+        defer { window.close() }
+        #expect(window.styleMask.contains(.fullSizeContentView), "la barra de arriba tapa la barra lateral")
+        let layout = window.contentLayoutRect.maxY
+        #expect(layout < window.frame.height, "el contenido no llega bajo la barra de título")
+    }
 }

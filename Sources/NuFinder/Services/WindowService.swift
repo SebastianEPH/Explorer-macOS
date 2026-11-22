@@ -21,7 +21,7 @@ enum WindowService {
         window.setContentSize(NSSize(width: splitPane ? 1180 : 1040, height: 680))
         window.title = "Explorer"
         window.representedURL = url
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView] // Fork: barra lateral bajo la barra de arriba (si no, sale en blanco)
         // Ventana nueva siempre aislada, aunque macOS tenga «Preferir pestañas: siempre».
         window.tabbingMode = .disallowed
         WindowLifetime.keep(window) // Fork: la ventana vive hasta cerrarse y se libera una sola vez
