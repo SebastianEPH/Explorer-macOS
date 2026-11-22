@@ -300,3 +300,16 @@ extension ContextMenuOption {
         }
     }
 }
+
+/// Fork: explica por qué un control está desactivado y cómo activarlo
+/// (si no, parece que «no hace caso» al hacer clic).
+struct DisabledReason: View {
+    let text: LocalizedStringKey
+    init(_ text: LocalizedStringKey) { self.text = text }
+
+    var body: some View {
+        Label { Text(text) } icon: { Image(systemName: "lock.fill") }
+            .font(.caption)
+            .foregroundStyle(.orange)
+    }
+}

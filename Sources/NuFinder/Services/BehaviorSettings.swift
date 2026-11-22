@@ -168,6 +168,9 @@ struct StartupSection: View {
             }
             FolderChoicePicker(title: "Start folder", symbol: "house", emptyLabel: "Home", value: $startFolder)
                 .disabled(restoresTabs)
+            if restoresTabs {
+                DisabledReason("Not used while “Reopen the tabs from last time” is on. Turn it off to choose a start folder.")
+            }
         }
         Section("Tabs") {
             FolderChoicePicker(title: "New tab opens", symbol: "plus.square.on.square",

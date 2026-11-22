@@ -607,3 +607,6 @@
 "Soft 3D" = "3D suave";
 "Minimal Gradient" = "Degradado minimalista";
 "See how each icon looks in light or dark mode." = "Mira cómo se ve cada icono en modo claro u oscuro.";
+"Not available while the tabs are in the top bar: they take the title’s place. Turn off “Tabs in the top bar” to show it." = "No disponible con las pestañas en la barra de arriba: ocupan el sitio del título. Desactiva «Pestañas en la barra de arriba» para mostrarlo.";
+"Not used while “Reopen the tabs from last time” is on. Turn it off to choose a start folder." = "No se usa mientras «Volver a abrir las pestañas de la última vez» está activado. Desactívalo para elegir una carpeta de inicio.";
+"Turn on the status bar above to choose what it shows." = "Activa la barra de estado (arriba) para elegir qué muestra.";

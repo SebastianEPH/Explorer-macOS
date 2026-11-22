@@ -215,6 +215,9 @@ struct WindowLayoutSection: View {
                 Text("The buttons on the right stay.")
             }
             .disabled(compactTop)
+            if compactTop {
+                DisabledReason("Not available while the tabs are in the top bar: they take the title’s place. Turn off “Tabs in the top bar” to show it.")
+            }
             Picker(selection: $tabBar) {
                 Text("Always").tag("always")
                 Text("Only with 2 or more tabs").tag("multiple")
