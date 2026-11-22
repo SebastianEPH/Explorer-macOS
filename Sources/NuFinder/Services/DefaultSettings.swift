@@ -45,8 +45,49 @@ enum DefaultSettings {
     /// Solo en la app instalada: las pruebas usan los valores de fábrica.
     static var isInstalledApp: Bool { Bundle.main.bundleIdentifier == "com.miguelrodriguez.NuFinder" }
 
-    static func register(_ defaults: UserDefaults = .standard, force: Bool = false) {
+    /// Lo último que dejé configurado: se escribe al cambiar cualquier ajuste y
+    /// se carga al arrancar como valor por defecto (gana sobre `mine`).
+    static let snapshotFile = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/Application Support/Explorer/Ajustes.plist")
+
+    /// Claves que no son ajustes (tamaño de ventanas, estado de macOS).
+    static func isSetting(_ key: String) -> Bool {
+        !["NSWindow Frame", "NSSplitView", "com_apple_", "NSNavPanel", "NSToolbar"].contains { key.hasPrefix($0) }
+    }
+
+    static func register(_ defaults: UserDefaults = .standard, force: Bool = false, file: URL = snapshotFile) {
         guard force || isInstalledApp else { return }
-        defaults.register(defaults: mine)
+        var values = mine
+        if let data = try? Data(contentsOf: file),
+           let saved = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
+            values.merge(saved) { _, new in new }
+        }
+        defaults.register(defaults: values)
+        if !force { startSaving() }
+    }
+
+    /// Escribe en el archivo lo guardado ahora (solo ajustes).
+    static func saveSnapshot(_ defaults: UserDefaults = .standard,
+                             domain: String = Bundle.main.bundleIdentifier ?? "Explorer", file: URL = snapshotFile) {
+        let values = (defaults.persistentDomain(forName: domain) ?? [:]).filter { isSetting($0.key) }
+        guard !values.isEmpty,
+              let data = try? PropertyListSerialization.data(fromPropertyList: values, format: .binary, options: 0) else { return }
+        try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? data.write(to: file, options: .atomic)
+    }
+
+    nonisolated(unsafe) private static var pending: DispatchWorkItem?
+    nonisolated(unsafe) private static var observer: NSObjectProtocol?
+
+    private static func startSaving() {
+        guard observer == nil else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { saveSnapshot() } // la primera vez
+        observer = NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { _ in
+            pending?.cancel()
+            let work = DispatchWorkItem { saveSnapshot() }
+            pending = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: work)
+        }
     }
 }

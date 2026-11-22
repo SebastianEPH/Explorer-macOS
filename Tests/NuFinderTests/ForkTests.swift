@@ -310,4 +310,24 @@ struct ForkTests {
         d.set("List", forKey: "view.default")
         #expect(d.string(forKey: "view.default") == "List", "lo que cambio se guarda y manda")
     }
+
+    /// Flujo: cambio un ajuste → se escribe el archivo → al «reiniciar» (dominio vacío,
+    /// como si macOS no hubiera cargado mis ajustes) arranca con lo último que dejé.
+    @Test func lastChangesBecomeDefaultsAfterRestart() throws {
+        let suite = "ForkTests.snap.\(UUID().uuidString)"
+        let d = try #require(UserDefaults(suiteName: suite))
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).plist")
+        let reg = UserDefaults.registrationDomain
+        let savedReg = UserDefaults.standard.volatileDomain(forName: reg)
+        defer { UserDefaults.standard.setVolatileDomain(savedReg, forName: reg) }
+        d.set("Columns", forKey: "view.default")
+        d.set("{1,2}", forKey: "NSWindow Frame x")
+        DefaultSettings.saveSnapshot(d, domain: suite, file: file)
+        d.removePersistentDomain(forName: suite)
+        #expect(d.string(forKey: "view.default") == nil)
+        DefaultSettings.register(d, force: true, file: file)
+        #expect(d.string(forKey: "view.default") == "Columns", "no arrancó con lo último que dejé")
+        #expect(d.bool(forKey: "layout.compactTop"), "falta mi configuración base")
+        #expect(d.object(forKey: "NSWindow Frame x") == nil, "guardó estado de ventanas")
+    }
 }
