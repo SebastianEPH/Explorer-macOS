@@ -120,4 +120,41 @@ struct WindowUITests {
         #expect(after.contains("Copy Filename"), "no es el menú del archivo: \(after)")
         #expect(!after.contains("Copy Path"), "el menú sigue con la opción oculta: \(after)")
     }
+
+    // MARK: valores por defecto propios
+
+    /// Mi configuración por defecto: una ventana nueva abre en iconos y sin «Copy Path»;
+    /// flujo: cambio una opción → la ventana siguiente usa lo que cambié.
+    @Test func windowUsesMyDefaultsAndKeepsChanges() async throws {
+        let defaults = UserDefaults.standard
+        let reg = UserDefaults.registrationDomain
+        let savedReg = defaults.volatileDomain(forName: reg)
+        let keys = ["view.default", ContextMenuSettings.hiddenKey]
+        let saved = keys.map { defaults.object(forKey: $0) }
+        defer {
+            defaults.setVolatileDomain(savedReg, forName: reg)
+            for (k, v) in zip(keys, saved) { defaults.set(v, forKey: k) }
+        }
+        for k in keys { defaults.removeObject(forKey: k) }
+        DefaultSettings.register(defaults, force: true)
+
+        let url = try folder("mine", files: ["nota.txt"])
+        let window = try await openWindow(at: url)
+        defer { window.close() }
+        let browser = try #require(KeyWindowFocus.shared.browser(for: window))
+        for _ in 0..<40 where browser.displayedItems.isEmpty { try await spin(0.1) }
+        #expect(browser.viewMode == .icons, "la ventana no usa mi vista por defecto")
+        browser.viewMode = .list
+        try await spin(1)
+        let menu = try #require(firstRowMenu(in: window), "no se encontró el menú del archivo")
+        #expect(menu.contains("Open"), "no es el menú del archivo: \(menu)")
+        #expect(!menu.contains("Copy Path"), "mis opciones ocultas siguen saliendo: \(menu)")
+
+        defaults.set("List", forKey: BehaviorSettings.defaultViewKey)
+        let window2 = try await openWindow(at: url)
+        defer { window2.close() }
+        let browser2 = try #require(KeyWindowFocus.shared.browser(for: window2))
+        for _ in 0..<40 where browser2.displayedItems.isEmpty { try await spin(0.1) }
+        #expect(browser2.viewMode == .list, "lo que cambié no se usa en la ventana nueva")
+    }
 }

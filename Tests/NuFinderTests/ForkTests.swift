@@ -294,4 +294,20 @@ struct ForkTests {
         #expect(defaults.object(forKey: "savedWorkspaces") == nil)
         #expect(defaults.bool(forKey: "showsSplitPane")) // lo demás se conserva
     }
+
+    // MARK: valores por defecto propios
+
+    @Test func myDefaultsApplyOnlyWhenNothingSaved() throws {
+        let d = try #require(UserDefaults(suiteName: "ForkTests.defaults.\(UUID().uuidString)"))
+        let reg = UserDefaults.registrationDomain
+        let savedReg = UserDefaults.standard.volatileDomain(forName: reg)
+        defer { UserDefaults.standard.setVolatileDomain(savedReg, forName: reg) }
+        DefaultSettings.register(d) // en pruebas no es la app instalada: no registra
+        #expect(d.string(forKey: "view.default") == nil)
+        DefaultSettings.register(d, force: true)
+        #expect(d.string(forKey: "view.default") == "Icons")
+        #expect(d.bool(forKey: "layout.compactTop"))
+        d.set("List", forKey: "view.default")
+        #expect(d.string(forKey: "view.default") == "List", "lo que cambio se guarda y manda")
+    }
 }

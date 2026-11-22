@@ -57,6 +57,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 @main
 struct FreeloaderApp: App {
+    private let registeredDefaults: Void = DefaultSettings.register() // Fork: mis ajustes por defecto (antes que todo)
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var mainBrowser = BrowserModel()
     @ObservedObject private var keyFocus = KeyWindowFocus.shared // Fork: menús → ventana activa
