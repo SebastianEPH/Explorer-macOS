@@ -108,6 +108,7 @@ struct SidebarView: View {
                     }
                 }
                 .listStyle(.sidebar)
+                .sidebarTransparency() // Fork: transparencia elegida en Ajustes (por defecto, la de Finder)
                 .onChange(of: browser.showsTree) { _, visible in
                     if visible { scrollToCurrentFolder(using: proxy) }
                 }

@@ -255,6 +255,7 @@ struct AppearanceSection: View {
     @AppStorage(AppearanceSettings.toolbarColorKey) private var toolbarColor = ""
     @AppStorage(AppearanceSettings.toolbarColorDarkKey) private var toolbarColorDark = ""
     @AppStorage(BehaviorSettings.showsLocationsKey) private var showsLocations = true
+    @AppStorage(SidebarTransparency.key) private var sidebarTransparency = "system"
 
     var body: some View {
         if shows("theme") {
@@ -290,7 +291,16 @@ struct AppearanceSection: View {
         }
         if shows("sidebar") {
             Section("Sidebar") {
-                Toggle(isOn: $showsLocations) {
+                Picker(selection: $sidebarTransparency) {
+                Text("Like Finder (system)").tag("system")
+                Text("Less transparent").tag("less")
+                Text("Solid").tag("solid")
+            } label: {
+                Label("Transparency", systemImage: "square.on.square.intersection.dashed")
+                Text("“Like Finder” uses the same macOS material as Finder’s sidebar.")
+            }
+            .pickerStyle(.segmented)
+            Toggle(isOn: $showsLocations) {
                     Label("Show “Locations” (disks and servers)", systemImage: "externaldrive")
                 }
                 SidebarExtrasToggles()
@@ -420,5 +430,28 @@ struct ToolbarColorRow: View {
                 }
             }
         } label: { Label(title, systemImage: symbol) }
+    }
+}
+
+/// Fork: transparencia de la barra lateral. «system» = el material de macOS, igual que Finder.
+enum SidebarTransparency {
+    static let key = "sidebar.transparency"   // "system", "less", "solid"
+}
+
+extension View {
+    func sidebarTransparency() -> some View { modifier(SidebarTransparencyModifier()) }
+}
+
+private struct SidebarTransparencyModifier: ViewModifier {
+    @AppStorage(SidebarTransparency.key) private var mode = "system"
+    func body(content: Content) -> some View {
+        switch mode {
+        case "less":
+            content.scrollContentBackground(.hidden).background(.thickMaterial)
+        case "solid":
+            content.scrollContentBackground(.hidden).background(Color(nsColor: .windowBackgroundColor))
+        default:
+            content
+        }
     }
 }
