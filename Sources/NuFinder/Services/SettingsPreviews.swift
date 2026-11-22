@@ -209,31 +209,6 @@ struct ContextMenuPreview: View {
     }
 }
 
-/// Esquema: clic en Finder del Dock → se abre Explorer.
-struct FinderRedirectPreview: View {
-    let enabled: Bool
-
-    var body: some View {
-        SettingsPreviewBox(title: "Preview: what happens when you click Finder in the Dock") {
-            HStack(spacing: 14) {
-                appIcon("/System/Library/CoreServices/Finder.app", "Finder")
-                Image(systemName: "arrow.right").font(.title2).foregroundStyle(.secondary)
-                if enabled {
-                    appIcon(Bundle.main.bundlePath, "Explorer")
-                } else {
-                    appIcon("/System/Library/CoreServices/Finder.app", "Finder")
-                }
-            }
-        }
-    }
-
-    private func appIcon(_ path: String, _ name: String) -> some View {
-        VStack(spacing: 2) {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable().frame(width: 40, height: 40)
-            Text(verbatim: name).font(.caption)
-        }
-    }
-}
 
 extension ContextMenuOption {
     var symbol: String {

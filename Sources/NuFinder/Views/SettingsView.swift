@@ -47,7 +47,6 @@ struct SettingsView: View {
             Form { ContextMenuSection() }.settingsTab("Context Menu", systemImage: "contextualmenu.and.cursorarrow").tag("contextmenu")
             SettingsPagesView(tab: "system", pages: [
                 SettingsPage("permissions", "Permissions", "lock.shield") { PermissionsSection() },
-                SettingsPage("finder", "Finder", "face.smiling") { FinderRedirectSection() },
                 SettingsPage("updates", "Updates", "arrow.down.circle") { UpdatesSection() }
             ])
             .settingsTab("System", systemImage: "lock.shield").tag("system")

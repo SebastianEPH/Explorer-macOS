@@ -1,3 +1,4 @@
+import ServiceManagement
 import AppKit
 import SwiftUI
 
@@ -83,9 +84,16 @@ enum DockReopen {
 /// Fork: quita los datos de «Espacios de trabajo», que se eliminó de la app.
 enum RemovedFeatures {
     static func cleanDefaults(_ defaults: UserDefaults = .standard) {
-        for key in ["savedWorkspaces", "launchWorkspaceID", "toolbar.showsWorkspaces"] {
+        for key in ["savedWorkspaces", "launchWorkspaceID", "toolbar.showsWorkspaces", "finderRedirect.enabled"] {
             defaults.removeObject(forKey: key)
         }
+    }
+
+    /// «Finder abre Explorer» se quitó: era lo único que la registraba al inicio de sesión.
+    static func unregisterLoginItem() {
+        guard Bundle.main.bundleIdentifier == "com.miguelrodriguez.NuFinder",
+              SMAppService.mainApp.status == .enabled else { return }
+        try? SMAppService.mainApp.unregister()
     }
 }
 

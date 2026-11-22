@@ -18,7 +18,6 @@ enum DefaultSettings {
                                    "\(home)/Documents", "\(home)/Downloads", "\(home)/Pictures"],
             "files.compactHitArea": true,
             "files.gridSpacing": 18.0,
-            "finderRedirect.enabled": false,
             "layout.compactTop": true,
             "layout.path": "buttons",
             "layout.showsTitle": false,

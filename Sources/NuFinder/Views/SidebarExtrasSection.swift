@@ -58,10 +58,9 @@ enum SidebarExtras: String, CaseIterable, Identifiable {
         name.hasPrefix("Dropbox") ? "shippingbox" : name.hasPrefix("Google") ? "externaldrive.badge.icloud" : "cloud"
     }
 
-    /// Abre una ventana que solo existe en Finder sin que la redirección la cierre.
+    /// Abre una ventana que solo existe en Finder.
     @MainActor
     static func openFinderWindow(_ app: String) {
-        FinderRedirectService.pause(seconds: 300)
         NSWorkspace.shared.open(URL(filePath: "/System/Library/CoreServices/Finder.app/Contents/Applications/\(app).app"))
     }
 

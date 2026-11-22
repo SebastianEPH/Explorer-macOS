@@ -9,7 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
-        FinderRedirectService.start()
+        RemovedFeatures.unregisterLoginItem() // Fork: sin «Finder abre Explorer», ya no arranca al iniciar sesión
         RemovedFeatures.cleanDefaults() // Fork: sin espacios de trabajo
         AppearanceSettings.apply() // Fork
         TextPredictionSettings.apply() // Fork: sin texto gris de predicción al escribir nombres

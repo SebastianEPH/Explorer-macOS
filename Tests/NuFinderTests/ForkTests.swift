@@ -330,4 +330,13 @@ struct ForkTests {
         #expect(d.bool(forKey: "layout.compactTop"), "falta mi configuración base")
         #expect(d.object(forKey: "NSWindow Frame x") == nil, "guardó estado de ventanas")
     }
+
+    /// «Finder abre Explorer» se quitó de raíz: su ajuste guardado se borra al arrancar.
+    @Test func finderRedirectSettingIsRemoved() throws {
+        let d = try #require(UserDefaults(suiteName: "ForkTests.finder.\(UUID().uuidString)"))
+        d.set(true, forKey: "finderRedirect.enabled")
+        RemovedFeatures.cleanDefaults(d)
+        #expect(d.object(forKey: "finderRedirect.enabled") == nil)
+        #expect(DefaultSettings.mine["finderRedirect.enabled"] == nil)
+    }
 }

@@ -60,7 +60,7 @@ enum MenuExtras: String, CaseIterable, Identifiable {
 
     var title: LocalizedStringKey {
         switch self {
-        case .app: "Explorer menu: Permissions and Finder replacement"
+        case .app: "Explorer menu: Permissions"
         case .file: "File menu: compress, extract, AirDrop, empty Trash"
         case .edit: "Edit menu: copy name, rename, tags, paste as alias"
         case .view: "View menu: view modes, sort, icon size, bars, path, theme"
@@ -119,7 +119,6 @@ struct ExplorerMenus: Commands {
         CommandGroup(after: .appSettings) {
             if appExtras {
                 Button("Permissions…") { SettingsOpener.open(tab: "system", page: "permissions") }
-                Button("Finder Replacement…") { SettingsOpener.open(tab: "system", page: "finder") }
             }
         }
         // MARK: Archivo
