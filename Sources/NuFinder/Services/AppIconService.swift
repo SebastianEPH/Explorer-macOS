@@ -68,6 +68,30 @@ struct AppIconDesign: Identifiable {
         case isometric, duotone, sketch, soft3D, gradientMinimal
     }
 
+    /// Lado más largo del dibujo en unidades (100 = todo el espacio). Sin fondo, el dibujo se
+    /// escala para que ese lado ocupe exactamente el espacio disponible (con 0 % de margen, toca el borde).
+    var extent: CGFloat {
+        switch id {
+        case "window": return 66
+        case "window-square": return 62
+        case "tiles", "file-types": return 58
+        case "window-tiles": return 66
+        case "dual-pane": return 69
+        case "columns": return 78
+        case "sidebar": return 66
+        case "folder-tabs": return 82
+        case "folder-grid": return 62
+        case "breadcrumb": return 84
+        case "glass-layers": return 72
+        case "glass-folder", "isometric", "duotone", "soft3d", "gradient": return 66
+        case "lens-grid": return 76
+        case "monogram": return 56
+        case "cards": return 76
+        case "sketch": return 62
+        default: return 66
+        }
+    }
+
     /// Número que se muestra en Ajustes (1…20).
     var number: Int { (Self.all.firstIndex { $0.id == id } ?? 0) + 1 }
 
@@ -134,7 +158,7 @@ struct AppIconArt: View {
                         .shadow(color: .black.opacity(0.28), radius: s * 0.02, y: s * 0.012)
                 }
                 // Sin fondo, el dibujo crece para ocupar el espacio y lo blanco toma el color del icono.
-                glyph(u: box / 100 * (background ? 1 : 1.5)) // sin fondo: el dibujo ocupa ~80 % del icono, como los de Apple
+                glyph(u: box / (background ? 100 : design.extent)) // sin fondo: el dibujo llena el espacio menos el margen
                     .environment(\.iconTint, background ? nil : design.light)
                     .shadow(color: .black.opacity(background ? 0 : 0.18), radius: s * 0.015, y: s * 0.01)
             }
