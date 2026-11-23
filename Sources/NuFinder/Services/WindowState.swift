@@ -84,7 +84,7 @@ enum DockReopen {
 /// Fork: quita los datos de «Espacios de trabajo», que se eliminó de la app.
 enum RemovedFeatures {
     static func cleanDefaults(_ defaults: UserDefaults = .standard) {
-        for key in ["savedWorkspaces", "launchWorkspaceID", "toolbar.showsWorkspaces", "finderRedirect.enabled", "open.foldersInNewTab", "tabs.memoryLimit"] {
+        for key in ["savedWorkspaces", "launchWorkspaceID", "toolbar.showsWorkspaces", "finderRedirect.enabled", "open.foldersInNewTab", "tabs.memoryLimit", "toolbar.viewButtons", "toolbar.viewButtons.showsCompact"] {
             defaults.removeObject(forKey: key)
         }
     }

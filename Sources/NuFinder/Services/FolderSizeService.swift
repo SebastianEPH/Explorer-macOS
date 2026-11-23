@@ -38,6 +38,13 @@ final class FolderSizeService: ObservableObject {
         calculating.remove(item.url)
     }
 
+    /// Fork: deja de calcular todo lo que hay dentro de `root` (antes de expulsar un disco).
+    func cancelAll(under root: URL) {
+        let prefix = root.standardizedFileURL.path
+        FolderSizeQueue.shared.cancelAll(under: root)
+        calculating = calculating.filter { !$0.standardizedFileURL.path.hasPrefix(prefix) }
+    }
+
     func invalidate(_ url: URL) {
         entries[url] = nil
     }

@@ -65,7 +65,7 @@ struct AddressBarRow: View {
                 .help("Go to Path")
                 .hoverLift() // Fork
                 }
-                if ViewModeButtons.isOn { ViewModeButtonsView() } else { viewModeMenu } // Fork
+                // Fork: sin botones de vista arriba; están en la barra de estado (abajo)
                 SortMenu()
             }
             if pathMode == "both" { BreadcrumbView() } // Fork

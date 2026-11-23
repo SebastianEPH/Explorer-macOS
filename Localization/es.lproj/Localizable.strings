@@ -724,3 +724,11 @@
 "Rounded tabs background" = "Fondo de las pestañas redondeado";
 "The dark background behind the tabs and the + button gets rounded ends like the bar. Off: it ends in a straight edge." = "El fondo oscuro de las pestañas y del botón + tiene los extremos redondeados como la barra. Apagado: termina en un borde recto.";
 "Only for tabs in the top bar. Turn on “Tabs in the top bar” above." = "Solo con las pestañas en la barra de arriba. Activa «Pestañas en la barra de arriba».";
+
+/* Fork: tamaños en paralelo y expulsar */
+"2 (original)" = "2 (original)";
+"Automatic (%lld)" = "Automático (%lld)";
+"Folder sizes calculated at once" = "Carpetas que calculan su tamaño a la vez";
+"More at once fills the Size column sooner. Automatic uses half of this Mac’s %lld cores." = "Más a la vez llena antes la columna Tamaño. Automático usa la mitad de los %lld núcleos de este Mac.";
+"Eject attempts: %lld" = "Intentos al expulsar: %lld";
+"If a disk or mounted image (ISO, DMG) is busy, Explorer stops its own work on it and tries again. 1 = original." = "Si un disco o una imagen montada (ISO, DMG) está ocupado, Explorer deja lo que estaba haciendo en él y lo vuelve a intentar. 1 = original.";

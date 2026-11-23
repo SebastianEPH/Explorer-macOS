@@ -10,6 +10,16 @@ enum TableMarquee {
     static func selection(rows: [Int], base: Set<Int>, additive: Bool) -> Set<Int> {
         additive ? base.union(rows) : Set(rows)
     }
+
+    /// Margen (pt) junto a los bordes izquierdo, derecho e inferior donde macOS redimensiona la ventana.
+    static let resizeMargin: CGFloat = 8
+
+    /// Un clic aquí es para cambiar el tamaño de la ventana: el recuadro no se lo queda.
+    /// Antes se lo quedaba si la tabla llegaba a la esquina inferior izquierda: salía el cursor
+    /// de redimensionar pero la ventana no cambiaba.
+    static func isResizeZone(_ point: NSPoint, windowSize: NSSize, margin: CGFloat = resizeMargin) -> Bool {
+        point.x <= margin || point.x >= windowSize.width - margin || point.y <= margin
+    }
 }
 
 extension View {
@@ -19,7 +29,7 @@ extension View {
     }
 }
 
-private struct TableMarqueeInstaller: NSViewRepresentable {
+struct TableMarqueeInstaller: NSViewRepresentable {
     let onSelect: (Set<Int>) -> Void
     let current: () -> Set<Int>
 
@@ -63,10 +73,12 @@ private struct TableMarqueeInstaller: NSViewRepresentable {
             if let monitor { NSEvent.removeMonitor(monitor) }
         }
 
-        private func handle(_ event: NSEvent) -> NSEvent? {
+        func handle(_ event: NSEvent) -> NSEvent? {
             switch event.type {
             case .leftMouseDown:
                 guard event.window === window, !isHiddenOrHasHiddenAncestor,
+                      let win = event.window, !(win.styleMask.contains(.resizable)
+                          && TableMarquee.isResizeZone(event.locationInWindow, windowSize: win.frame.size)),
                       !event.modifierFlags.contains(.control),
                       convert(bounds, to: nil).contains(event.locationInWindow),
                       let table = tableUnder(event) else { return event }
@@ -76,6 +88,9 @@ private struct TableMarqueeInstaller: NSViewRepresentable {
                 guard table.bounds.contains(point) else { return event }
                 let row = table.row(at: point)
                 guard row == -1 || table.column(at: point) > 0 else { return event }
+                // Doble clic en una fila (fuera del nombre): es para abrirla, se deja pasar a la tabla.
+                // Antes el recuadro se quedaba también el segundo clic y la carpeta no se abría.
+                guard !(row >= 0 && event.clickCount >= 2) else { return event }
                 startRow = row
                 self.table = table
                 start = point

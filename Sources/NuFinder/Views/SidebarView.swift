@@ -231,7 +231,7 @@ struct SidebarView: View {
         }
         Task {
             do {
-                try NSWorkspace.shared.unmountAndEjectDevice(at: volume.url)
+                try await VolumeEject.eject(volume.url) // Fork: fuera del hilo principal y con reintentos
                 refreshVolumes()
             } catch {
                 browser.errorMessage = String(localized: "Couldn’t eject \(volume.name): \(error.localizedDescription)")

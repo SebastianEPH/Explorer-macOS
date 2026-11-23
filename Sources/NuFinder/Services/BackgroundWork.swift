@@ -31,6 +31,7 @@ final class FolderSizeQueue: @unchecked Sendable {
 
     /// Calcula el tamaño de `url` y llama a `done` en el hilo principal (no se llama si se cancela).
     func calculate(_ url: URL, done: @escaping @MainActor (Int64) -> Void) {
+        queue.maxConcurrentOperationCount = FolderSizeParallel.current // Fork: Ajustes → Archivos
         let operation = BlockOperation()
         operation.addExecutionBlock { [weak operation] in
             guard let operation else { return }
@@ -45,6 +46,17 @@ final class FolderSizeQueue: @unchecked Sendable {
 
     func cancel(_ url: URL) {
         lock.withLock { operations[url]?.cancel(); operations[url] = nil }
+    }
+
+    /// Fork: cancela todo lo que esté dentro de `root` (p. ej. antes de expulsar un disco).
+    func cancelAll(under root: URL) {
+        let prefix = root.standardizedFileURL.path
+        lock.withLock {
+            for (url, operation) in operations where url.standardizedFileURL.path.hasPrefix(prefix) {
+                operation.cancel()
+                operations[url] = nil
+            }
+        }
     }
 
     private func remove(_ url: URL) {
