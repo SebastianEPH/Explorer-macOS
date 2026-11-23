@@ -402,6 +402,7 @@ final class BrowserModel: ObservableObject {
                 self.items = self.sort(loadedItems)
                 self.tabMemory.shown(directory, hidden: includesHidden) // Fork
             case .failure(let error):
+                if self.tabMemory.isShowing(directory, hidden: includesHidden) { self.items = []; self.tabMemory.clearShown() } // Fork: no dejar archivos de una carpeta que ya no se puede leer
                 self.errorMessage = error.localizedDescription
             }
         }

@@ -27,6 +27,7 @@ final class TabMemory {
     /// Carpeta cuyos archivos están en pantalla ahora mismo.
     private var showing: (url: URL, hidden: Bool)?
     func shown(_ url: URL, hidden: Bool) { showing = (url.standardizedFileURL, hidden) }
+    func clearShown() { showing = nil }
     /// Si se vuelve a leer la carpeta que ya se ve (no hace falta la carga).
     func isShowing(_ url: URL, hidden: Bool, enabled: Bool = TabMemory.isEnabled) -> Bool {
         guard enabled, let showing else { return false }
