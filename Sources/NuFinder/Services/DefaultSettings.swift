@@ -27,6 +27,7 @@ enum DefaultSettings {
             "toolbar.showsOperations": false,
             "toolbar.showsSplit": true,
             "view.default": "Icons",
+            "view.sameEverywhere": true,
             "view.iconSize": 40.0,
             "shortcut.commandPalette": "p",
         ]

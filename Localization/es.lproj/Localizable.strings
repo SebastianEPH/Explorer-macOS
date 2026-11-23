@@ -699,3 +699,9 @@
 "Drawn again on every redraw: about 50–150 ms for 58 files (stutters)" = "Se dibujan otra vez en cada redibujo: unos 50–150 ms para 58 archivos (va a tirones)";
 "Redraw only what changes while scrolling" = "Redibujar solo lo que cambia al desplazarse";
 "Moving the pointer or scrolling redraws only the item underneath, not the whole folder. Off: the whole folder is redrawn on every frame, as before." = "Mover el puntero o desplazarse redibuja solo el elemento de debajo, no toda la carpeta. Apagado: se redibuja toda la carpeta en cada fotograma, como antes.";
+
+/* Misma vista en todas partes */
+"Same view wherever you open a folder from" = "Misma vista abras la carpeta desde donde la abras";
+"Favorites, tabs, new windows and the Terminal all use the folder’s own saved view. Off: favorites keep a separate view and switching tabs keeps the previous view." = "Favoritos, pestañas, ventanas nuevas y la Terminal usan la vista guardada de la carpeta. Apagado: los favoritos tienen su propia vista y al cambiar de pestaña se queda la vista anterior.";
+"Preview: opening “Fotos” from three places" = "Vista previa: abrir «Fotos» desde tres sitios";
+"Tab" = "Pestaña";

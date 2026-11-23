@@ -195,6 +195,7 @@ struct StartupSection: View {
                     Text("Files whose name starts with a dot, like .gitignore.")
                 }
                 Text("Folders with their own saved view keep it.").font(.caption).foregroundStyle(.secondary)
+                FolderViewConsistencyToggle() // Fork
             }
         }
     }

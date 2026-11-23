@@ -355,6 +355,7 @@ final class BrowserModel: ObservableObject {
         syncActiveTab()
         activeTabID = id
         currentURL = tab.url
+        if FolderViewConsistency.isOn(defaults) { restoreViewPreferences(for: tab.url) } // Fork
         history = tab.history
         historyIndex = tab.historyIndex
         addressText = tab.url.path
@@ -1249,7 +1250,7 @@ final class BrowserModel: ObservableObject {
     func navigateToFavorite(_ url: URL) {
         let candidate = url.standardizedFileURL
         navigate(to: candidate)
-        if let preference = favoriteViewPreferences[candidate.path] {
+        if let preference = favoriteViewPreferences[candidate.path], !FolderViewConsistency.isOn(defaults) { // Fork
             applyViewPreference(preference)
         }
     }

@@ -37,11 +37,13 @@ struct SidebarView: View {
                                 .disabled(browser.favorites.last?.id == favorite.id)
                                 if !favorite.isBuiltIn {
                                     Divider()
+                                    if !FolderViewConsistency.isOn() { // Fork: el favorito usa la vista de su carpeta
                                     Button("Update Saved View") {
                                         browser.updateFavoriteView(favorite.url)
                                     }
                                     if browser.favoriteHasSavedView(favorite.url) {
                                         Label("View and Sort Saved", systemImage: "checkmark.circle")
+                                    }
                                     }
                                     Divider()
                                     Button("Remove from Favorites", role: .destructive) {
