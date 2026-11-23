@@ -384,4 +384,13 @@ struct ForkTests {
         #expect(CloudStatus.defaults[CloudStatus.enabledKey] as? Bool == true)
         #expect(CloudStatus.defaults[CloudStatus.showDownloadedKey] as? Bool == false, "Finder no marca los descargados")
     }
+
+    /// «Abrir carpetas en una pestaña nueva» se quitó: se borra lo guardado y no viene por defecto.
+    @Test func foldersInNewTabSettingIsRemoved() throws {
+        let d = try #require(UserDefaults(suiteName: "ForkTests.newtab.\(UUID().uuidString)"))
+        d.set(true, forKey: "open.foldersInNewTab")
+        RemovedFeatures.cleanDefaults(d)
+        #expect(d.object(forKey: "open.foldersInNewTab") == nil)
+        #expect(DefaultSettings.mine["open.foldersInNewTab"] == nil)
+    }
 }

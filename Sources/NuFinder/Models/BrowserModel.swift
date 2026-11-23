@@ -870,7 +870,7 @@ final class BrowserModel: ObservableObject {
     }
 
     func open(_ item: FileItem) {
-        if item.isDirectory { if BehaviorSettings.foldersOpenInNewTab { newTab(at: item.url) } else { navigate(to: item.url) } } // Fork
+        if item.isDirectory { navigate(to: item.url) }
         else { NSWorkspace.shared.open(item.url) }
     }
 

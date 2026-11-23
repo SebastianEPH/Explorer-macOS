@@ -358,8 +358,6 @@
 "Folders with their own saved view keep it." = "Las carpetas con su propia vista guardada la conservan.";
 "Preview: how a folder looks" = "Vista previa: cómo se ve una carpeta";
 "Opening and Deleting" = "Abrir y borrar";
-"Open folders in a new tab" = "Abrir carpetas en una pestaña nueva";
-"Double-clicking a folder opens it in a new tab instead of the same one." = "Al hacer doble clic en una carpeta se abre en una pestaña nueva en vez de en la misma.";
 "Ask before moving to the Trash" = "Preguntar antes de mover a la Papelera";
 "Shows a confirmation before deleting with ⌘⌫ or the menu." = "Pide confirmación antes de borrar con ⌘⌫ o desde el menú.";
 "Move this item to the Trash?" = "¿Mover este elemento a la Papelera?";

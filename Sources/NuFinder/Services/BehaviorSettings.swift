@@ -9,7 +9,6 @@ enum BehaviorSettings {
     static let newTabFolderKey = "tabs.newTabFolder"      // "" = carpeta actual
     static let defaultViewKey = "view.default"
     static let hiddenByDefaultKey = "view.hiddenByDefault"
-    static let foldersInNewTabKey = "open.foldersInNewTab"
     static let confirmTrashKey = "trash.confirm"
     static let iconSizeKey = "view.iconSize"
     static let defaultIconSize = 56.0
@@ -34,7 +33,6 @@ enum BehaviorSettings {
     }
 
     static var showsHiddenByDefault: Bool { UserDefaults.standard.bool(forKey: hiddenByDefaultKey) }
-    static var foldersOpenInNewTab: Bool { UserDefaults.standard.bool(forKey: foldersInNewTabKey) }
 
     /// true = seguir. Pregunta solo si el usuario activó la confirmación.
     @MainActor
@@ -206,7 +204,6 @@ struct FileBehaviorSection: View {
     /// Fork: apartado a mostrar (nil = todos).
     var part: String? = nil
     private func shows(_ name: String) -> Bool { part == nil || part == name }
-    @AppStorage(BehaviorSettings.foldersInNewTabKey) private var foldersInNewTab = false
     @AppStorage(BehaviorSettings.confirmTrashKey) private var confirmTrash = false
     @AppStorage(ListColumnSettings.showsCreatedKey) private var showsCreated = false
     @AppStorage("previewPane.visible") private var previewVisible = true
@@ -216,10 +213,6 @@ struct FileBehaviorSection: View {
     var body: some View {
         if shows("opening") {
             Section("Opening and Deleting") {
-                Toggle(isOn: $foldersInNewTab) {
-                    Label("Open folders in a new tab", systemImage: "plus.square.on.square")
-                    Text("Double-clicking a folder opens it in a new tab instead of the same one.")
-                }
                 Toggle(isOn: $confirmTrash) {
                     Label("Ask before moving to the Trash", systemImage: "trash")
                     Text("Shows a confirmation before deleting with ⌘⌫ or the menu.")

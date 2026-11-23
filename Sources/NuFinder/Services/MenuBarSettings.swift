@@ -106,7 +106,6 @@ struct ExplorerMenus: Commands {
     @AppStorage(StatusBarSettings.visibleKey) private var statusBar = true
     @AppStorage(FolderSizeQueue.autoKey) private var folderSizes = true
     @AppStorage(BehaviorSettings.confirmTrashKey) private var confirmTrash = false
-    @AppStorage(BehaviorSettings.foldersInNewTabKey) private var foldersInNewTab = false
     @AppStorage(BehaviorSettings.hiddenByDefaultKey) private var hiddenByDefault = false
     @AppStorage(BehaviorSettings.iconSizeKey) private var iconSize = BehaviorSettings.defaultIconSize
     @ObservedObject private var splitPanes = WindowSplitPanes.shared // Fork: panel de la ventana activa
@@ -246,7 +245,6 @@ struct ExplorerMenus: Commands {
         if showsOptions {
             CommandMenu("Options") {
                 Toggle("Calculate folder sizes automatically", isOn: $folderSizes)
-                Toggle("Open folders in a new tab", isOn: $foldersInNewTab)
                 Toggle("Ask before moving to the Trash", isOn: $confirmTrash)
                 Toggle("Show hidden files from the start", isOn: $hiddenByDefault)
                 Divider()

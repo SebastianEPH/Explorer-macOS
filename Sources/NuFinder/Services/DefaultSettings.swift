@@ -21,7 +21,6 @@ enum DefaultSettings {
             "layout.compactTop": true,
             "layout.path": "buttons",
             "layout.showsTitle": false,
-            "open.foldersInNewTab": true,
             "preferredTerminalPath": "/Applications/iTerm.app",
             "previewPane.visible": false,
             "showsSplitPane": false,

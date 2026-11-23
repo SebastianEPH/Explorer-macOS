@@ -216,4 +216,31 @@ struct WindowUITests {
         let after = try await menuItems()
         #expect(!after.contains("Download Now"), "\(after)")
     }
+
+    // MARK: abrir carpetas
+
+    /// Flujo: aunque quedara guardado el ajuste viejo «Abrir carpetas en una pestaña nueva»,
+    /// abrir una carpeta entra en ella en la misma pestaña (el ajuste se quitó).
+    @Test func openingFolderStaysInSameTab() async throws {
+        let defaults = UserDefaults.standard
+        defaults.set(true, forKey: "open.foldersInNewTab")
+        RemovedFeatures.cleanDefaults(defaults)
+        #expect(defaults.object(forKey: "open.foldersInNewTab") == nil, "el ajuste quitado sigue guardado")
+        defaults.set(true, forKey: "open.foldersInNewTab") // aunque siguiera ahí, no debe contar
+        defer { defaults.removeObject(forKey: "open.foldersInNewTab") }
+
+        let url = try folder("opensame")
+        let sub = url.appendingPathComponent("Sub", isDirectory: true)
+        try FileManager.default.createDirectory(at: sub, withIntermediateDirectories: true)
+        let window = try await openWindow(at: url)
+        defer { window.close() }
+        let browser = try #require(KeyWindowFocus.shared.browser(for: window))
+        for _ in 0..<40 where browser.displayedItems.isEmpty { try await spin(0.1) }
+        let tabsBefore = browser.tabs.count
+        let item = try #require(browser.displayedItems.first { $0.name == "Sub" })
+        browser.open(item)
+        try await spin()
+        #expect(browser.tabs.count == tabsBefore, "abrió una pestaña nueva")
+        #expect(browser.currentURL.lastPathComponent == "Sub")
+    }
 }
