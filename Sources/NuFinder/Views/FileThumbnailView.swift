@@ -13,7 +13,7 @@ struct FileThumbnailView: View {
                     .resizable()
                     .scaledToFill()
             } else {
-                Image(nsImage: item.icon)
+                Image(nsImage: IconCache.icon(for: item, size: size)) // Fork: icono ya dibujado (fluidez)
                     .resizable()
                     .scaledToFit()
             }

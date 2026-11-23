@@ -29,7 +29,7 @@ struct SettingsView: View {
             ])
             .settingsTab("Startup", systemImage: "power").tag("startup")
             SettingsPagesView(tab: "files", pages: [
-                SettingsPage("icons", "Icons and Selection", "square.grid.2x2") { ItemHitAreaSection() },
+                SettingsPage("icons", "Icons and Selection", "square.grid.2x2") { ItemHitAreaSection(); IconCacheSection() },
                 SettingsPage("opening", "Opening and Deleting", "trash") { FileBehaviorSection(part: "opening") },
                 SettingsPage("panels", "Panels", "sidebar.right") { FileBehaviorSection(part: "panels") },
                 SettingsPage("cloud", "Cloud Files", "icloud") { CloudStatusSection() } // Fork

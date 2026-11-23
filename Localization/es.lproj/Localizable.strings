@@ -689,3 +689,11 @@
 "%lld folders · %@ of %@" = "%lld carpetas · %@ de %@";
 "Going back to a tab or folder: shown instantly" = "Volver a una pestaña o carpeta: al instante";
 "Going back to a tab: loads again (about 1 s)" = "Volver a una pestaña: vuelve a cargar (aprox. 1 s)";
+
+/* Fork: iconos ya dibujados */
+"Smooth Scrolling" = "Desplazamiento fluido";
+"Keep icons drawn in memory" = "Guardar los iconos ya dibujados";
+"Each icon is drawn once per file type and size, so moving through a folder and scrolling stay smooth. Off: every redraw draws the icons again, as before." = "Cada icono se dibuja una vez por tipo de archivo y tamaño, así moverse por una carpeta y desplazarse va fluido. Apagado: cada redibujo vuelve a dibujar los iconos, como antes.";
+"Preview: icons drawn per redraw" = "Vista previa: iconos dibujados en cada redibujo";
+"Drawn once and reused: about 0.4 ms for 58 files" = "Dibujados una vez y reutilizados: unos 0,4 ms para 58 archivos";
+"Drawn again on every redraw: about 50–150 ms for 58 files (stutters)" = "Se dibujan otra vez en cada redibujo: unos 50–150 ms para 58 archivos (va a tirones)";

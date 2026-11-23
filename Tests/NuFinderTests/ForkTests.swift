@@ -452,4 +452,47 @@ struct ForkTests {
         #expect(MemoryBudget.automaticMB(physical: 4 * 1024) == 256)
         #expect(MemoryBudget.automaticMB(physical: 256 * 1024) == 4096)
     }
+
+    // MARK: iconos ya dibujados (fluidez)
+
+    private func iconFolder(_ files: [String]) throws -> URL {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("IconCache-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        for file in files { try Data("x".utf8).write(to: url.appendingPathComponent(file)) }
+        return url
+    }
+
+    @Test func iconCacheSharesByTypeAndKeepsOwnIcons() throws {
+        let dir = try iconFolder(["a.pdf", "b.pdf", "c.zip"])
+        let sub = dir.appendingPathComponent("Carpeta", isDirectory: true)
+        try FileManager.default.createDirectory(at: sub, withIntermediateDirectories: true)
+        let a = try #require(FileItem.load(dir.appendingPathComponent("a.pdf")))
+        let b = try #require(FileItem.load(dir.appendingPathComponent("b.pdf")))
+        let c = try #require(FileItem.load(dir.appendingPathComponent("c.zip")))
+        let folder = try #require(FileItem.load(sub))
+        #expect(IconCache.key(for: a, pixels: 80) == IconCache.key(for: b, pixels: 80), "dos PDF deben compartir icono")
+        #expect(IconCache.key(for: a, pixels: 80) != IconCache.key(for: c, pixels: 80))
+        #expect(IconCache.key(for: a, pixels: 80) != IconCache.key(for: a, pixels: 160), "cada tamaño su icono")
+        #expect(IconCache.key(for: folder, pixels: 80).hasPrefix("path:"), "las carpetas pueden tener icono propio")
+        IconCache.clear()
+        let first = IconCache.icon(for: a, size: 40, enabled: true)
+        #expect(IconCache.icon(for: b, size: 40, enabled: true) === first, "no se reutilizó")
+        #expect(first.representations.count == 1, "debe ser un solo mapa de bits ya dibujado")
+        #expect(IconCache.icon(for: a, size: 40, enabled: false) !== first, "apagado debe ser como el original")
+    }
+
+    /// Redibujar 60 iconos ya guardados debe caber de sobra en un fotograma (16 ms).
+    @Test func cachedIconsRedrawWithinOneFrame() throws {
+        let names = (0..<60).map { "f\($0).\(["pdf", "zip", "xlsx", "apk", "txt", "html"][$0 % 6])" }
+        let dir = try iconFolder(names)
+        let items = names.compactMap { FileItem.load(dir.appendingPathComponent($0)) }
+        IconCache.clear()
+        for item in items { _ = IconCache.icon(for: item, size: 40, enabled: true) }
+        let start = Date()
+        for item in items {
+            _ = IconCache.icon(for: item, size: 40, enabled: true).cgImage(forProposedRect: nil, context: nil, hints: nil)
+        }
+        let ms = Date().timeIntervalSince(start) * 1000
+        #expect(ms < 16, "redibujar 60 iconos tardó \(ms) ms")
+    }
 }
