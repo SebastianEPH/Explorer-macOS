@@ -138,8 +138,17 @@ enum ContextMenuSettings {
     static let hiddenKey = "contextMenu.hidden"
 
     static func hiddenSet(_ stored: String) -> Set<String> {
-        Set(stored.split(separator: ",").map(String.init))
+        // El menú se arma en cada redibujo de cada archivo: trocear el texto cada vez ocupaba
+        // el 70 % del hilo principal al desplazarse. Se guarda el último resultado.
+        parseLock.lock(); defer { parseLock.unlock() }
+        if let last = lastHidden, last.stored == stored { return last.set }
+        let set = Set(stored.split(separator: ",").map(String.init))
+        lastHidden = (stored, set)
+        return set
     }
+    private static let parseLock = NSLock()
+    nonisolated(unsafe) private static var lastHidden: (stored: String, set: Set<String>)?
+    nonisolated(unsafe) private static var orderCache: [String: [ContextMenuOption]] = [:]
 
     static func isVisible(_ option: ContextMenuOption, scope: ContextMenuScope, in stored: String) -> Bool {
         let hidden = hiddenSet(stored)
@@ -173,6 +182,19 @@ enum ContextMenuSettings {
 
     /// Opciones del tipo en el orden elegido; las que falten (opciones nuevas) van en su sitio original.
     static func order(_ scope: ContextMenuScope, in stored: String) -> [ContextMenuOption] {
+        let cacheKey = "\(scope.rawValue)|\(stored)"
+        parseLock.lock()
+        if let hit = orderCache[cacheKey] { parseLock.unlock(); return hit }
+        parseLock.unlock()
+        let result = computeOrder(scope, in: stored)
+        parseLock.lock()
+        if orderCache.count > 64 { orderCache.removeAll() }
+        orderCache[cacheKey] = result
+        parseLock.unlock()
+        return result
+    }
+
+    private static func computeOrder(_ scope: ContextMenuScope, in stored: String) -> [ContextMenuOption] {
         let defaults = scope.options
         guard let saved = orders(stored)[scope.rawValue] else { return defaults }
         var result = saved.compactMap(ContextMenuOption.init(rawValue:)).filter(defaults.contains)

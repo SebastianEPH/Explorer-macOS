@@ -61,9 +61,34 @@ enum CloudStatus {
     }
 
     /// Lector del estado; las pruebas lo sustituyen para simular una nube.
-    nonisolated(unsafe) static var provider: (URL) -> CloudItemState? = read
+    nonisolated(unsafe) static var provider: (URL) -> CloudItemState? = read { didSet { resetCache() } }
 
-    static func state(for url: URL) -> CloudItemState? { provider(url) }
+    /// Estado reutilizable mientras está fresco (el menú contextual lo pide en cada redibujo
+    /// de cada archivo; leer el disco ahí hacía ir a tirones el desplazamiento).
+    static func state(for url: URL) -> CloudItemState? {
+        let now = Date().timeIntervalSinceReferenceDate
+        cacheLock.lock()
+        if let hit = cache[url.path], now - hit.time < freshness { cacheLock.unlock(); return hit.state }
+        cacheLock.unlock()
+        return refresh(url)
+    }
+
+    /// Vuelve a leer el estado del disco (lo usa el icono al refrescarse).
+    @discardableResult
+    static func refresh(_ url: URL) -> CloudItemState? {
+        let state = provider(url)
+        cacheLock.lock()
+        if cache.count > 20_000 { cache.removeAll() }
+        cache[url.path] = (state, Date().timeIntervalSinceReferenceDate)
+        cacheLock.unlock()
+        return state
+    }
+
+    static func resetCache() { cacheLock.lock(); cache.removeAll(); cacheLock.unlock() }
+
+    private static var freshness: Double { max(0.5, UserDefaults.standard.object(forKey: refreshKey) as? Double ?? 2) }
+    private static let cacheLock = NSLock()
+    nonisolated(unsafe) private static var cache: [String: (state: CloudItemState?, time: Double)] = [:]
 
     static func read(_ url: URL) -> CloudItemState? {
         let fresh = URL(fileURLWithPath: url.path) // sin valores en caché
@@ -86,11 +111,11 @@ enum CloudStatus {
     }
 
     static func download(_ urls: [URL]) {
-        for url in urls { try? FileManager.default.startDownloadingUbiquitousItem(at: url) }
+        for url in urls { try? FileManager.default.startDownloadingUbiquitousItem(at: url); refresh(url) }
     }
 
     static func evict(_ urls: [URL]) {
-        for url in urls { try? FileManager.default.evictUbiquitousItem(at: url) }
+        for url in urls { try? FileManager.default.evictUbiquitousItem(at: url); refresh(url) }
     }
 }
 
@@ -117,7 +142,7 @@ struct CloudStatusBadge: View {
             state = CloudStatus.state(for: url)
             while state != nil, !Task.isCancelled { // fuera de la nube se mira una sola vez
                 try? await Task.sleep(for: .seconds(max(0.5, refresh)))
-                state = CloudStatus.state(for: url)
+                state = CloudStatus.refresh(url)
             }
         }
     }

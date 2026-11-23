@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import Testing
 @testable import NuFinder
 
@@ -494,5 +495,56 @@ struct ForkTests {
         }
         let ms = Date().timeIntervalSince(start) * 1000
         #expect(ms < 16, "redibujar 60 iconos tardó \(ms) ms")
+    }
+
+    // MARK: fluidez del menú contextual (se arma en cada redibujo de cada archivo)
+
+    /// 58 archivos × todas las opciones, con mi lista de ocultos: debe caber de sobra en un fotograma.
+    @Test func contextMenuVisibilityIsCheapPerRedraw() {
+        let stored = DefaultSettings.mine[ContextMenuSettings.hiddenKey] as? String ?? ""
+        #expect(stored.count > 500)
+        _ = ContextMenuSettings.isVisible(.open, scope: .file, in: stored)
+        let start = Date()
+        for _ in 0..<58 {
+            for option in ContextMenuSettings.order(.file, in: "") {
+                _ = ContextMenuSettings.isVisible(option, scope: .file, in: stored)
+            }
+        }
+        let ms = Date().timeIntervalSince(start) * 1000
+        #expect(ms < 2, "armar los menús de 58 archivos tardó \(ms) ms")
+    }
+
+    /// Armar el menú no debe leer el disco por cada archivo y opción: el estado de la nube
+    /// se reutiliza mientras está fresco.
+    @Test func cloudMenuDoesNotReadDiskOnEveryRedraw() {
+        let saved = CloudStatus.provider
+        defer { CloudStatus.provider = saved; CloudStatus.resetCache() }
+        var reads = 0
+        CloudStatus.provider = { _ in reads += 1; return nil }
+        CloudStatus.resetCache()
+        let url = URL(fileURLWithPath: "/tmp/menu-\(UUID().uuidString).txt")
+        for _ in 0..<20 {
+            _ = CloudStatus.menuAllows(.cloudDownload, url)
+            _ = CloudStatus.menuAllows(.cloudEvict, url)
+        }
+        #expect(reads == 1, "leyó el disco \(reads) veces para el mismo archivo")
+    }
+
+    /// El puntero solo avisa cuando cambia de archivo, y salir de uno ajeno no borra el actual.
+    @Test func hoverTrackerOnlyPublishesRealChanges() {
+        let tracker = HoverTracker()
+        var changes = 0
+        let sub = tracker.objectWillChange.sink { changes += 1 }
+        defer { sub.cancel() }
+        let a = URL(fileURLWithPath: "/tmp/a"), b = URL(fileURLWithPath: "/tmp/b")
+        tracker.set(a, inside: true)
+        tracker.set(a, inside: true)
+        #expect(changes == 1, "avisó sin cambiar de archivo")
+        tracker.set(b, inside: true)
+        tracker.set(a, inside: false)
+        #expect(tracker.url == b, "salir de otro archivo borró el actual")
+        tracker.set(b, inside: false)
+        #expect(tracker.url == nil)
+        #expect(SmoothScrolling.isEnabled || UserDefaults.standard.object(forKey: SmoothScrolling.enabledKey) != nil)
     }
 }

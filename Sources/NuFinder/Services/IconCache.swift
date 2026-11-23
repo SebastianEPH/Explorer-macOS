@@ -58,6 +58,7 @@ enum IconCache {
 /// Ajustes → Archivos → Iconos y selección: iconos ya dibujados.
 struct IconCacheSection: View {
     @AppStorage(IconCache.enabledKey) private var enabled = true
+    @AppStorage(SmoothScrolling.enabledKey) private var smooth = true
 
     var body: some View {
         Section {
@@ -65,7 +66,11 @@ struct IconCacheSection: View {
                 Label("Keep icons drawn in memory", systemImage: "bolt.horizontal")
                 Text("Each icon is drawn once per file type and size, so moving through a folder and scrolling stay smooth. Off: every redraw draws the icons again, as before.")
             }
-            IconCachePreview(enabled: enabled)
+            Toggle(isOn: $smooth) {
+                Label("Redraw only what changes while scrolling", systemImage: "scroll")
+                Text("Moving the pointer or scrolling redraws only the item underneath, not the whole folder. Off: the whole folder is redrawn on every frame, as before.")
+            }
+            IconCachePreview(enabled: enabled && smooth)
         } header: {
             Text("Smooth Scrolling")
         }

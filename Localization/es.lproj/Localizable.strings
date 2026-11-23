@@ -697,3 +697,5 @@
 "Preview: icons drawn per redraw" = "Vista previa: iconos dibujados en cada redibujo";
 "Drawn once and reused: about 0.4 ms for 58 files" = "Dibujados una vez y reutilizados: unos 0,4 ms para 58 archivos";
 "Drawn again on every redraw: about 50–150 ms for 58 files (stutters)" = "Se dibujan otra vez en cada redibujo: unos 50–150 ms para 58 archivos (va a tirones)";
+"Redraw only what changes while scrolling" = "Redibujar solo lo que cambia al desplazarse";
+"Moving the pointer or scrolling redraws only the item underneath, not the whole folder. Off: the whole folder is redrawn on every frame, as before." = "Mover el puntero o desplazarse redibuja solo el elemento de debajo, no toda la carpeta. Apagado: se redibuja toda la carpeta en cada fotograma, como antes.";

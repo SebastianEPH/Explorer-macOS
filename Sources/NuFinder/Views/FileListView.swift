@@ -7,7 +7,12 @@ struct FileListView: View {
     @State private var springOpenTask: Task<Void, Never>?
     @State private var typeSelectionBuffer = ""
     @State private var typeSelectionResetTask: Task<Void, Never>?
-    @State private var tileFrames: [URL: CGRect] = [:]
+    @State private var tileFrameBox = TileFrameBox() // Fork: guardarlas en @State redibujaba todo en cada fotograma de scroll
+    @State private var tileFramesState: [URL: CGRect] = [:]
+    private var tileFrames: [URL: CGRect] {
+        get { SmoothScrolling.isEnabled ? tileFrameBox.frames : tileFramesState }
+        nonmutating set { if SmoothScrolling.isEnabled { tileFrameBox.frames = newValue } else { tileFramesState = newValue } }
+    }
     @State private var marqueeRect: CGRect?
     @State private var marqueeBaseSelection: Set<URL> = []
     @State private var isMarqueeSelecting = false
@@ -25,6 +30,7 @@ struct FileListView: View {
     @AppStorage(ContextMenuSettings.hiddenKey) private var hiddenMenuOptions = "" // Fork
     @AppStorage(ContextMenuSettings.orderKey) private var menuOrder = "" // Fork
     @State private var hoveredURL: URL? // Fork: preselección al pasar el ratón
+    @State private var hover = HoverTracker() // Fork: preselección sin redibujar toda la vista
     @AppStorage(BehaviorSettings.iconSizeKey) private var iconSize = BehaviorSettings.defaultIconSize // Fork
     private func menu(_ option: ContextMenuOption, _ item: FileItem? = nil) -> Bool { ContextMenuSettings.isVisible(option, scope: item.map(ContextMenuScope.of) ?? .background, in: hiddenMenuOptions) } // Fork
 
@@ -104,6 +110,7 @@ struct FileListView: View {
                     RoundedRectangle(cornerRadius: 5)
                         .fill(selectionColor(for: item.url))
                 }
+                .background { HoverFill(tracker: hover, url: item.url, active: SmoothScrolling.isEnabled && selectionColor(for: item.url) == .clear, cornerRadius: 5) } // Fork
                 .scaleEffect(activatingURL == item.url ? 0.985 : 1)
                 .animation(.easeOut(duration: 0.1), value: activatingURL)
                 .contentShape(Rectangle())
@@ -328,6 +335,7 @@ struct FileListView: View {
         tileLabel(for: item)
             .padding(7)
             .background(selectionColor(for: item.url), in: RoundedRectangle(cornerRadius: 7))
+            .background { HoverFill(tracker: hover, url: item.url, active: SmoothScrolling.isEnabled && selectionColor(for: item.url) == .clear, cornerRadius: 7) } // Fork
             .onRightMouseDown { selectForContextMenu(item.url) } // Fork
             .onHover { trackHover(item.url, $0) } // Fork
             .modifier(TileFrameReporter(url: item.url))
@@ -394,7 +402,7 @@ struct FileListView: View {
         if browser.selection.contains(url) {
             return Color.accentColor.opacity(0.22)
         }
-        if hoveredURL == url { return Color.accentColor.opacity(0.08) } // Fork: preselección
+        if hoveredURL == url && !SmoothScrolling.isEnabled { return Color.accentColor.opacity(0.08) } // Fork: preselección
         return .clear
     }
 
@@ -405,6 +413,7 @@ struct FileListView: View {
     }
 
     private func trackHover(_ url: URL, _ inside: Bool) {
+        if SmoothScrolling.isEnabled { hover.set(url, inside: inside); return }
         if inside { hoveredURL = url } else if hoveredURL == url { hoveredURL = nil }
     }
 
