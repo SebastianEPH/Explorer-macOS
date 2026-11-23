@@ -352,7 +352,6 @@ final class BrowserModel: ObservableObject {
 
     func selectTab(_ id: UUID) {
         guard let tab = tabs.first(where: { $0.id == id }) else { return }
-        let cached = tabMemory.swap(leaving: activeTabID, url: currentURL, items: items, entering: id, url: tab.url, hidden: showsHiddenFiles) // Fork
         syncActiveTab()
         activeTabID = id
         currentURL = tab.url
@@ -361,7 +360,6 @@ final class BrowserModel: ObservableObject {
         addressText = tab.url.path
         selection.removeAll()
         reload()
-        if let cached { items = sort(cached); isLoading = false; tabMemory.shown(tab.url, hidden: showsHiddenFiles) } // Fork: se ve al instante, la recarga sigue detrás
         watcher.watch(tab.url) { [weak self] in self?.reload() }
         persistTabs()
     }
@@ -373,6 +371,7 @@ final class BrowserModel: ObservableObject {
 
     func reload() {
         reloadTask?.cancel()
+        if let cached = tabMemory.restore(tab: activeTabID, url: currentURL, hidden: showsHiddenFiles) { items = sort(cached) } // Fork: pestaña o carpeta del historial ya leída: al instante
         isLoading = !tabMemory.isShowing(currentURL, hidden: showsHiddenFiles) // Fork: la carpeta que ya se ve se actualiza sin la carga
         let directory = currentURL
         let includesHidden = showsHiddenFiles
@@ -401,8 +400,9 @@ final class BrowserModel: ObservableObject {
             case .success(let loadedItems):
                 self.items = self.sort(loadedItems)
                 self.tabMemory.shown(directory, hidden: includesHidden) // Fork
+                self.tabMemory.save(tab: self.activeTabID, url: directory, hidden: includesHidden, items: self.items, history: self.history) // Fork
             case .failure(let error):
-                if self.tabMemory.isShowing(directory, hidden: includesHidden) { self.items = []; self.tabMemory.clearShown() } // Fork: no dejar archivos de una carpeta que ya no se puede leer
+                self.tabMemory.discard(tab: self.activeTabID, url: directory); if self.tabMemory.isShowing(directory, hidden: includesHidden) { self.items = []; self.tabMemory.clearShown() } // Fork: no dejar archivos de una carpeta que ya no se puede leer
                 self.errorMessage = error.localizedDescription
             }
         }

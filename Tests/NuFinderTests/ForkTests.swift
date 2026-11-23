@@ -396,22 +396,60 @@ struct ForkTests {
 
     // MARK: pestañas en memoria
 
-    @Test func tabMemoryKeepsForgetsAndLimits() {
-        let memory = TabMemory()
-        let a = UUID(), b = UUID(), c = UUID()
-        let urlA = URL(fileURLWithPath: "/tmp/A"), urlB = URL(fileURLWithPath: "/tmp/B")
+    @Test func tabMemoryKeepsHistoryAndFreesWhatIsNotUsed() {
+        let store = FolderMemoryStore(watchPressure: false)
+        let memory = TabMemory(store: store)
+        let tab = UUID()
+        let a = URL(fileURLWithPath: "/tmp/A"), b = URL(fileURLWithPath: "/tmp/B"), c = URL(fileURLWithPath: "/tmp/C")
         let items = [FileItem.load(URL(fileURLWithPath: "/tmp"))].compactMap { $0 }
-        #expect(memory.swap(leaving: a, url: urlA, items: items, entering: b, url: urlB, hidden: false, enabled: true, limit: 10) == nil)
-        #expect(memory.stored(a))
-        #expect(memory.swap(leaving: b, url: urlB, items: items, entering: a, url: urlA, hidden: false, enabled: true, limit: 10)?.count == items.count)
-        // otra carpeta en la misma pestaña o con ocultos distinto → no sirve lo guardado
-        #expect(memory.swap(leaving: b, url: urlB, items: items, entering: a, url: urlB, hidden: false, enabled: true, limit: 10) == nil)
-        #expect(memory.swap(leaving: b, url: urlB, items: items, entering: a, url: urlA, hidden: true, enabled: true, limit: 10) == nil)
-        memory.forget(a)
-        #expect(!memory.stored(a), "no se liberó al cerrar")
-        _ = memory.swap(leaving: a, url: urlA, items: items, entering: c, url: urlA, hidden: false, enabled: true, limit: 1)
-        #expect(memory.stored(a) != memory.stored(b), "no respetó el máximo")
-        _ = memory.swap(leaving: a, url: urlA, items: items, entering: b, url: urlB, hidden: false, enabled: false, limit: 10)
-        #expect(!memory.stored(a) && !memory.stored(b), "apagado debe vaciar la memoria")
+        memory.save(tab: tab, url: a, hidden: false, items: items, history: [a], enabled: true, keepsHistory: true, budget: .max)
+        memory.save(tab: tab, url: b, hidden: false, items: items, history: [a, b], enabled: true, keepsHistory: true, budget: .max)
+        #expect(store.folderCount == 2, "no guardó la carpeta del historial")
+        #expect(memory.restore(tab: tab, url: a, hidden: false, enabled: true) != nil, "atrás no es instantáneo")
+        // A sale del historial (se navegó a C desde B tras volver) → se libera
+        memory.save(tab: tab, url: c, hidden: false, items: items, history: [b, c], enabled: true, keepsHistory: true, budget: .max)
+        #expect(store.items(tab: tab, url: a, hidden: false) == nil, "una carpeta fuera del historial sigue en RAM")
+        // sin historial: solo la actual
+        memory.save(tab: tab, url: c, hidden: false, items: items, history: [b, c], enabled: true, keepsHistory: false, budget: .max)
+        #expect(store.folderCount == 1)
+        // ocultos distinto → no sirve
+        memory.clearShown()
+        #expect(memory.restore(tab: tab, url: c, hidden: true, enabled: true) == nil)
+        // carpeta con error → se descarta
+        memory.discard(tab: tab, url: c)
+        #expect(store.folderCount == 0)
+        // cerrar pestaña → se libera
+        memory.save(tab: tab, url: a, hidden: false, items: items, history: [a], enabled: true, keepsHistory: true, budget: .max)
+        memory.forget(tab)
+        #expect(store.folderCount == 0 && store.usedBytes == 0, "cerrar la pestaña no liberó la RAM")
+        // apagado → vacía
+        memory.save(tab: tab, url: a, hidden: false, items: items, history: [a], enabled: true, keepsHistory: true, budget: .max)
+        _ = memory.restore(tab: tab, url: a, hidden: false, enabled: false)
+        #expect(store.folderCount == 0)
+    }
+
+    @Test func folderMemoryRespectsBudgetAndWindowClose() {
+        let store = FolderMemoryStore(watchPressure: false)
+        let items = [FileItem.load(URL(fileURLWithPath: "/tmp"))].compactMap { $0 }
+        let one = FolderMemoryStore.estimate(items)
+        var memory: TabMemory? = TabMemory(store: store)
+        let t1 = UUID(), t2 = UUID(), t3 = UUID()
+        for (tab, name) in [(t1, "1"), (t2, "2"), (t3, "3")] {
+            let url = URL(fileURLWithPath: "/tmp/\(name)")
+            memory?.save(tab: tab, url: url, hidden: false, items: items, history: [url], enabled: true, keepsHistory: true, budget: one * 2)
+        }
+        #expect(store.folderCount == 2, "se pasó del presupuesto")
+        #expect(!store.has(tab: t1), "debía soltar la usada hace más tiempo")
+        memory = nil // cerrar la ventana
+        #expect(store.folderCount == 0, "cerrar la ventana no liberó la RAM")
+        store.save(tab: t1, url: URL(fileURLWithPath: "/tmp/x"), hidden: false, items: items)
+        store.clear() // lo que hace el aviso de memoria de macOS
+        #expect(store.usedBytes == 0)
+    }
+
+    @Test func memoryBudgetUsesTheMac() {
+        #expect(MemoryBudget.automaticMB(physical: 48 * 1024) == 1966, "48 GB → ~1,9 GB")
+        #expect(MemoryBudget.automaticMB(physical: 4 * 1024) == 256)
+        #expect(MemoryBudget.automaticMB(physical: 256 * 1024) == 4096)
     }
 }

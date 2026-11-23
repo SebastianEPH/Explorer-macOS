@@ -7,8 +7,8 @@ final class ThumbnailService: @unchecked Sendable {
     private let cache = NSCache<NSString, NSImage>()
 
     private init() {
-        cache.countLimit = 300
-        cache.totalCostLimit = 96 * 1_024 * 1_024
+        cache.countLimit = MemoryBudget.thumbnailCount // Fork: más miniaturas en RAM (Ajustes → Pestañas)
+        cache.totalCostLimit = MemoryBudget.thumbnailBytes
     }
 
     func thumbnail(for url: URL, size: CGSize, scale: CGFloat) async -> NSImage? {

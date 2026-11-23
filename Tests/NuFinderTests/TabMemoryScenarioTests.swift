@@ -217,4 +217,43 @@ struct TabMemoryScenarioTests {
             _ = memory // la memoria vive dentro del modelo de la ventana: se va con él
         }
     }
+
+    /// 9. Atrás y adelante: la carpeta anterior sale al instante, sin carga.
+    @Test func backAndForwardAreInstant() async throws {
+        try await withMemory {
+            let a = try folder("backA", files: ["a1.txt", "a2.txt"])
+            let sub = a.appendingPathComponent("Sub", isDirectory: true)
+            try FileManager.default.createDirectory(at: sub, withIntermediateDirectories: true)
+            try Data("x".utf8).write(to: sub.appendingPathComponent("s.txt"))
+            let (window, browser) = try await open(a)
+            defer { window.close() }
+            try await settle(browser) { browser.items.count == 3 }
+            browser.navigate(to: sub)
+            try await settle(browser) { browser.items.count == 1 }
+            browser.goBack()
+            #expect(!browser.isLoading, "atrás mostró la carga")
+            #expect(browser.items.count == 3)
+            browser.goForward()
+            #expect(!browser.isLoading, "adelante mostró la carga")
+            #expect(browser.items.map(\.name) == ["s.txt"])
+        }
+    }
+
+    /// 10. Cerrar la ventana libera de verdad su RAM en el almacén común.
+    @Test func closingWindowFreesItsFolders() async throws {
+        try await withMemory {
+            let a = try folder("winA", files: ["a.txt"])
+            let b = try folder("winB", files: ["b.txt"])
+            var opened: (NSWindow, BrowserModel)? = try await open(a)
+            let browser = try #require(opened?.1)
+            browser.newTab(at: b)
+            try await settle(browser) { browser.items.count == 1 }
+            let tabs = browser.tabs.map(\.id)
+            #expect(tabs.contains { FolderMemoryStore.shared.has(tab: $0) })
+            opened?.0.close()
+            opened = nil
+            for _ in 0..<30 where tabs.contains(where: { FolderMemoryStore.shared.has(tab: $0) }) { try await spin(0.1) }
+            #expect(!tabs.contains { FolderMemoryStore.shared.has(tab: $0) }, "la ventana cerrada sigue ocupando RAM")
+        }
+    }
 }
