@@ -30,6 +30,8 @@ enum DefaultSettings {
             "view.sameEverywhere": true,
             "files.sortFoldersBySize": true,
             "toolbar.viewButtons": true,
+            "toolbar.viewButtons.showsCompact": false,
+            "layout.roundedTabs": true,
             "view.iconSize": 40.0,
             "shortcut.commandPalette": "p",
         ]

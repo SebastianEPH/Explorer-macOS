@@ -4,7 +4,13 @@ import SwiftUI
 /// iconos) en vez del menú desplegable con texto. Apagado = menú original.
 enum ViewModeButtons {
     static let key = "toolbar.viewButtons"
+    static let showsCompactKey = "toolbar.viewButtons.showsCompact"
     static var isOn: Bool { UserDefaults.standard.bool(forKey: key) }
+
+    /// Vistas con botón: la compacta se puede quitar (por defecto están las tres).
+    static func modes(showsCompact: Bool) -> [FileViewMode] {
+        FileViewMode.allCases.filter { showsCompact || $0 != .compact }
+    }
 
     static func icon(_ mode: FileViewMode) -> String {
         switch mode {
@@ -26,11 +32,13 @@ struct ViewModeButtonsView: View {
 /// Los tres botones juntos; el de la vista actual va resaltado.
 struct ViewModeButtonRow: View {
     let selected: FileViewMode
+    var showsCompact: Bool? = nil
     let choose: (FileViewMode) -> Void
+    @AppStorage(ViewModeButtons.showsCompactKey) private var storedShowsCompact = true
 
     var body: some View {
         HStack(spacing: 3) {
-            ForEach(FileViewMode.allCases) { mode in
+            ForEach(ViewModeButtons.modes(showsCompact: showsCompact ?? storedShowsCompact)) { mode in
                 Button { choose(mode) } label: {
                     FreeloaderToolbarIcon(systemName: ViewModeButtons.icon(mode), isActive: selected == mode)
                         .opacity(selected == mode ? 1 : 0.55)
@@ -47,6 +55,7 @@ struct ViewModeButtonRow: View {
 
 struct ViewModeButtonsToggle: View {
     @AppStorage(ViewModeButtons.key) private var on = false
+    @AppStorage(ViewModeButtons.showsCompactKey) private var showsCompact = true
     @State private var previewMode = FileViewMode.list
 
     var body: some View {
@@ -54,10 +63,16 @@ struct ViewModeButtonsToggle: View {
             Label("View buttons with icons", systemImage: "square.grid.2x2")
             Text("One button per view next to Sort, the current one highlighted. Off: a single menu with the view names.")
         }
+        Toggle(isOn: $showsCompact) {
+            Label("Compact view button", systemImage: "rectangle.grid.1x2")
+            Text("Off: only List and Icons. The Compact view stays in the View menu and ⌘2.")
+        }
+        .lockedSetting(!on)
+        if !on { DisabledReason("Only for view buttons with icons. Turn that on above.") }
         SettingsPreviewBox(title: "Preview: top bar") {
             HStack {
                 if on {
-                    ViewModeButtonRow(selected: previewMode) { previewMode = $0 }
+                    ViewModeButtonRow(selected: previewMode, showsCompact: showsCompact) { previewMode = $0 }
                 } else {
                     HStack(spacing: 4) {
                         FreeloaderToolbarIcon(systemName: ViewModeButtons.icon(previewMode))

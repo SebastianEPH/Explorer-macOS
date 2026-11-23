@@ -520,9 +520,10 @@ struct ForkTests {
         let saved = CloudStatus.provider
         defer { CloudStatus.provider = saved; CloudStatus.resetCache() }
         var reads = 0
-        CloudStatus.provider = { _ in reads += 1; return nil }
-        CloudStatus.resetCache()
         let url = URL(fileURLWithPath: "/tmp/menu-\(UUID().uuidString).txt")
+        // Solo este archivo: otras pruebas en paralelo dibujan ventanas que también preguntan.
+        CloudStatus.provider = { if $0.path == url.path { reads += 1 }; return nil }
+        CloudStatus.resetCache()
         for _ in 0..<20 {
             _ = CloudStatus.menuAllows(.cloudDownload, url)
             _ = CloudStatus.menuAllows(.cloudEvict, url)

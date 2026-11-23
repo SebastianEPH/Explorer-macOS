@@ -712,3 +712,15 @@
 "View buttons with icons" = "Botones de vista con iconos";
 "One button per view next to Sort, the current one highlighted. Off: a single menu with the view names." = "Un botón por vista junto a Ordenar, con la actual resaltada. Apagado: un solo menú con los nombres de las vistas.";
 "Preview: top bar" = "Vista previa: barra de arriba";
+"Compact view button" = "Botón de vista compacta";
+"Off: only List and Icons. The Compact view stays in the View menu and ⌘2." = "Apagado: solo Lista e Iconos. La vista compacta sigue en el menú Visualización y con ⌘2.";
+"Only for view buttons with icons. Turn that on above." = "Solo para los botones de vista con iconos. Actívalos arriba.";
+"Rounded tabs background" = "Fondo de las pestañas redondeado";
+"The dark background behind the tabs and the + button gets rounded ends like the bar. Off: it ends in a straight edge." = "El fondo oscuro de las pestañas y del botón + tiene los extremos redondeados como la barra. Apagado: termina en un borde recto.";
+"Only for tabs in the top bar. Turn on “Tabs in the top bar” above." = "Solo con las pestañas en la barra de arriba. Activa «Pestañas en la barra de arriba».";
+"Compact view button" = "Botón de vista compacta";
+"Off: only List and Icons. The Compact view stays in the View menu and ⌘2." = "Apagado: solo Lista e Iconos. La vista compacta sigue en el menú Visualización y con ⌘2.";
+"Only for view buttons with icons. Turn that on above." = "Solo para los botones de vista con iconos. Actívalos arriba.";
+"Rounded tabs background" = "Fondo de las pestañas redondeado";
+"The dark background behind the tabs and the + button gets rounded ends like the bar. Off: it ends in a straight edge." = "El fondo oscuro de las pestañas y del botón + tiene los extremos redondeados como la barra. Apagado: termina en un borde recto.";
+"Only for tabs in the top bar. Turn on “Tabs in the top bar” above." = "Solo con las pestañas en la barra de arriba. Activa «Pestañas en la barra de arriba».";

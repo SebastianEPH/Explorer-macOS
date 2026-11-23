@@ -10,6 +10,8 @@ enum LayoutSettings {
     static let showsSearchKey = "layout.showsSearch"
     /// Sin barra de título: los botones van a la derecha de la fila de pestañas.
     static let compactTopKey = "layout.compactTop"
+    /// Fork: el fondo de las pestañas en la barra de arriba con las esquinas redondeadas.
+    static let roundedTabsKey = "layout.roundedTabs"
 
     static func showsTabBar(_ mode: String, tabCount: Int) -> Bool {
         switch mode {
@@ -44,6 +46,7 @@ struct CompactTabs: View {
     @AppStorage("toolbar.showsSplit") private var showsSplit = true
     @AppStorage("toolbar.showsTerminal") private var showsTerminal = true
     @AppStorage("toolbar.showsOperations") private var showsOperations = true
+    @AppStorage(LayoutSettings.roundedTabsKey) private var roundedTabs = false
 
     /// Espacio que ocupan los botones visibles de la derecha (unos 40 pt cada uno y un margen para que no se escondan en «»»).
     static func buttonsWidth(visible: Int) -> CGFloat { 22 + 40 * CGFloat(visible) }
@@ -58,6 +61,7 @@ struct CompactTabs: View {
             if LayoutSettings.showsTabBar(mode, tabCount: browser.tabs.count) {
                 TabBarView()
                     .fixedSize(horizontal: true, vertical: false)
+                    .clipShape(RoundedRectangle(cornerRadius: roundedTabs ? 14 : 0, style: .continuous)) // Fork: el fondo de las pestañas sigue la forma redondeada de la barra
                     .frame(maxWidth: width, alignment: .leading)
             }
             WindowDragArea()
@@ -201,6 +205,7 @@ struct WindowLayoutSection: View {
     @AppStorage(LayoutSettings.pathKey) private var path = "both"
     @AppStorage(LayoutSettings.showsSearchKey) private var showsSearch = true
     @AppStorage(LayoutSettings.compactTopKey) private var compactTop = false
+    @AppStorage(LayoutSettings.roundedTabsKey) private var roundedTabs = false
 
     var body: some View {
         Section("Window") {
@@ -208,6 +213,14 @@ struct WindowLayoutSection: View {
             Toggle(isOn: $compactTop) {
                 Label("Tabs in the top bar (one row)", systemImage: "rectangle.topthird.inset.filled")
                 Text("The tabs go into the window’s top bar, next to its buttons, instead of a row of their own.")
+            }
+            Toggle(isOn: $roundedTabs) {
+                Label("Rounded tabs background", systemImage: "capsule")
+                Text("The dark background behind the tabs and the + button gets rounded ends like the bar. Off: it ends in a straight edge.")
+            }
+            .lockedSetting(!compactTop)
+            if !compactTop {
+                DisabledReason("Only for tabs in the top bar. Turn on “Tabs in the top bar” above.")
             }
             Toggle(isOn: $showsTitle) {
                 Label("Window title “Explorer”", systemImage: "textformat")
@@ -246,7 +259,13 @@ struct WindowLayoutSection: View {
                 row(height: 24) {
                     HStack(spacing: 4) {
                         ForEach([Color.red, .yellow, .green], id: \.self) { Circle().fill($0).frame(width: 8) }
-                        if tabBar != "never" { tab("Proyectos", selected: true).padding(.leading, 6); tab("Descargas", selected: false) }
+                        if tabBar != "never" {
+                            HStack(spacing: 4) { tab("Proyectos", selected: true); tab("Descargas", selected: false); Image(systemName: "plus").font(.system(size: 8, weight: .bold)) }
+                                .padding(.horizontal, 4).padding(.vertical, 2)
+                                .background(Color.primary.opacity(0.12), in: RoundedRectangle(cornerRadius: roundedTabs ? 9 : 0, style: .continuous))
+                                .padding(.leading, 6)
+                                .animation(.default, value: roundedTabs)
+                        }
                         Spacer()
                         ForEach(0..<3, id: \.self) { _ in mini(.accentColor) }
                     }
