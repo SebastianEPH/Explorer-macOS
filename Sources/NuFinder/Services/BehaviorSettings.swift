@@ -196,6 +196,7 @@ struct StartupSection: View {
                 }
                 Text("Folders with their own saved view keep it.").font(.caption).foregroundStyle(.secondary)
                 FolderViewConsistencyToggle() // Fork
+                ViewModeButtonsToggle() // Fork
             }
         }
     }
@@ -233,6 +234,7 @@ struct FileBehaviorSection: View {
                     Label("Calculate folder sizes automatically", systemImage: "scalemass")
                     Text("Off: the Size column shows “—” for folders; right-click → Calculate Size when you need it.")
                 }
+                FolderSizeSortToggle() // Fork
                 Toggle(isOn: $autoClose) {
                     Label("Close the operations panel when done", systemImage: "arrow.left.arrow.right.circle")
                 }

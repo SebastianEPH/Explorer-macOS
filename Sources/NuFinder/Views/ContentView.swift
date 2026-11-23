@@ -185,13 +185,7 @@ struct ContentView: View {
         .onChange(of: model.showsSizeColumn) { _, _ in model.saveViewPreferences() }
         .onChange(of: model.showsModifiedColumn) { _, _ in model.saveViewPreferences() }
         .onChange(of: model.sortCriteria) { _, _ in model.saveViewPreferences() }
-        .sheet(isPresented: Binding(
-            get: { model.showsGallery },
-            set: { model.showsGallery = $0 }
-        )) {
-            GalleryView()
-                .environmentObject(model)
-        }
+        .onReceive(FolderSizeService.shared.$entries.debounce(for: .milliseconds(400), scheduler: RunLoop.main)) { _ in model.resortForFolderSizes() } // Fork
         .task(id: model.currentURL) {
             if gitStatusEnabled {
                 GitStatusService.shared.refresh(for: model.currentURL)

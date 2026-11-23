@@ -65,15 +65,8 @@ struct AddressBarRow: View {
                 .help("Go to Path")
                 .hoverLift() // Fork
                 }
-                viewModeMenu
+                if ViewModeButtons.isOn { ViewModeButtonsView() } else { viewModeMenu } // Fork
                 SortMenu()
-                Button {
-                    browser.showsGallery = true
-                } label: {
-                    FreeloaderToolbarIcon(systemName: "photo.on.rectangle.angled")
-                }
-                .buttonStyle(.plain)
-                .help("Open Image Gallery")
             }
             if pathMode == "both" { BreadcrumbView() } // Fork
         }

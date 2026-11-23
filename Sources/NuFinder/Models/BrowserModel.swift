@@ -83,7 +83,6 @@ final class BrowserModel: ObservableObject {
     @Published var showsBatchRenamePrompt = false
     @Published var showsTagPrompt = false
     @Published var showsCommandPalette = false
-    @Published var showsGallery = false
     @Published var tagText = ""
     @Published var detailTitle: String?
     @Published var detailText = ""
@@ -862,7 +861,7 @@ final class BrowserModel: ObservableObject {
         switch field {
         case .name: return lhs.name.localizedStandardCompare(rhs.name)
         case .kind: return lhs.kind.localizedStandardCompare(rhs.kind)
-        case .size: return lhs.size == rhs.size ? .orderedSame : (lhs.size < rhs.size ? .orderedAscending : .orderedDescending)
+        case .size: let l = FolderSizeSort.size(lhs), r = FolderSizeSort.size(rhs); return l == r ? .orderedSame : (l < r ? .orderedAscending : .orderedDescending) // Fork: carpetas con su tamaño calculado
         case .modified: return compare(lhs.modified, rhs.modified)
         case .created: return compare(lhs.created, rhs.created)
         }

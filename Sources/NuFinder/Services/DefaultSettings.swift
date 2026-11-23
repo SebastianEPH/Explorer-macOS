@@ -28,6 +28,8 @@ enum DefaultSettings {
             "toolbar.showsSplit": true,
             "view.default": "Icons",
             "view.sameEverywhere": true,
+            "files.sortFoldersBySize": true,
+            "toolbar.viewButtons": true,
             "view.iconSize": 40.0,
             "shortcut.commandPalette": "p",
         ]

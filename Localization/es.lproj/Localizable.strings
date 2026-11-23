@@ -134,7 +134,6 @@
 "No File Operations" = "No hay operaciones de archivos";
 "OK" = "Aceptar";
 "Open" = "Abrir";
-"Open Image Gallery" = "Abrir galería de imágenes";
 "Open in New Tab" = "Abrir en una pestaña nueva";
 "Open in New Window" = "Abrir en una ventana nueva";
 "Open in Terminal" = "Abrir terminal aquí";
@@ -705,3 +704,11 @@
 "Favorites, tabs, new windows and the Terminal all use the folder’s own saved view. Off: favorites keep a separate view and switching tabs keeps the previous view." = "Favoritos, pestañas, ventanas nuevas y la Terminal usan la vista guardada de la carpeta. Apagado: los favoritos tienen su propia vista y al cambiar de pestaña se queda la vista anterior.";
 "Preview: opening “Fotos” from three places" = "Vista previa: abrir «Fotos» desde tres sitios";
 "Tab" = "Pestaña";
+
+/* Orden por tamaño de carpetas y botones de vista */
+"Sort folders by their calculated size" = "Ordenar las carpetas por su tamaño calculado";
+"Sorting by Size also moves folders, using the size shown in the column. Off: folders count as empty and stay in name order." = "Al ordenar por Tamaño también se mueven las carpetas, según el tamaño que muestra la columna. Apagado: las carpetas cuentan como vacías y quedan por nombre.";
+"Preview: sorted by Size, largest first" = "Vista previa: por Tamaño, de mayor a menor";
+"View buttons with icons" = "Botones de vista con iconos";
+"One button per view next to Sort, the current one highlighted. Off: a single menu with the view names." = "Un botón por vista junto a Ordenar, con la actual resaltada. Apagado: un solo menú con los nombres de las vistas.";
+"Preview: top bar" = "Vista previa: barra de arriba";
