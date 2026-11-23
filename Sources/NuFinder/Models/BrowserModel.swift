@@ -97,6 +97,7 @@ final class BrowserModel: ObservableObject {
         get { SharedClipboard.isCut } set { SharedClipboard.isCut = newValue }
     }
     private let watcher = DirectoryWatcher()
+    let tabMemory = TabMemory() // Fork
     private var undoActions: [() -> Void] = []
     private let persistsSession: Bool
     private let defaults: UserDefaults
@@ -302,6 +303,7 @@ final class BrowserModel: ObservableObject {
         guard tabs.count > 1, let index = tabs.firstIndex(where: { $0.id == id }) else { return }
         guard !tabs[index].isPinned else { return }
         let closed = tabs.remove(at: index)
+        tabMemory.forget(closed.id) // Fork
         closedTabs.append(closed)
         if activeTabID == id {
             selectTab(tabs[min(index, tabs.count - 1)].id)
@@ -350,6 +352,7 @@ final class BrowserModel: ObservableObject {
 
     func selectTab(_ id: UUID) {
         guard let tab = tabs.first(where: { $0.id == id }) else { return }
+        let cached = tabMemory.swap(leaving: activeTabID, url: currentURL, items: items, entering: id, url: tab.url, hidden: showsHiddenFiles) // Fork
         syncActiveTab()
         activeTabID = id
         currentURL = tab.url
@@ -358,6 +361,7 @@ final class BrowserModel: ObservableObject {
         addressText = tab.url.path
         selection.removeAll()
         reload()
+        if let cached { items = sort(cached); isLoading = false } // Fork: se ve al instante, la recarga sigue detrás
         watcher.watch(tab.url) { [weak self] in self?.reload() }
         persistTabs()
     }

@@ -671,3 +671,15 @@
 "Right-click on “Presupuesto.xlsx”" = "Clic derecho en «Presupuesto.xlsx»";
 "Only on cloud files not yet downloaded" = "Solo en archivos de la nube sin descargar";
 "Only on downloaded cloud files" = "Solo en archivos de la nube ya descargados";
+
+/* Fork: pestañas en memoria */
+"Switching Tabs" = "Cambiar de pestaña";
+"Keep tabs in memory" = "Guardar las pestañas en memoria";
+"Switching back to a tab shows its files instantly and refreshes them in the background. Closing the tab frees the memory." = "Al volver a una pestaña sus archivos se ven al instante y se actualizan en segundo plano. Al cerrarla se libera la memoria.";
+"Tabs kept in memory: %lld" = "Pestañas guardadas en memoria: %lld";
+"When there are more, the one used longest ago is reloaded from disk." = "Si hay más, la que usaste hace más tiempo se vuelve a leer del disco.";
+"Turn on “Keep tabs in memory” to use this." = "Activa «Guardar las pestañas en memoria» para usar esto.";
+"Turned off, every tab switch reads the folder again and shows the loading indicator, as before." = "Apagado, cada cambio de pestaña vuelve a leer la carpeta y muestra la carga, como antes.";
+"Preview: going back to the “Documents” tab" = "Vista previa: volver a la pestaña «Documents»";
+"Shown instantly" = "Se ve al instante";
+"Loads again (about 1 s)" = "Vuelve a cargar (aprox. 1 s)";

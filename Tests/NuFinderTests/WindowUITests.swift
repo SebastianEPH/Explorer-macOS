@@ -243,4 +243,69 @@ struct WindowUITests {
         #expect(browser.tabs.count == tabsBefore, "abrió una pestaña nueva")
         #expect(browser.currentURL.lastPathComponent == "Sub")
     }
+
+    // MARK: pestañas en memoria
+
+    /// Flujo: abro una pestaña nueva → vuelvo a la primera → se ve al instante, sin cargar.
+    /// Con la opción apagada vuelve a cargar como el original. Al cerrar la pestaña se libera.
+    @Test func switchingTabsShowsContentWithoutLoading() async throws {
+        let defaults = UserDefaults.standard
+        let saved = defaults.object(forKey: TabMemory.enabledKey)
+        defer { defaults.set(saved, forKey: TabMemory.enabledKey) }
+        defaults.set(true, forKey: TabMemory.enabledKey)
+
+        let first = try folder("tabA", files: ["a.txt", "b.txt"])
+        let second = try folder("tabB", files: ["c.txt"])
+        let window = try await openWindow(at: first)
+        defer { window.close() }
+        let browser = try #require(KeyWindowFocus.shared.browser(for: window))
+        for _ in 0..<40 where browser.items.isEmpty { try await spin(0.1) }
+        let firstTab = try #require(browser.activeTabID)
+        browser.newTab(at: second)
+        for _ in 0..<40 where browser.items.count != 1 { try await spin(0.1) }
+        let secondTab = try #require(browser.activeTabID)
+
+        browser.selectTab(firstTab)
+        #expect(!browser.isLoading, "mostró la carga al volver a la pestaña")
+        #expect(Set(browser.items.map(\.name)) == ["a.txt", "b.txt"])
+
+        browser.closeTab(secondTab)
+        #expect(browser.tabMemory.stored(secondTab) == false, "la pestaña cerrada sigue en memoria")
+
+        defaults.set(false, forKey: TabMemory.enabledKey)
+        browser.newTab(at: second)
+        for _ in 0..<40 where browser.items.count != 1 { try await spin(0.1) }
+        browser.selectTab(firstTab)
+        #expect(browser.isLoading, "apagado debe cargar como el original")
+    }
+
+    /// Flujo: corto un archivo en la pestaña A → paso a la B y pego → vuelvo a la A:
+    /// el archivo ya no está ahí (la memoria no deja ver lo viejo) y en B sí está.
+    @Test func cutPasteBetweenTabsWithTabMemory() async throws {
+        let defaults = UserDefaults.standard
+        let saved = defaults.object(forKey: TabMemory.enabledKey)
+        defer { defaults.set(saved, forKey: TabMemory.enabledKey) }
+        defaults.set(true, forKey: TabMemory.enabledKey)
+
+        let a = try folder("cutA", files: ["mover.txt", "queda.txt"])
+        let b = try folder("cutB")
+        let window = try await openWindow(at: a)
+        defer { window.close() }
+        let browser = try #require(KeyWindowFocus.shared.browser(for: window))
+        for _ in 0..<40 where browser.items.count != 2 { try await spin(0.1) }
+        let tabA = try #require(browser.activeTabID)
+        browser.selection = [try #require(browser.items.first { $0.name == "mover.txt" }).url]
+        browser.cutSelection()
+
+        browser.newTab(at: b)
+        try await spin()
+        await browser.paste(into: b, operations: FileOperationManager())
+        for _ in 0..<40 where browser.items.isEmpty { try await spin(0.1) }
+        #expect(browser.items.map(\.name) == ["mover.txt"], "no se pegó en B")
+
+        browser.selectTab(tabA)
+        for _ in 0..<40 where browser.items.count != 1 { try await spin(0.1) }
+        #expect(browser.items.map(\.name) == ["queda.txt"], "A sigue mostrando el archivo cortado: \(browser.items.map(\.name))")
+        #expect(!FileManager.default.fileExists(atPath: a.appendingPathComponent("mover.txt").path))
+    }
 }

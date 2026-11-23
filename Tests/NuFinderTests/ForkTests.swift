@@ -393,4 +393,25 @@ struct ForkTests {
         #expect(d.object(forKey: "open.foldersInNewTab") == nil)
         #expect(DefaultSettings.mine["open.foldersInNewTab"] == nil)
     }
+
+    // MARK: pestañas en memoria
+
+    @Test func tabMemoryKeepsForgetsAndLimits() {
+        let memory = TabMemory()
+        let a = UUID(), b = UUID(), c = UUID()
+        let urlA = URL(fileURLWithPath: "/tmp/A"), urlB = URL(fileURLWithPath: "/tmp/B")
+        let items = [FileItem.load(URL(fileURLWithPath: "/tmp"))].compactMap { $0 }
+        #expect(memory.swap(leaving: a, url: urlA, items: items, entering: b, url: urlB, hidden: false, enabled: true, limit: 10) == nil)
+        #expect(memory.stored(a))
+        #expect(memory.swap(leaving: b, url: urlB, items: items, entering: a, url: urlA, hidden: false, enabled: true, limit: 10)?.count == items.count)
+        // otra carpeta en la misma pestaña o con ocultos distinto → no sirve lo guardado
+        #expect(memory.swap(leaving: b, url: urlB, items: items, entering: a, url: urlB, hidden: false, enabled: true, limit: 10) == nil)
+        #expect(memory.swap(leaving: b, url: urlB, items: items, entering: a, url: urlA, hidden: true, enabled: true, limit: 10) == nil)
+        memory.forget(a)
+        #expect(!memory.stored(a), "no se liberó al cerrar")
+        _ = memory.swap(leaving: a, url: urlA, items: items, entering: c, url: urlA, hidden: false, enabled: true, limit: 1)
+        #expect(memory.stored(a) != memory.stored(b), "no respetó el máximo")
+        _ = memory.swap(leaving: a, url: urlA, items: items, entering: b, url: urlB, hidden: false, enabled: false, limit: 10)
+        #expect(!memory.stored(a) && !memory.stored(b), "apagado debe vaciar la memoria")
+    }
 }

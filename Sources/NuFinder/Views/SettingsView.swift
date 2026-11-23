@@ -24,7 +24,7 @@ struct SettingsView: View {
             .settingsTab("General", systemImage: "gearshape").tag("general")
             SettingsPagesView(tab: "startup", pages: [
                 SettingsPage("opens", "When Explorer Opens", "power") { StartupSection(part: "opens") },
-                SettingsPage("tabs", "Tabs", "rectangle.stack") { StartupSection(part: "tabs") },
+                SettingsPage("tabs", "Tabs", "rectangle.stack") { StartupSection(part: "tabs"); TabMemorySection() },
                 SettingsPage("view", "Default View", "eye") { StartupSection(part: "view") }
             ])
             .settingsTab("Startup", systemImage: "power").tag("startup")
