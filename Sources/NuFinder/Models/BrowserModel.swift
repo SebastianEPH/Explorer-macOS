@@ -361,7 +361,7 @@ final class BrowserModel: ObservableObject {
         addressText = tab.url.path
         selection.removeAll()
         reload()
-        if let cached { items = sort(cached); isLoading = false } // Fork: se ve al instante, la recarga sigue detrás
+        if let cached { items = sort(cached); isLoading = false; tabMemory.shown(tab.url, hidden: showsHiddenFiles) } // Fork: se ve al instante, la recarga sigue detrás
         watcher.watch(tab.url) { [weak self] in self?.reload() }
         persistTabs()
     }
@@ -373,7 +373,7 @@ final class BrowserModel: ObservableObject {
 
     func reload() {
         reloadTask?.cancel()
-        isLoading = true
+        isLoading = !tabMemory.isShowing(currentURL, hidden: showsHiddenFiles) // Fork: la carpeta que ya se ve se actualiza sin la carga
         let directory = currentURL
         let includesHidden = showsHiddenFiles
         reloadTask = Task { [weak self] in
@@ -400,6 +400,7 @@ final class BrowserModel: ObservableObject {
             switch result {
             case .success(let loadedItems):
                 self.items = self.sort(loadedItems)
+                self.tabMemory.shown(directory, hidden: includesHidden) // Fork
             case .failure(let error):
                 self.errorMessage = error.localizedDescription
             }

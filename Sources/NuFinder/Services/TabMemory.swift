@@ -24,6 +24,15 @@ final class TabMemory {
 
     func stored(_ tab: UUID) -> Bool { entries[tab] != nil }
 
+    /// Carpeta cuyos archivos están en pantalla ahora mismo.
+    private var showing: (url: URL, hidden: Bool)?
+    func shown(_ url: URL, hidden: Bool) { showing = (url.standardizedFileURL, hidden) }
+    /// Si se vuelve a leer la carpeta que ya se ve (no hace falta la carga).
+    func isShowing(_ url: URL, hidden: Bool, enabled: Bool = TabMemory.isEnabled) -> Bool {
+        guard enabled, let showing else { return false }
+        return showing.url == url.standardizedFileURL && showing.hidden == hidden
+    }
+
     /// Guarda la pestaña que se deja y devuelve lo guardado de la que se abre (si sigue siendo la misma carpeta).
     func swap(leaving old: UUID, url oldURL: URL, items: [FileItem],
               entering new: UUID, url newURL: URL, hidden: Bool,

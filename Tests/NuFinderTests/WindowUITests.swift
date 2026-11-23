@@ -268,6 +268,16 @@ struct WindowUITests {
         browser.selectTab(firstTab)
         #expect(!browser.isLoading, "mostró la carga al volver a la pestaña")
         #expect(Set(browser.items.map(\.name)) == ["a.txt", "b.txt"])
+        // ni un instante después: la recarga de fondo y el vigilante no deben mostrar la carga
+        var sawLoading = false
+        for _ in 0..<30 { try await spin(0.05); if browser.isLoading { sawLoading = true } }
+        #expect(!sawLoading, "la carga apareció después de cambiar de pestaña")
+        // y si alguien pulsa «Recargar» o la carpeta cambia, tampoco
+        try Data("x".utf8).write(to: first.appendingPathComponent("nuevo.txt"))
+        browser.reload()
+        #expect(!browser.isLoading, "una recarga de la carpeta ya mostrada sacó la carga")
+        for _ in 0..<40 where browser.items.count != 3 { try await spin(0.1) }
+        #expect(browser.items.count == 3, "no se actualizó en segundo plano")
 
         browser.closeTab(secondTab)
         #expect(browser.tabMemory.stored(secondTab) == false, "la pestaña cerrada sigue en memoria")
