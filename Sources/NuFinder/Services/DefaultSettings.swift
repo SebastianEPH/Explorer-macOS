@@ -31,6 +31,7 @@ enum DefaultSettings {
             "files.sortFoldersBySize": true,
             "files.folderSizeParallel": 0,
             "volumes.ejectRetries": 3,
+            "trash.deleteInside": true,
             "layout.roundedTabs": true,
             "view.iconSize": 40.0,
             "shortcut.commandPalette": "p",

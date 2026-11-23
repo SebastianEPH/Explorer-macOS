@@ -218,6 +218,7 @@ struct FileBehaviorSection: View {
                     Label("Ask before moving to the Trash", systemImage: "trash")
                     Text("Shows a confirmation before deleting with ⌘⌫ or the menu.")
                 }
+                TrashDeleteToggle() // Fork
             }
         }
         if shows("panels") {

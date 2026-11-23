@@ -1117,6 +1117,7 @@ final class BrowserModel: ObservableObject {
     func moveSelectionToTrash() {
         let urls = Array(selection)
         guard !urls.isEmpty else { return }
+        if TrashDelete.handle(urls, model: self) { return } // Fork: dentro de la Papelera, borrar para siempre
         guard BehaviorSettings.confirmTrash(count: urls.count) else { return } // Fork
 
         NSWorkspace.shared.recycle(urls) { [weak self] trashedURLs, error in

@@ -732,3 +732,11 @@
 "More at once fills the Size column sooner. Automatic uses half of this Mac’s %lld cores." = "Más a la vez llena antes la columna Tamaño. Automático usa la mitad de los %lld núcleos de este Mac.";
 "Eject attempts: %lld" = "Intentos al expulsar: %lld";
 "If a disk or mounted image (ISO, DMG) is busy, Explorer stops its own work on it and tries again. 1 = original." = "Si un disco o una imagen montada (ISO, DMG) está ocupado, Explorer deja lo que estaba haciendo en él y lo vuelve a intentar. 1 = original.";
+
+/* Fork: borrar dentro de la Papelera */
+"Delete %lld items permanently?" = "¿Borrar %lld elementos para siempre?";
+"They are already in the Trash. This can’t be undone." = "Ya están en la Papelera. No se puede deshacer.";
+"Delete Permanently" = "Borrar para siempre";
+"Couldn’t delete from the Trash: %@. Explorer may need Full Disk Access (Settings → System)." = "No se pudo borrar de la Papelera: %@. Puede que Explorer necesite Acceso total al disco (Ajustes → Sistema).";
+"Delete permanently inside the Trash" = "Borrar para siempre dentro de la Papelera";
+"Inside the Trash, ⌘⌫ and “Move to Trash” delete the selected items for good (asks first). Off: they do nothing there, as before." = "Dentro de la Papelera, ⌘⌫ y «Mover a la Papelera» borran lo seleccionado para siempre (pregunta antes). Apagado: ahí no hacen nada, como antes.";
