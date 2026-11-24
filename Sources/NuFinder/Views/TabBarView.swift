@@ -30,6 +30,7 @@ struct TabBarView: View {
                     .hoverHighlight() // Fork
                     .contentShape(Rectangle())
                     .onTapGesture { browser.selectTab(tab.id) }
+                    .onMiddleClick { MiddleClick.tabClicked(tab.id, in: browser) } // Fork: rueda = cerrar
                     .contextMenu {
                         Button(tab.isPinned ? String(localized: "Unpin Tab") : String(localized: "Pin Tab")) {
                             browser.togglePinnedTab(tab.id)

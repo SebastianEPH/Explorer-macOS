@@ -32,6 +32,8 @@ enum DefaultSettings {
             "files.folderSizeParallel": 0,
             "volumes.ejectRetries": 3,
             "trash.deleteInside": true,
+            "middleClick.closesTab": true,
+            "middleClick.folder": "newWindow",
             "layout.roundedTabs": true,
             "view.iconSize": 40.0,
             "shortcut.commandPalette": "p",

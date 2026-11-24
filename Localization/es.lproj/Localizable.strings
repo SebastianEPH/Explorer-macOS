@@ -740,3 +740,12 @@
 "Couldn’t delete from the Trash: %@. Explorer may need Full Disk Access (Settings → System)." = "No se pudo borrar de la Papelera: %@. Puede que Explorer necesite Acceso total al disco (Ajustes → Sistema).";
 "Delete permanently inside the Trash" = "Borrar para siempre dentro de la Papelera";
 "Inside the Trash, ⌘⌫ and “Move to Trash” delete the selected items for good (asks first). Off: they do nothing there, as before." = "Dentro de la Papelera, ⌘⌫ y «Mover a la Papelera» borran lo seleccionado para siempre (pregunta antes). Apagado: ahí no hacen nada, como antes.";
+"Mouse" = "Ratón";
+"Middle Mouse Button" = "Botón central del ratón";
+"Nothing" = "Nada";
+"Nothing happens" = "No pasa nada";
+"Tab closes" = "La pestaña se cierra";
+"Middle-click a tab to close it" = "Clic con la rueda en una pestaña la cierra";
+"Like clicking its X. Pinned tabs and the last tab stay open. Off: the middle button does nothing on tabs, as before." = "Como pulsar su X. Las pestañas fijadas y la última no se cierran. Apagado: la rueda no hace nada en las pestañas, como antes.";
+"Middle-click a folder" = "Clic con la rueda en una carpeta";
+"Opens the folder somewhere new and leaves the current one as it is. Files and apps are not affected. “Nothing” is the original behavior." = "Abre la carpeta en otro sitio y deja la actual como está. No afecta a archivos ni apps. «Nada» es el comportamiento original.";

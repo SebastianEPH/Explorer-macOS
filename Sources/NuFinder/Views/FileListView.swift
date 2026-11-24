@@ -212,6 +212,7 @@ struct FileListView: View {
                 .width(min: 140, ideal: 170)
             }
         }
+        .tableMiddleClick { row in if browser.displayedItems.indices.contains(row) { MiddleClick.itemClicked(browser.displayedItems[row], in: browser) } } // Fork: rueda
         // Fork: recuadro de selección al arrastrar desde una zona vacía, como en Windows.
         .tableMarquee(onSelect: { rows in
             let items = browser.displayedItems
@@ -338,6 +339,7 @@ struct FileListView: View {
             .background { HoverFill(tracker: hover, url: item.url, active: SmoothScrolling.isEnabled && selectionColor(for: item.url) == .clear, cornerRadius: 7) } // Fork
             .onRightMouseDown { selectForContextMenu(item.url) } // Fork
             .onHover { trackHover(item.url, $0) } // Fork
+            .onMiddleClick { MiddleClick.itemClicked(item, in: browser) } // Fork: rueda = abrir en ventana nueva
             .modifier(TileFrameReporter(url: item.url))
             .contentShape(Rectangle())
             .accessibilityElement(children: .combine)

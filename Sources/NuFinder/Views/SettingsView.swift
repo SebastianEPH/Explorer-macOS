@@ -32,7 +32,8 @@ struct SettingsView: View {
                 SettingsPage("icons", "Icons and Selection", "square.grid.2x2") { ItemHitAreaSection(); IconCacheSection() },
                 SettingsPage("opening", "Opening and Deleting", "trash") { FileBehaviorSection(part: "opening") },
                 SettingsPage("panels", "Panels", "sidebar.right") { FileBehaviorSection(part: "panels") },
-                SettingsPage("cloud", "Cloud Files", "icloud") { CloudStatusSection() } // Fork
+                SettingsPage("cloud", "Cloud Files", "icloud") { CloudStatusSection() },
+                SettingsPage("mouse", "Mouse", "computermouse") { MiddleClickSection() } // Fork
             ])
             .settingsTab("Files", systemImage: "doc").tag("files")
             SettingsPagesView(tab: "appearance", pages: [
