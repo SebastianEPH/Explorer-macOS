@@ -55,6 +55,7 @@ struct ContentView: View {
             )
         }
         .toolbar { toolbar }
+        .splitOpenReceiver(primary: browser, secondary: secondaryBrowser) // Fork: rueda → panel dividido
         .background(WindowTitleVisibility()) // Fork: título de la ventana según Ajustes
         .background(WindowRepresentedURL(url: activeBrowser.currentURL)) // Fork: ruta en su propia ventana
         .onAppear {
@@ -247,6 +248,7 @@ struct ContentView: View {
                 .buttonStyle(.plain)
                 .help("Open in Terminal")
             }
+            NewWindowToolbarButton(browser: activeBrowser) // Fork: abrir otra ventana aquí
             if toolbarShowsOperations {
                 Button {
                     operations.showsDetails = true

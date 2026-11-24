@@ -52,13 +52,13 @@ struct MiddleClickTests {
 
     // MARK: unitarias
 
-    // Por defecto apagado (= original); en mi configuración, encendido y «ventana nueva».
+    // Por defecto apagado (= original); en mi configuración, encendido y «pestaña nueva».
     @Test func defaults() {
         let d = UserDefaults(suiteName: "MC.\(UUID().uuidString)")!
         #expect(!d.bool(forKey: MiddleClick.closesTabKey))
         #expect(MiddleClickFolderAction(rawValue: d.string(forKey: MiddleClick.folderKey) ?? "") == nil)
         #expect(DefaultSettings.mine[MiddleClick.closesTabKey] as? Bool == true)
-        #expect(DefaultSettings.mine[MiddleClick.folderKey] as? String == MiddleClickFolderAction.newWindow.rawValue)
+        #expect(DefaultSettings.mine[MiddleClick.folderKey] as? String == MiddleClickFolderAction.newTab.rawValue, "por defecto, pestaña nueva")
     }
 
     // Solo carpetas; ni archivos ni apps/paquetes.
@@ -138,10 +138,11 @@ struct MiddleClickTests {
 
     /// Lista real: la ventana de Explorer con su `NSTableView`.
     private func listWindow(at url: URL) async throws -> (NSWindow, TableMiddleClickInstaller.InstallerView, NSTableView) {
+        _ = NSApplication.shared
         let before = Set(NSApp.windows.map(ObjectIdentifier.init))
         WindowService.open(at: url)
         try await spin(0.8)
-        let window = try #require(NSApp.windows.first { !before.contains(ObjectIdentifier($0)) })
+        let window = try #require(try await TestWindows.window(at: url, excluding: before))
         let browser = try #require(KeyWindowFocus.shared.browser(for: window))
         for _ in 0..<40 where browser.displayedItems.isEmpty { try await spin(0.1) }
         browser.viewMode = .list
@@ -193,5 +194,112 @@ struct MiddleClickTests {
             #expect(browser.tabs.contains { $0.url.lastPathComponent == "Sub" })
             #expect(browser.tabs.contains { $0.url.standardizedFileURL == root })
         }
+    }
+
+    // MARK: panel dividido
+
+    // Unitaria: desde el panel izquierdo abre el dividido y lleva el derecho; desde el derecho, el izquierdo;
+    // de otra ventana, nada.
+    @Test func splitRequestGoesToOtherPane() async throws {
+        let a = try folder("SA"), b = try folder("SB"), target = try folder("ST")
+        let d = { UserDefaults(suiteName: "MC.\(UUID().uuidString)")! }
+        let primary = BrowserModel(initialURL: a, restoresSession: false, defaults: d())
+        let secondary = BrowserModel(initialURL: b, restoresSession: false, defaults: d())
+        let other = BrowserModel(initialURL: b, restoresSession: false, defaults: d())
+        let panes = WindowSplitPanes(defaults: d())
+        #expect(!panes.isOn(primary))
+        SplitOpenRequest.apply(.init(url: target, source: primary), primary: primary, secondary: secondary, panes: panes)
+        #expect(panes.isOn(primary), "se abre el panel dividido")
+        #expect(secondary.currentURL.standardizedFileURL == target)
+        #expect(primary.currentURL.standardizedFileURL == a, "el izquierdo se queda donde estaba")
+        SplitOpenRequest.apply(.init(url: target, source: secondary), primary: primary, secondary: secondary, panes: panes)
+        #expect(primary.currentURL.standardizedFileURL == target)
+        let before = (primary.currentURL, secondary.currentURL)
+        SplitOpenRequest.apply(.init(url: a, source: other), primary: primary, secondary: secondary, panes: panes)
+        #expect(primary.currentURL == before.0 && secondary.currentURL == before.1, "otra ventana no toca esta")
+    }
+
+    // Flujo: «Abrir en el panel dividido» → ventana real en lista → rueda sobre la carpeta →
+    // la ventana abre su panel dividido (lo hace `ContentView` al recibir el aviso).
+    @Test func middleClickFolderOpensSplitPane() async throws {
+        let root = try folder("Split", subfolders: ["Dentro"])
+        try await withSettings(closesTab: nil, folder: .split) {
+            let (window, installer, table) = try await listWindow(at: root)
+            defer { window.close() }
+            let browser = try #require(KeyWindowFocus.shared.browser(for: window))
+            WindowSplitPanes.shared.set(false, for: browser)
+            defer { WindowSplitPanes.shared.set(false, for: browser) }
+            try await spin(0.3)
+            let rect = table.frameOfCell(atColumn: 0, row: 0)
+            #expect(installer.handle(try middleUp(table.convert(NSPoint(x: rect.midX, y: rect.midY), to: nil), in: window)) == 0)
+            try await spin(0.5)
+            #expect(WindowSplitPanes.shared.isOn(browser), "la ventana abrió el panel dividido")
+            #expect(SplitOpenRequest.shared.lastURL?.lastPathComponent == "Dentro")
+            #expect(browser.currentURL.standardizedFileURL == root, "el panel izquierdo no se movió")
+            #expect(browser.tabs.count == 1, "no abrió pestaña")
+        }
+    }
+
+    // Unitaria (el fallo que pilló la suite): un aviso viejo no le llega a quien se suscribe después,
+    // y si el modelo de origen ya no existe no se aplica a nadie.
+    @Test func splitRequestIsNotReplayed() async throws {
+        let a = try folder("RA"), target = try folder("RT")
+        let d = { UserDefaults(suiteName: "MC.\(UUID().uuidString)")! }
+        let panes = WindowSplitPanes(defaults: d())
+        var source: BrowserModel? = BrowserModel(initialURL: a, restoresSession: false, defaults: d())
+        SplitOpenRequest.shared.open(target, from: source!)
+        var received = 0
+        let late = SplitOpenRequest.shared.requests.sink { _ in received += 1 }
+        defer { late.cancel() }
+        #expect(received == 0, "el aviso anterior no se repite al suscribirse")
+        let stale = SplitOpenRequest.Request(url: target, source: source)
+        source = nil
+        let p = BrowserModel(initialURL: a, restoresSession: false, defaults: d())
+        let s2 = BrowserModel(initialURL: a, restoresSession: false, defaults: d())
+        SplitOpenRequest.apply(stale, primary: p, secondary: s2, panes: panes)
+        #expect(!panes.isOn(p) && p.currentURL.standardizedFileURL == a && s2.currentURL.standardizedFileURL == a)
+    }
+
+    // MARK: botón «Ventana nueva»
+
+    // Unitaria: apagado por defecto (original); encendido en mi configuración. Cuenta para el ancho de la barra.
+    @Test func newWindowButtonDefaults() {
+        let d = UserDefaults(suiteName: "MC.\(UUID().uuidString)")!
+        #expect(!d.bool(forKey: NewWindowButton.key))
+        #expect(DefaultSettings.mine[NewWindowButton.key] as? Bool == true)
+    }
+
+    // Completa: el botón solo se dibuja con la opción encendida.
+    @Test func newWindowButtonFollowsSetting() async throws {
+        let old = UserDefaults.standard.object(forKey: NewWindowButton.key)
+        defer { UserDefaults.standard.set(old, forKey: NewWindowButton.key) }
+        let browser = BrowserModel(initialURL: try folder("NW"), restoresSession: false, defaults: UserDefaults(suiteName: "MC.\(UUID().uuidString)")!)
+        UserDefaults.standard.set(false, forKey: NewWindowButton.key)
+        let off = NSHostingView(rootView: NewWindowToolbarButton(browser: browser))
+        UserDefaults.standard.set(true, forKey: NewWindowButton.key)
+        let on = NSHostingView(rootView: NewWindowToolbarButton(browser: browser))
+        try await spin(0.2)
+        #expect(on.fittingSize.width > 10, "encendido se ve")
+        UserDefaults.standard.set(false, forKey: NewWindowButton.key)
+        try await spin(0.2)
+        #expect(off.fittingSize.width < 1 && on.fittingSize.width < 1, "apagado no se ve")
+    }
+
+    // Flujo: ventana real en una carpeta → pulsar «Ventana nueva» → sale otra ventana de Explorer en esa carpeta.
+    @Test func newWindowButtonOpensWindowHere() async throws {
+        let root = try folder("Aqui")
+        let (window, _, _) = try await listWindow(at: try folder("Base", files: ["a.txt"]))
+        defer { window.close() }
+        let browser = try #require(KeyWindowFocus.shared.browser(for: window))
+        browser.navigate(to: root)
+        try await spin(0.4)
+        let before = Set(NSApp.windows.map(ObjectIdentifier.init))
+        NewWindowButton.press(from: browser)
+        try await spin(0.8)
+        let opened = try #require(try await TestWindows.window(at: root, excluding: before), "no se abrió ninguna ventana")
+        defer { opened.close() }
+        let other = try #require(KeyWindowFocus.shared.browser(for: opened))
+        #expect(other !== browser, "ventana con su propio modelo")
+        #expect(other.currentURL.standardizedFileURL == root)
     }
 }

@@ -25,7 +25,7 @@ struct TabMemoryScenarioTests {
         let before = Set(NSApplication.shared.windows.map(ObjectIdentifier.init))
         WindowService.open(at: url)
         try await spin(0.5)
-        let window = try #require(NSApp.windows.first { !before.contains(ObjectIdentifier($0)) })
+        let window = try #require(try await TestWindows.window(at: url, excluding: before))
         let browser = try #require(KeyWindowFocus.shared.browser(for: window))
         try await settle(browser)
         return (window, browser)

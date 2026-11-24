@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 /// Fork: botón central del ratón (la rueda), como en los navegadores y el Explorador de Windows.
@@ -6,7 +7,7 @@ import SwiftUI
 /// - En una carpeta la abre en una ventana o pestaña nueva (`middleClick.folder`).
 /// Apagado = comportamiento original (el botón central no hace nada).
 enum MiddleClickFolderAction: String, CaseIterable, Identifiable {
-    case none, newWindow, newTab
+    case none, newTab, split, newWindow
     var id: String { rawValue }
 
     var title: LocalizedStringKey {
@@ -14,6 +15,7 @@ enum MiddleClickFolderAction: String, CaseIterable, Identifiable {
         case .none: "Nothing"
         case .newWindow: "Open in New Window"
         case .newTab: "Open in New Tab"
+        case .split: "Open in Split Pane"
         }
     }
 
@@ -22,6 +24,7 @@ enum MiddleClickFolderAction: String, CaseIterable, Identifiable {
         case .none: "nosign"
         case .newWindow: "macwindow.badge.plus"
         case .newTab: "plus.rectangle.on.rectangle"
+        case .split: "rectangle.split.2x1"
         }
     }
 }
@@ -65,12 +68,56 @@ enum MiddleClick {
         case .none: break
         case .newWindow: openWindow(item.url)
         case .newTab: browser.newTab(at: item.url)
+        case .split: SplitOpenRequest.shared.open(item.url, from: browser)
         }
         return action
     }
 }
 
+/// Abrir una carpeta en el otro panel del panel dividido (lo abre si está cerrado).
+/// El panel de la derecha es un `@StateObject` de `ContentView`: se le pide con este aviso y
+/// `ContentView` lo atiende con una línea (`.splitOpenReceiver`).
+/// El aviso no se guarda (`PassthroughSubject`): con `@Published` cada ventana nueva recibía el
+/// último al abrirse, y como el origen se comparaba por dirección de memoria (que se reutiliza
+/// al cerrar ventanas) otra ventana podía tomarlo por suyo y cambiar de carpeta. Lo pilló una prueba.
+@MainActor
+final class SplitOpenRequest {
+    static let shared = SplitOpenRequest()
+    struct Request {
+        let url: URL
+        weak var source: BrowserModel?
+    }
+    let requests = PassthroughSubject<Request, Never>()
+    /// Última carpeta pedida (solo para pruebas).
+    private(set) var lastURL: URL?
+
+    func open(_ url: URL, from source: BrowserModel) {
+        lastURL = url
+        requests.send(Request(url: url, source: source))
+    }
+
+    /// Desde el panel izquierdo: abre el dividido y lleva el derecho a la carpeta.
+    /// Desde el derecho: la abre en el izquierdo. De otra ventana: no hace nada.
+    static func apply(_ request: Request, primary: BrowserModel, secondary: BrowserModel,
+                      panes: WindowSplitPanes = .shared) {
+        guard let source = request.source else { return }
+        if source === primary {
+            if !panes.isOn(primary) { panes.set(true, for: primary) }
+            secondary.navigate(to: request.url)
+        } else if source === secondary {
+            primary.navigate(to: request.url)
+        }
+    }
+}
+
 extension View {
+    /// Fork: atiende «Abrir en el panel dividido» del botón central para esta ventana.
+    func splitOpenReceiver(primary: BrowserModel, secondary: BrowserModel) -> some View {
+        onReceive(SplitOpenRequest.shared.requests) { request in
+            SplitOpenRequest.apply(request, primary: primary, secondary: secondary)
+        }
+    }
+
     /// Fork: llama a `action` al soltar el botón central del ratón sobre esta vista.
     func onMiddleClick(_ action: @escaping () -> Void) -> some View {
         background(MiddleClickReader(action: action))
@@ -203,7 +250,7 @@ struct MiddleClickSection: View {
                 }
             } label: {
                 Label("Middle-click a folder", systemImage: "folder")
-                Text("Opens the folder somewhere new and leaves the current one as it is. Files and apps are not affected. “Nothing” is the original behavior.")
+                Text("Opens the folder in a new tab, in the other side of the split pane or in a new window, and leaves the current one as it is. Files and apps are not affected. “Nothing” is the original behavior.")
             }
         }
     }

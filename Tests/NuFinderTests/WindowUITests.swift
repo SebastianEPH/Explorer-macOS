@@ -25,7 +25,7 @@ struct WindowUITests {
         let before = Set(NSApplication.shared.windows.map(ObjectIdentifier.init))
         WindowService.open(at: url)
         try await spin()
-        return try #require(NSApp.windows.first { !before.contains(ObjectIdentifier($0)) })
+        return try #require(try await TestWindows.window(at: url, excluding: before))
     }
 
     /// Menú del clic derecho sobre la primera fila de la lista (vista de lista, un `NSTableView`).

@@ -748,4 +748,7 @@
 "Middle-click a tab to close it" = "Clic con la rueda en una pestaña la cierra";
 "Like clicking its X. Pinned tabs and the last tab stay open. Off: the middle button does nothing on tabs, as before." = "Como pulsar su X. Las pestañas fijadas y la última no se cierran. Apagado: la rueda no hace nada en las pestañas, como antes.";
 "Middle-click a folder" = "Clic con la rueda en una carpeta";
-"Opens the folder somewhere new and leaves the current one as it is. Files and apps are not affected. “Nothing” is the original behavior." = "Abre la carpeta en otro sitio y deja la actual como está. No afecta a archivos ni apps. «Nada» es el comportamiento original.";
+"Opens the folder in a new tab, in the other side of the split pane or in a new window, and leaves the current one as it is. Files and apps are not affected. “Nothing” is the original behavior." = "Abre la carpeta en una pestaña nueva, en el otro lado del panel dividido o en una ventana nueva, y deja la actual como está. No afecta a archivos ni apps. «Nada» es el comportamiento original.";
+"Open in Split Pane" = "Abrir en el panel dividido";
+"Opens another Explorer window in the current folder." = "Abre otra ventana de Explorer en la carpeta actual.";
+"Open a New Window Here" = "Abrir una ventana nueva aquí";

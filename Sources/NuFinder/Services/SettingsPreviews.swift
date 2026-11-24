@@ -28,6 +28,7 @@ struct SettingsPreviewBox<Content: View>: View {
 struct ToolbarPreview: View {
     let split: Bool
     let terminal: Bool
+    var newWindow = false
     let operations: Bool
 
     var body: some View {
@@ -42,9 +43,10 @@ struct ToolbarPreview: View {
                     }
                 item("rectangle.split.2x1", "Split Pane", on: split)
                 item("terminal", "Terminal", on: terminal)
+                item("macwindow.badge.plus", "New Window", on: newWindow)
                 item("arrow.left.arrow.right.circle", "File Operations", on: operations)
             }
-            .animation(.default, value: [split, terminal, operations])
+            .animation(.default, value: [split, terminal, newWindow, operations])
         }
     }
 
