@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import SwiftUI
 import Testing
 @testable import NuFinder
 
@@ -208,21 +209,12 @@ struct FTPTests {
         await #expect(throws: (any Error).self) { _ = try await FTPClient(address: server.ftpAddress, password: "pw").list("/") }
     }
 
-    /// Las dos ventanas se dibujan en rápida y en avanzada (la avanzada enseña más opciones).
-    @Test @MainActor func connectAndShareWindowsHaveQuickAndAdvanced() async throws {
-        let d = UserDefaults.standard
-        let saved = [d.object(forKey: "network.connect.advanced"), d.object(forKey: "network.share.advanced")]
-        defer { d.set(saved[0], forKey: "network.connect.advanced"); d.set(saved[1], forKey: "network.share.advanced") }
-        for (kind, proto) in [(NetworkWindow.connect, SavedServer.Kind.ftp), (.connect, .smb), (.share, .ftp), (.share, .smb)] {
-            d.set(false, forKey: "network.\(kind.rawValue).advanced")
-            NetworkWindow.open(kind, proto)
-            try await Task.sleep(for: .milliseconds(400))
-            let window = try #require(NetworkWindow.current(kind, proto))
-            let quick = window.frame.height
-            d.set(true, forKey: "network.\(kind.rawValue).advanced")
-            try await Task.sleep(for: .milliseconds(400))
-            #expect(window.frame.height > quick, "\(kind) \(proto)")
-            NetworkWindow.close(kind, proto)
+    /// Ajustes → Red: una página por protocolo, cada una con «Mis conexiones» y «Mi servidor».
+    @Test @MainActor func onePagePerProtocol() {
+        #expect(NetworkSettingsPages.pages.map(\.id) == ["ftp", "smb", "general"])
+        for page in NetworkSettingsPages.pages.prefix(2) {
+            let view = NSHostingView(rootView: Form { page.content }.formStyle(.grouped).frame(width: 600))
+            #expect(view.fittingSize.height > 150, "\(page.id)")
         }
     }
 

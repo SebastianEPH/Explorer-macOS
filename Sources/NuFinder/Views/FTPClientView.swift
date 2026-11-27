@@ -136,7 +136,7 @@ struct FTPClientView: View {
         VStack(spacing: 12) {
             Image(systemName: "network.slash").font(.system(size: 40)).foregroundStyle(.secondary)
             Text("Not connected").font(.title3)
-            Button("Connect to an FTP Server…") { NetworkWindow.open(.connect, .ftp) }.buttonStyle(.borderedProminent)
+            Button("My FTP Connections…") { NetworkSettingsPages.open(.ftp) }.buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

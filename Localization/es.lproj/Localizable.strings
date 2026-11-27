@@ -995,3 +995,34 @@
 "Share from this Mac by SMB" = "Compartir desde este Mac por SMB";
 "Configure FTP Server…" = "Configurar servidor FTP…";
 "Configure SMB Sharing…" = "Configurar compartir por SMB…";
+
+/* Fork: Red por protocolo (Mis conexiones / Mi servidor) */
+"No FTP connections yet. Add one with its address, user and password." = "Aún no hay conexiones FTP. Añade una con su dirección, usuario y contraseña.";
+"No SMB connections yet. Add a Windows PC, NAS or Mac with its address, user and password." = "Aún no hay conexiones SMB. Añade un PC con Windows, un NAS o un Mac con su dirección, usuario y contraseña.";
+"Add FTP Connection" = "Añadir conexión FTP";
+"Add SMB Connection" = "Añadir conexión SMB";
+"My FTP Connections" = "Mis conexiones FTP";
+"My SMB Connections" = "Mis conexiones SMB";
+"Computers you connect to. Saved in ~/.explorer/red.json; passwords go to the macOS Keychain." = "Equipos a los que te conectas. Se guardan en ~/.explorer/red.json; las contraseñas van al Llavero de macOS.";
+"On · %lld shared folders" = "Activo · %lld carpetas compartidas";
+"My FTP Server" = "Mi servidor FTP";
+"My SMB Server" = "Mi servidor SMB";
+"This Mac shares a folder by FTP (built into Explorer)." = "Este Mac comparte una carpeta por FTP (integrado en Explorer).";
+"This Mac shares folders by SMB (macOS File Sharing)." = "Este Mac comparte carpetas por SMB (Compartir archivos de macOS).";
+"Connection details" = "Datos de la conexión";
+"My FTP server details" = "Datos de mi servidor FTP";
+"My SMB server details" = "Datos de mi servidor SMB";
+"On" = "Activado";
+"Set a password, otherwise nobody can log in." = "Pon una contraseña; si no, nadie podrá entrar.";
+"Only this Mac (127.0.0.1)" = "Solo este Mac (127.0.0.1)";
+"Address to connect" = "Dirección para conectarse";
+"Start" = "Iniciar";
+"Add FTP Connection…" = "Añadir conexión FTP…";
+"Add SMB Connection…" = "Añadir conexión SMB…";
+"On: %@" = "Activo: %@";
+"On: %lld shared folders" = "Activo: %lld carpetas compartidas";
+"My FTP Connections…" = "Mis conexiones FTP…";
+"FTP  ›  My FTP Connections · My FTP Server" = "FTP  ›  Mis conexiones FTP · Mi servidor FTP";
+"SMB (Windows, NAS, Mac)  ›  My SMB Connections · My SMB Server" = "SMB (Windows, NAS, Mac)  ›  Mis conexiones SMB · Mi servidor SMB";
+"Your connections and your server for each protocol, one click away." = "Tus conexiones y tu servidor de cada protocolo, a un clic.";
+"New connection" = "Conexión nueva";

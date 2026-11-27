@@ -22,7 +22,7 @@ struct SavedServer: Codable, Hashable, Identifiable, Sendable {
     var target: String { "\(kind.rawValue)://\(user)@\(host):\(port)/\(path)" }
     static func == (a: SavedServer, b: SavedServer) -> Bool { a.target == b.target && a.anonymous == b.anonymous && a.name == b.name }
     func hash(into hasher: inout Hasher) { hasher.combine(target) }
-    var title: String { host.isEmpty && name.isEmpty ? String(localized: "New server") : name.isEmpty ? (user.isEmpty || anonymous ? host : "\(user)@\(host)") : name }
+    var title: String { host.isEmpty && name.isEmpty ? String(localized: "New connection") : name.isEmpty ? (user.isEmpty || anonymous ? host : "\(user)@\(host)") : name }
     static func defaultPort(_ kind: Kind) -> Int { kind == .ftp ? 21 : 445 }
 
     init(kind: Kind = .smb, host: String, port: Int? = nil, user: String = "", anonymous: Bool = false, path: String = "", name: String = "") {
