@@ -1086,3 +1086,6 @@
 "Needed to turn the SMB server on/off and share folders. Press Request and type your password once; macOS doesn’t allow Touch ID for this in apps that aren’t Apple’s." = "Hace falta para encender o apagar el servidor SMB y compartir carpetas. Pulsa Solicitar y escribe tu contraseña una sola vez; macOS no deja usar Touch ID para esto en apps que no son de Apple.";
 "Remember (don’t ask again)" = "Recordar (no volver a pedirlo)";
 "Needs the administrator permission (once)" = "Necesita el permiso de administrador (una sola vez)";
+
+"Needed to turn the SMB server on/off and share folders. Press Request and use Touch ID once." = "Hace falta para encender o apagar el servidor SMB y compartir carpetas. Pulsa Solicitar y usa Touch ID una vez.";
+"Needed to turn the SMB server on/off and share folders. Press Request and type your password once (Touch ID for sudo is off on this Mac)." = "Hace falta para encender o apagar el servidor SMB y compartir carpetas. Pulsa Solicitar y escribe tu contraseña una vez (Touch ID para sudo está desactivado en este Mac).";

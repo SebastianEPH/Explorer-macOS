@@ -23,7 +23,7 @@ enum AdminAuthorization {
         return unsafeBitCast(symbol, to: Execute.self)
     }()
 
-    static var supportsTouchID: Bool { execute != nil }
+    static var supportsTouchID: Bool { sudoUsesTouchID() }
 
     /// Pide (o reutiliza) el permiso de administrador. nil si se concedió; si no, el motivo.
     private static func authorize() -> (AuthorizationRef?, String?) {
@@ -114,8 +114,27 @@ enum AdminAuthorization {
         return runPrivileged(body)
     }
 
-    /// Ejecuta un guion de shell como administrador (Touch ID). nil = bien; si no, el error.
+    /// ¿Touch ID activado para `sudo`? (`auth sufficient pam_tid.so` sin comentar en sudo_local o sudo).
+    static func sudoUsesTouchID(_ files: [String] = ["/etc/pam.d/sudo_local", "/etc/pam.d/sudo"]) -> Bool {
+        files.contains { file in
+            ((try? String(contentsOfFile: file, encoding: .utf8)) ?? "").split(separator: "\n").contains { line in
+                let text = line.trimmingCharacters(in: .whitespaces)
+                return !text.hasPrefix("#") && text.contains("pam_tid.so")
+            }
+        }
+    }
+
+    /// Ejecuta un guion de shell como administrador. nil = bien; si no, el error.
+    /// Primero con `sudo` + Touch ID (si está activado en el Mac); si no, el diálogo de macOS (contraseña).
     static func runPrivileged(_ script: String) -> String? {
+        if sudoUsesTouchID() {
+            // -S lee la contraseña de /dev/null: si Touch ID falla o se cancela, termina en vez de esperar una terminal.
+            let (code, output) = shell("/usr/bin/sudo -S -p '' /bin/sh -c \(SMBServer.quoted(script)) </dev/null")
+            if code == 0 { return nil }
+            let text = output.lowercased()
+            let authFailed = text.contains("password") || text.contains("contraseña") || text.contains("sorry") || text.contains("incorrect")
+            if !authFailed { return output.trimmingCharacters(in: .whitespacesAndNewlines) } // falló la orden, no el permiso
+        }
         guard let execute else { return runWithAppleScript(script) }
         let (ref, error) = authorize()
         guard let ref else { return error }
@@ -164,12 +183,14 @@ struct AdminPermissionRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            Image(systemName: remembered ? "checkmark.circle.fill" : "lock.fill")
+            Image(systemName: remembered ? "checkmark.circle.fill" : (AdminAuthorization.supportsTouchID ? "touchid" : "lock.fill"))
                 .foregroundStyle(remembered ? Color.green : Color.orange)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Administrator")
                 Text(remembered ? "Remembered: Explorer won’t ask again (SMB server: turn on/off and share folders)."
-                                : "Needed to turn the SMB server on/off and share folders. Press Request and type your password once; macOS doesn’t allow Touch ID for this in apps that aren’t Apple’s.")
+                                : AdminAuthorization.supportsTouchID
+                                    ? "Needed to turn the SMB server on/off and share folders. Press Request and use Touch ID once."
+                                    : "Needed to turn the SMB server on/off and share folders. Press Request and type your password once (Touch ID for sudo is off on this Mac).")
                     .font(.caption).foregroundStyle(.secondary)
                 Toggle("Remember (don’t ask again)", isOn: $remember).font(.caption).toggleStyle(.checkbox)
                 if let message { DisabledReason("\(message)") }
