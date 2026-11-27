@@ -155,7 +155,7 @@ struct SMBTests {
         #expect(opened.count >= 5)
         for (tab, page) in opened { #expect(tab == "servers" && ids.contains(page), "\(tab)/\(page)") }
         let es = try #require(Bundle(path: "Localization/es.lproj"))
-        #expect(es.localizedString(forKey: ServersMenu.title, value: nil, table: nil) == "Servidores")
+        #expect(es.localizedString(forKey: ServersMenu.title, value: nil, table: nil) == "Red")
     }
 
     /// La pestaña real se dibuja con sus cuatro apartados (cliente y servidor por separado).

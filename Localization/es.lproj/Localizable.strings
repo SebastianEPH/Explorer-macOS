@@ -766,7 +766,7 @@
 "FTP Settings…" = "Ajustes de FTP…";
 "Preview: the FTP client window" = "Vista previa: la ventana del cliente FTP";
 "Adds “Connect to FTP Server…” (⌥⌘K) to the FTP menu: browse a server, download to the current folder, upload by dragging files. Passwords are kept in the Keychain." = "Activa «Conectar a servidor FTP…» (⌥⌘K) en el menú FTP: recorre un servidor, descarga a la carpeta actual y sube arrastrando archivos. Las contraseñas se guardan en el Llavero.";
-"FTP in the “Servers” menu" = "FTP en el menú «Servidores»";
+"FTP in the “Servers” menu" = "FTP en el menú «Red»";
 "Turns the client and the server on and off from the menu bar." = "Enciende y apaga el cliente y el servidor desde la barra de menús.";
 "Preview: what other computers connect to" = "Vista previa: a dónde se conectan los otros equipos";
 "Shares a folder with other devices on your network. Off: nothing listens, as in the original." = "Comparte una carpeta con otros dispositivos de tu red. Apagado: no escucha nada, como en el original.";
@@ -800,7 +800,7 @@
 "Download to the current Explorer folder" = "Descargar a la carpeta actual de Explorer";
 "Downloaded to %@" = "Descargado en %@";
 "Delete the selected items from the server?" = "¿Eliminar del servidor los elementos seleccionados?";
-"“Servers” → FTP" = "«Servidores» → FTP";
+"“Servers” → FTP" = "«Red» → FTP";
 "Turns the FTP client and server on and off, connects to servers and shares the current folder." = "Enciende y apaga el cliente y el servidor FTP, conecta con servidores y comparte la carpeta actual.";
 
 /* Fork: servidor SMB */
@@ -818,20 +818,20 @@
 "Guests" = "Invitados";
 "Allow guests" = "Permitir invitados";
 "Share a Folder…" = "Compartir una carpeta…";
-"SMB in the “Servers” menu" = "SMB en el menú «Servidores»";
+"SMB in the “Servers” menu" = "SMB en el menú «Red»";
 "Turns the server on and off, shares the current folder and connects to servers." = "Enciende y apaga el servidor, comparte la carpeta actual y conecta con servidores.";
 "To log in from Windows, your user needs “Windows File Sharing” turned on in System Settings → Sharing → File Sharing → Options." = "Para entrar desde Windows, tu usuario necesita «Compartir archivos de Windows» activado en Ajustes del Sistema → Compartir → Compartir archivos → Opciones.";
 "Open…" = "Abrir…";
 "No shared folders" = "No hay carpetas compartidas";
 "Unknown error" = "Error desconocido";
-"“Servers” → SMB" = "«Servidores» → SMB";
+"“Servers” → SMB" = "«Red» → SMB";
 "Turns the macOS SMB server on and off, shares the current folder and connects to servers." = "Enciende y apaga el servidor SMB de macOS, comparte la carpeta actual y conecta con servidores.";
 
 /* Fork: menú Servidores */
 "Servers" = "Servidores";
-"“Servers” menu" = "Menú «Servidores»";
+"“Servers” menu" = "Menú «Red»";
 "FTP, SMB and other protocols, each with its client and server." = "FTP, SMB y otros protocolos, cada uno con su cliente y su servidor.";
-"Server Settings…" = "Ajustes de servidores…";
+"Server Settings…" = "Ajustes de red…";
 
 /* Fork: paleta de comandos */
 "Type to find an action and click it. Esc closes." = "Escribe para buscar una acción y haz clic en ella. Esc la cierra.";

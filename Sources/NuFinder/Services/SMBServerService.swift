@@ -291,7 +291,7 @@ struct SMBServerPreview: View {
 struct ServersMenu: Commands {
     static let showsKey = "menu.showsServers"
     /// El mismo nombre en la barra de menús y en la pestaña de Ajustes.
-    static let title = "Servers"
+    static let title = "Network"
     @AppStorage(ServersMenu.showsKey) private var shows = true
     let currentFolder: () -> URL?
     let connectSMB: () -> Void

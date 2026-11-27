@@ -272,7 +272,13 @@ enum SettingsOpener {
         UserDefaults.standard.set(page, forKey: "settings.page.\(tab)")
         UserDefaults.standard.set(tab, forKey: "settings.tab")
         NSApp.activate(ignoringOtherApps: true)
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        // «showSettingsWindow:» ya no abre nada en macOS actual: se pulsa el «Ajustes…» (⌘,) del menú de la app.
+        if let appMenu = NSApp.mainMenu?.items.first?.submenu,
+           let index = appMenu.items.firstIndex(where: { $0.keyEquivalent == "," && $0.keyEquivalentModifierMask == .command }) {
+            appMenu.performActionForItem(at: index)
+        } else {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        }
     }
 }
 
@@ -335,7 +341,7 @@ struct MenuBarSection: View {
         if showsGo { list.append("Go") }
         if showsCommands { list.append("Commands") }
         if showsOptions { list.append("Options") }
-        if showsServers { list.append("Servers") }
+        if showsServers { list.append(ServersMenu.title) }
         list += ["Window", "Help"]
         return list
     }
