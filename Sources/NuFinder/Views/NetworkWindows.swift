@@ -78,14 +78,15 @@ enum SMBMount {
     }
 }
 
-/// Ventana «Conectarse a un servidor».
+/// Ventana «Conectarse a un servidor FTP / SMB».
 struct ConnectView: View {
+    /// FTP o SMB: lo elige el menú («Conectarse a un servidor FTP…» / «…SMB…»).
+    let kind: SavedServer.Kind
     @ObservedObject private var store = NetworkStore.shared
     @AppStorage("network.connect.advanced") private var advanced = false
     @State private var address = ""
     @State private var user = ""
     @State private var password = ""
-    @State private var kind: SavedServer.Kind? = nil // nil = automático
     @State private var port = ""
     @State private var anonymous = false
     @State private var remember = true
@@ -93,7 +94,7 @@ struct ConnectView: View {
     @State private var busy = false
     @State private var error: String?
 
-    /// Servidor que resulta de lo escrito (lo que se va a usar al pulsar Conectar).
+    /// Servidor que resulta de lo escrito (lo que se usa al pulsar Conectar).
     var server: SavedServer? {
         guard var server = SavedServer.parse(address, kind: kind) else { return nil }
         if !user.isEmpty { server.user = user }
@@ -103,44 +104,39 @@ struct ConnectView: View {
         return server
     }
 
+    private var examples: String {
+        kind == .ftp ? String(localized: "Examples: ftp.mi-web.com · 192.168.1.30 · ftp://192.168.1.30:2121")
+                     : String(localized: "Examples: 192.168.1.20 · nas.local/Fotos · \\\\PC\\Documentos")
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ModePicker(advanced: $advanced)
             Form {
                 Section {
-                    TextField(text: $address, prompt: Text(verbatim: "192.168.1.20/Fotos")) { Text("Server address") }
+                    TextField(text: $address, prompt: Text(verbatim: kind == .ftp ? "ftp.mi-web.com" : "192.168.1.20/Fotos")) { Text("Server address") }
                         .onSubmit { connect() }
-                    if let server {
-                        Label(server.kind == .ftp ? "Will connect with FTP to \(server.host)" : "Will connect to the shared folder of \(server.host) (Windows, NAS, Mac)",
-                              systemImage: "info.circle")
-                            .font(.caption).foregroundStyle(.secondary)
-                    } else {
-                        Text(verbatim: String(localized: "Examples: 192.168.1.20 · nas.local/Fotos · \\\\PC\\Documentos · ftp://mi-web.com")) // verbatim: sin Markdown, que se comía una «\\»
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
+                    Text(verbatim: examples).font(.caption).foregroundStyle(.secondary) // verbatim: sin Markdown (se comía «\»)
                     if !anonymous {
                         TextField("User", text: $user)
                         SecureField("Password", text: $password)
                     }
-                } header: { Text("Which computer do you want to open?") }
+                } header: {
+                    Text(kind == .ftp ? "Which FTP server do you want to open?" : "Which Windows, NAS or Mac do you want to open?")
+                }
                 if advanced {
                     Section("Advanced") {
-                        Picker("Type", selection: $kind) {
-                            Text("Automatic").tag(SavedServer.Kind?.none)
-                            Text("Windows, NAS or Mac (SMB)").tag(SavedServer.Kind?.some(.smb))
-                            Text("FTP").tag(SavedServer.Kind?.some(.ftp))
-                        }
-                        TextField("Port", text: $port, prompt: Text(verbatim: String(server.map { $0.port } ?? 445)))
-                        Toggle("Connect without user (anonymous / guest)", isOn: $anonymous)
+                        TextField("Port", text: $port, prompt: Text(verbatim: String(SavedServer.defaultPort(kind))))
+                        Toggle(kind == .ftp ? "Connect without user (anonymous)" : "Connect as guest", isOn: $anonymous)
                         Toggle("Remember password in the Keychain", isOn: $remember)
                         TextField("Name in the list", text: $name, prompt: Text("Optional, e.g. “NAS at home”"))
                     }
                 }
-                if !store.config.servers.isEmpty {
+                let recent = store.config.servers.filter { $0.kind == kind }
+                if !recent.isEmpty {
                     Section("Recent") {
-                        ForEach(store.config.servers) { saved in
+                        ForEach(recent) { saved in
                             HStack {
-                                Image(systemName: saved.kind == .ftp ? "network" : "externaldrive.connected.to.line.below")
                                 VStack(alignment: .leading) {
                                     Text(saved.title)
                                     Text(verbatim: "\(saved.kind.rawValue)://\(saved.host)\(saved.path.isEmpty ? "" : "/" + saved.path)")
@@ -173,7 +169,6 @@ struct ConnectView: View {
 
     private func fill(_ saved: SavedServer) {
         address = saved.host + (saved.path.isEmpty ? "" : "/" + saved.path)
-        kind = saved.kind
         user = saved.user
         anonymous = saved.anonymous
         name = saved.name
@@ -187,24 +182,27 @@ struct ConnectView: View {
         Task {
             error = await NetworkConnector.connect(server, password: password, remember: remember)
             busy = false
-            if error == nil { NetworkWindow.close(.connect) }
+            if error == nil { NetworkWindow.close(.connect, kind) }
         }
     }
 }
 
 // MARK: Compartir
 
-/// Ventana «Compartir una carpeta».
+/// Ventana «Compartir una carpeta por FTP / SMB».
 struct ShareView: View {
+    let kind: SavedServer.Kind
     @ObservedObject private var store = NetworkStore.shared
     @ObservedObject private var ftp = FTPServerController.shared
     @ObservedObject private var smb = SMBServerController.shared
     @AppStorage("network.share.advanced") private var advanced = false
     @State private var password = FTPSecrets.password(for: FTPSettings.serverPasswordAccount) ?? ""
-    @State private var copied = false
+    @State private var smbFolder = KeyWindowFocus.shared.windowBrowser?.currentURL.path ?? NSHomeDirectory()
+    @State private var smbReadOnly = false
+    @State private var smbGuest = false
 
     private var share: Binding<NetworkConfig.Share> { $store.config.share }
-    private var folder: String { store.config.share.folderPath }
+    private var folder: String { kind == .ftp ? store.config.share.folderPath : smbFolder }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -220,93 +218,119 @@ struct ShareView: View {
                         Spacer()
                         Button("Change…") { chooseFolder() }
                     }
-                    Toggle(isOn: share.enabled) {
-                        Text(store.config.share.enabled ? "Shared" : "Not shared").font(.headline)
-                        Text(store.config.share.enabled ? "Other devices on your network can open this folder." : "Turn on to let other devices open this folder.")
-                    }
-                    .toggleStyle(.switch)
-                    if case .failed(let message) = ftp.state, store.config.share.enabled {
-                        DisabledReason("Couldn’t share: \(message). Change the port in Advanced.")
-                    }
-                } header: { Text("Which folder do you want to share?") }
-
-                if ftp.isRunning, let address = ftp.addresses.first {
-                    Section("How to open it from another device") {
-                        AccessLine(label: "Address", value: address)
-                        if store.config.share.anonymous {
-                            Text("No user or password needed.").font(.caption).foregroundStyle(.secondary)
-                        } else {
-                            AccessLine(label: "User", value: store.config.share.user)
-                            AccessLine(label: "Password", value: password.isEmpty ? String(localized: "(set one below)") : String(repeating: "•", count: password.count))
-                        }
-                        Text("Windows: paste the address in File Explorer. Phone: any “FTP” file app. Mac: Finder → Go → Connect to Server.")
-                            .font(.caption).foregroundStyle(.secondary)
-                        Button(copied ? "Copied" : "Copy Instructions") { copyInstructions(address) }
-                    }
+                } header: {
+                    Text(kind == .ftp ? "Which folder do you want to share by FTP?" : "Which folder do you want to share with Windows, NAS or Mac (SMB)?")
                 }
-
-                Section("Who can enter") {
-                    Toggle("Anyone, without password", isOn: share.anonymous)
-                    if !store.config.share.anonymous {
-                        TextField("User", text: share.user)
-                        SecureField("Password", text: $password)
-                            .onChange(of: password) { _, value in
-                                FTPSecrets.setPassword(value, for: FTPSettings.serverPasswordAccount)
-                                FTPServerController.shared.passwordChanged()
-                            }
-                        if password.isEmpty { DisabledReason("Set a password, otherwise nobody can enter.") }
-                    }
-                    Toggle("Others can only view and download (not change or delete)", isOn: share.readOnly)
-                }
-
-                if advanced {
-                    Section("Advanced") {
-                        TextField("Port", value: share.port, format: .number.grouping(.never))
-                        Toggle("Only this Mac (invisible to the network)", isOn: share.localOnly)
-                        Text("Shared with FTP, built into Explorer. FTP doesn’t encrypt: use it only on networks you trust.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    Section("Also share with Windows (SMB, macOS File Sharing)") {
-                        HStack {
-                            Text(smb.running ? "macOS File Sharing is on" : "macOS File Sharing is off")
-                            Spacer()
-                            if smb.busy { ProgressView().controlSize(.small) }
-                            if smb.shares.contains(where: { $0.path == folder }) {
-                                Button("Stop sharing with SMB") {
-                                    if let item = smb.shares.first(where: { $0.path == folder }) { Task { await smb.unshare(item) } }
-                                }
-                            } else {
-                                Button("Share this folder with SMB") {
-                                    let readOnly = store.config.share.readOnly, guest = store.config.share.anonymous
-                                    Task { await smb.share(URL(fileURLWithPath: folder), readOnly: readOnly, guest: guest) }
-                                }
-                            }
-                        }
-                        if smb.shares.contains(where: { $0.path == folder }), let address = SMBServer.addresses().first {
-                            AccessLine(label: "Windows", value: "\\\\" + address.replacingOccurrences(of: "smb://", with: "") + "\\" + (folder as NSString).lastPathComponent)
-                        }
-                        ForEach(smb.shares.filter { $0.path != folder }) { item in
-                            HStack {
-                                Label(item.name, systemImage: "folder")
-                                Spacer()
-                                Button("Stop Sharing") { Task { await smb.unshare(item) } }
-                            }
-                        }
-                        Text("Asks for your administrator password. To log in from Windows, turn on “Windows File Sharing” for your user in System Settings → Sharing.")
-                            .font(.caption).foregroundStyle(.secondary)
-                        if let message = smb.message { DisabledReason("\(message)") }
-                    }
-                }
+                if kind == .ftp { ftpSections } else { smbSections }
             }
             .formStyle(.grouped)
         }
-        .frame(width: 520, height: advanced ? 720 : 560)
+        .frame(width: 540, height: advanced ? 680 : 580)
         .task { await smb.refresh() }
         .onAppear {
-            // Sin carpeta elegida: se propone la que está abierta en Explorer (no toda la carpeta de usuario).
-            if !store.config.share.enabled, store.config.share.folder.isEmpty,
+            // Sin carpeta elegida: se propone la abierta en Explorer (no toda la carpeta de usuario).
+            if kind == .ftp, !store.config.share.enabled, store.config.share.folder.isEmpty,
                let current = KeyWindowFocus.shared.windowBrowser?.currentURL {
                 store.config.share.folder = current.path
+            }
+        }
+    }
+
+    // FTP: servidor propio de Explorer (sin contraseña de administrador).
+    @ViewBuilder private var ftpSections: some View {
+        Section {
+            Toggle(isOn: share.enabled) {
+                Text(store.config.share.enabled ? "Shared by FTP" : "Not shared").font(.headline)
+                Text(store.config.share.enabled ? "Other devices on your network can open this folder." : "Turn on to let other devices open this folder.")
+            }
+            .toggleStyle(.switch)
+            if case .failed(let message) = ftp.state, store.config.share.enabled {
+                DisabledReason("Couldn’t share: \(message). Change the port in Advanced.")
+            }
+        }
+        if ftp.isRunning, let address = ftp.addresses.first {
+            Section("How to open it from another device") {
+                AccessLine(label: "Address", value: address)
+                if store.config.share.anonymous {
+                    Text("No user or password needed.").font(.caption).foregroundStyle(.secondary)
+                } else {
+                    AccessLine(label: "User", value: store.config.share.user)
+                }
+                Text("Windows: paste the address in File Explorer. Phone: any “FTP” file app. Mac: Finder → Go → Connect to Server.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        Section("Who can enter") {
+            Toggle("Anyone, without password", isOn: share.anonymous)
+            if !store.config.share.anonymous {
+                TextField("User", text: share.user)
+                SecureField("Password", text: $password)
+                    .onChange(of: password) { _, value in
+                        FTPSecrets.setPassword(value, for: FTPSettings.serverPasswordAccount)
+                        FTPServerController.shared.passwordChanged()
+                    }
+                if password.isEmpty { DisabledReason("Set a password, otherwise nobody can enter.") }
+            }
+            Toggle("Others can only view and download (not change or delete)", isOn: share.readOnly)
+        }
+        if advanced {
+            Section("Advanced") {
+                TextField("Port", value: share.port, format: .number.grouping(.never))
+                Toggle("Only this Mac (invisible to the network)", isOn: share.localOnly)
+                Text("FTP doesn’t encrypt: use it only on networks you trust.").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    // SMB: el «Compartir archivos» de macOS (pide contraseña de administrador).
+    @ViewBuilder private var smbSections: some View {
+        let current = smb.shares.first { $0.path == folder }
+        Section {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text(current != nil ? "Shared with SMB" : "Not shared").font(.headline)
+                    Text("Uses macOS File Sharing. It asks for your administrator password.").font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                if smb.busy { ProgressView().controlSize(.small) }
+                if let current {
+                    Button("Stop Sharing") { Task { await smb.unshare(current) } }.disabled(smb.busy)
+                } else {
+                    Button("Share") {
+                        let url = URL(fileURLWithPath: folder), ro = smbReadOnly, guest = smbGuest
+                        Task { await smb.share(url, readOnly: ro, guest: guest) }
+                    }
+                    .buttonStyle(.borderedProminent).disabled(smb.busy)
+                }
+            }
+            if let message = smb.message { DisabledReason("\(message)") }
+        }
+        if let current, let host = SMBServer.addresses().first?.replacingOccurrences(of: "smb://", with: "") {
+            Section("How to open it from another device") {
+                AccessLine(label: "Windows", value: "\\\\" + host + "\\" + current.name)
+                AccessLine(label: "Mac", value: "smb://\(host)/\(current.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? current.name)")
+                Text("Log in with your Mac user and password. On Windows, your user needs “Windows File Sharing” turned on in System Settings → Sharing → File Sharing → Options.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Button("Open System Settings → Sharing") { SMBServer.openSystemSharing() }
+            }
+        }
+        if advanced {
+            Section("Advanced") {
+                Toggle("Others can only view and download (not change or delete)", isOn: $smbReadOnly)
+                Toggle("Allow guests (no password)", isOn: $smbGuest)
+                Text("Applies when you press Share.").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        let others = smb.shares.filter { $0.path != folder }
+        if !others.isEmpty {
+            Section("Other folders shared with SMB") {
+                ForEach(others) { item in
+                    HStack {
+                        Label(item.name, systemImage: "folder")
+                        Spacer()
+                        Button("Stop Sharing") { Task { await smb.unshare(item) } }.disabled(smb.busy)
+                    }
+                }
             }
         }
     }
@@ -317,17 +341,8 @@ struct ShareView: View {
         panel.canChooseFiles = false
         panel.prompt = String(localized: "Share")
         panel.directoryURL = URL(fileURLWithPath: folder)
-        if panel.runModal() == .OK, let url = panel.url { store.config.share.folder = url.path }
-    }
-
-    private func copyInstructions(_ address: String) {
-        var text = String(localized: "Address") + ": " + address
-        if !store.config.share.anonymous {
-            text += "\n" + String(localized: "User") + ": " + store.config.share.user
-        }
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(text, forType: .string)
-        copied = true
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        if kind == .ftp { store.config.share.folder = url.path } else { smbFolder = url.path }
     }
 }
 
@@ -366,49 +381,72 @@ private struct ModePicker: View {
 
 enum NetworkWindow: String {
     case connect, share
-    @MainActor private static var windows: [NetworkWindow: NSWindow] = [:]
+    @MainActor private static var windows: [String: NSWindow] = [:]
 
     @MainActor
-    static func open(_ kind: NetworkWindow) {
-        if let window = windows[kind], window.isVisible { window.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
+    static func open(_ kind: NetworkWindow, _ proto: SavedServer.Kind) {
+        let key = "\(kind.rawValue).\(proto.rawValue)"
+        if let window = windows[key], window.isVisible { window.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
         let window = NSWindow(contentRect: .zero, styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
-        window.identifier = NSUserInterfaceItemIdentifier("explorer.network.\(kind.rawValue)")
-        switch kind {
-        case .connect:
-            window.title = String(localized: "Connect to a Server")
-            window.contentViewController = NSHostingController(rootView: ConnectView())
-        case .share:
-            window.title = String(localized: "Share a Folder")
-            window.contentViewController = NSHostingController(rootView: ShareView())
+        window.identifier = NSUserInterfaceItemIdentifier("explorer.network.\(key)")
+        switch (kind, proto) {
+        case (.connect, .ftp): window.title = String(localized: "Connect to an FTP Server")
+        case (.connect, .smb): window.title = String(localized: "Connect to an SMB Server (Windows, NAS, Mac)")
+        case (.share, .ftp): window.title = String(localized: "Share a Folder by FTP")
+        case (.share, .smb): window.title = String(localized: "Share a Folder by SMB")
         }
+        window.contentViewController = kind == .connect
+            ? NSHostingController(rootView: ConnectView(kind: proto))
+            : NSHostingController(rootView: AnyView(ShareView(kind: proto)))
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
-        windows[kind] = window
+        windows[key] = window
     }
 
-    @MainActor static func close(_ kind: NetworkWindow) { windows[kind]?.close() }
-    @MainActor static func current(_ kind: NetworkWindow) -> NSWindow? { windows[kind].flatMap { $0.isVisible ? $0 : nil } }
+    @MainActor static func close(_ kind: NetworkWindow, _ proto: SavedServer.Kind) { windows["\(kind.rawValue).\(proto.rawValue)"]?.close() }
+    @MainActor static func current(_ kind: NetworkWindow, _ proto: SavedServer.Kind) -> NSWindow? {
+        windows["\(kind.rawValue).\(proto.rawValue)"].flatMap { $0.isVisible ? $0 : nil }
+    }
 }
 
-/// Menú «Red» de la barra de menús: dos acciones y, si compartes algo, qué y cómo pararlo.
+/// Menú «Red»: FTP y SMB a la vista, cada uno con «Conectarse a un servidor …» y «Compartir una
+/// carpeta por …» (y lo que se está compartiendo), recientes y «Configuración de Red…».
 struct NetworkMenu: Commands {
     static let title = "Network"
     @AppStorage(NetworkSettings.showsMenuKey) private var shows = true
     @ObservedObject private var store = NetworkStore.shared
-    @ObservedObject private var ftp = FTPServerController.shared
+    @ObservedObject private var smb = SMBServerController.shared
     let currentFolder: () -> URL?
 
     var body: some Commands {
         if shows {
             CommandMenu(LocalizedStringKey(NetworkMenu.title)) {
-                Button("Connect to a Server…") { NetworkWindow.open(.connect) }
-                    .keyboardShortcut("k", modifiers: [.command, .option])
+                Menu("FTP") {
+                    Button("Connect to an FTP Server…") { NetworkWindow.open(.connect, .ftp) }
+                        .keyboardShortcut("k", modifiers: [.command, .option])
+                    Button("Share a Folder by FTP…") { NetworkWindow.open(.share, .ftp) }
+                    if store.config.share.enabled {
+                        Divider()
+                        Text("Sharing “\((store.config.share.folderPath as NSString).lastPathComponent)” by FTP")
+                        Button("Stop Sharing by FTP") { store.config.share.enabled = false }
+                    }
+                }
+                Menu("SMB (Windows, NAS, Mac)") {
+                    Button("Connect to an SMB Server…") { NetworkWindow.open(.connect, .smb) }
+                    Button("Share a Folder by SMB…") { NetworkWindow.open(.share, .smb) }
+                    if !smb.shares.isEmpty {
+                        Divider()
+                        ForEach(smb.shares) { item in
+                            Button("Stop Sharing “\(item.name)” by SMB") { Task { await smb.unshare(item) } }
+                        }
+                    }
+                }
                 if !store.config.servers.isEmpty {
-                    Menu("Recent") {
+                    Menu("Recent Servers") {
                         ForEach(store.config.servers.prefix(10)) { saved in
-                            Button(saved.title) {
+                            Button("\(saved.title) (\(saved.kind.rawValue.uppercased()))") {
                                 Task {
                                     if let error = await NetworkConnector.connect(saved, password: FTPSecrets.password(for: saved.id) ?? "", remember: true) {
                                         KeyWindowFocus.shared.windowBrowser?.errorMessage = error
@@ -419,19 +457,7 @@ struct NetworkMenu: Commands {
                     }
                 }
                 Divider()
-                Button("Share a Folder…") { NetworkWindow.open(.share) }
-                if let url = currentFolder(), !(store.config.share.enabled && store.config.share.folderPath == url.path) {
-                    Button("Share “\(url.lastPathComponent)”") {
-                        store.config.share.folder = url.path
-                        store.config.share.enabled = true
-                        NetworkWindow.open(.share)
-                    }
-                }
-                if store.config.share.enabled {
-                    Divider()
-                    Text("Sharing “\((store.config.share.folderPath as NSString).lastPathComponent)”")
-                    Button("Stop Sharing") { store.config.share.enabled = false }
-                }
+                Button("Network Settings…") { SettingsOpener.open(tab: "network", page: "") }
             }
         }
     }
@@ -446,8 +472,9 @@ struct NetworkSettingsSection: View {
         Section {
             SettingsPreviewBox(title: "Preview: the “Network” menu") {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("Connect to a Server…")
-                    Text("Share a Folder…")
+                    Text("FTP  ›  Connect to an FTP Server… · Share a Folder by FTP…")
+                    Text("SMB (Windows, NAS, Mac)  ›  Connect to an SMB Server… · Share a Folder by SMB…")
+                    Text("Network Settings…")
                     if store.config.share.enabled {
                         Divider()
                         Text("Sharing “\((store.config.share.folderPath as NSString).lastPathComponent)”").foregroundStyle(.secondary)
@@ -461,8 +488,12 @@ struct NetworkSettingsSection: View {
                 Text("Connect to other computers (Windows, NAS, Mac, FTP) and share a folder of this Mac.")
             }
             HStack {
-                Button("Connect to a Server…") { NetworkWindow.open(.connect) }
-                Button("Share a Folder…") { NetworkWindow.open(.share) }
+                Button("Connect to an FTP Server…") { NetworkWindow.open(.connect, .ftp) }
+                Button("Connect to an SMB Server…") { NetworkWindow.open(.connect, .smb) }
+            }
+            HStack {
+                Button("Share a Folder by FTP…") { NetworkWindow.open(.share, .ftp) }
+                Button("Share a Folder by SMB…") { NetworkWindow.open(.share, .smb) }
             }
         }
         Section("Where it’s saved") {

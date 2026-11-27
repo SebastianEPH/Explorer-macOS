@@ -213,16 +213,16 @@ struct FTPTests {
         let d = UserDefaults.standard
         let saved = [d.object(forKey: "network.connect.advanced"), d.object(forKey: "network.share.advanced")]
         defer { d.set(saved[0], forKey: "network.connect.advanced"); d.set(saved[1], forKey: "network.share.advanced") }
-        for kind in [NetworkWindow.connect, .share] {
+        for (kind, proto) in [(NetworkWindow.connect, SavedServer.Kind.ftp), (.connect, .smb), (.share, .ftp), (.share, .smb)] {
             d.set(false, forKey: "network.\(kind.rawValue).advanced")
-            NetworkWindow.open(kind)
+            NetworkWindow.open(kind, proto)
             try await Task.sleep(for: .milliseconds(400))
-            let window = try #require(NetworkWindow.current(kind))
+            let window = try #require(NetworkWindow.current(kind, proto))
             let quick = window.frame.height
             d.set(true, forKey: "network.\(kind.rawValue).advanced")
             try await Task.sleep(for: .milliseconds(400))
-            #expect(window.frame.height > quick, "\(kind)")
-            NetworkWindow.close(kind)
+            #expect(window.frame.height > quick, "\(kind) \(proto)")
+            NetworkWindow.close(kind, proto)
         }
     }
 

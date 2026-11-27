@@ -1,16 +1,18 @@
 #!/bin/sh
 # Compila, prueba, firma e instala Explorer en este Mac (sin GitHub).
-# Uso: sh Scripts/install_local.sh
+# Uso: sh Scripts/install_local.sh            (sin pruebas, rápido)
+#      sh Scripts/install_local.sh --tests    (con todas las pruebas antes)
 set -e
 cd "$(dirname "$0")/.."
 
-echo "==> Pruebas"
-# Una sola pasada (antes eran dos: el doble de espera).
-log=$(mktemp)
-if swift test >"$log" 2>&1; then status=0; else status=1; fi
-grep -E "error:|✘|Test run with" "$log"
-rm -f "$log"
-[ "$status" = 0 ] || { echo "Las pruebas fallaron"; exit 1; }
+if [ "$1" = "--tests" ]; then
+  echo "==> Pruebas"
+  log=$(mktemp)
+  if swift test >"$log" 2>&1; then status=0; else status=1; fi
+  grep -E "error:|✘|Test run with" "$log"
+  rm -f "$log"
+  [ "$status" = 0 ] || { echo "Las pruebas fallaron"; exit 1; }
+fi
 
 echo "==> Compilando"
 export PATH="$(ruby -e 'print Gem.user_dir')/bin:$PATH"

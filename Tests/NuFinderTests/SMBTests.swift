@@ -126,6 +126,8 @@ struct SMBTests {
         #expect(es.localizedString(forKey: NetworkMenu.title, value: nil, table: nil) == "Red")
         let source = try String(contentsOfFile: "Sources/NuFinder/Views/NetworkWindows.swift", encoding: .utf8)
         let menu = source.components(separatedBy: "struct NetworkMenu")[1].components(separatedBy: "struct NetworkSettingsSection")[0]
-        for word in ["\"FTP", "\"SMB", "Client", "Server\""] { #expect(!menu.contains("Button(" + word), "\(word)") }
+        // FTP y SMB a la vista, cada acción dice a qué tipo de servidor va, y hay acceso a la configuración.
+        for text in ["Menu(\"FTP\")", "Menu(\"SMB (Windows, NAS, Mac)\")", "Connect to an FTP Server…", "Connect to an SMB Server…",
+                     "Share a Folder by FTP…", "Share a Folder by SMB…", "Network Settings…"] { #expect(menu.contains(text), "\(text)") }
     }
 }
