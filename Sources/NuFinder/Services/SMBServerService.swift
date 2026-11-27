@@ -37,14 +37,7 @@ enum SMBServer {
             process.waitUntilExit()
             return (process.terminationStatus, String(decoding: data, as: UTF8.self))
         },
-        runAsAdmin: { script in
-            let source = "do shell script \"\(SMBServer.appleScriptEscaped(script))\" with administrator privileges"
-            var error: NSDictionary?
-            NSAppleScript(source: source)?.executeAndReturnError(&error)
-            guard let error else { return nil }
-            if (error[NSAppleScript.errorNumber] as? Int) == -128 { return String(localized: "Cancelled") }
-            return error[NSAppleScript.errorMessage] as? String ?? String(localized: "Unknown error")
-        })
+        runAsAdmin: { script in AdminAuthorization.run(script) }) // Fork: Touch ID (autorización de macOS)
 
     static func appleScriptEscaped(_ text: String) -> String {
         text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
