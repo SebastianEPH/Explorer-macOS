@@ -146,12 +146,21 @@ enum FTPSecrets {
         if !interactive { query[kSecUseAuthenticationUI as String] = kSecUseAuthenticationUIFail }
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
-        if status == errSecInteractionNotAllowed || status == errSecAuthFailed { needsPermission = true; return nil }
+        if status == errSecInteractionNotAllowed || status == errSecAuthFailed || status == errSecInteractionRequired {
+            needsPermission = true; return nil
+        }
         guard status == errSecSuccess, let data = result as? Data else { return nil }
         return String(data: data, encoding: .utf8)
     }
 
     nonisolated(unsafe) static var needsPermission = false
+
+    /// El Llavero clásico (donde están estas contraseñas) ignora `kSecUseAuthenticationUIFail`:
+    /// la única forma de que macOS nunca muestre «Explorer quiere usar…» es desactivar los avisos
+    /// del proceso. Se llama al arrancar; solo «Solicitar» (Sistema → Permisos) los reactiva un momento.
+    static func silenceKeychainPrompts() {
+        SecKeychainSetUserInteractionAllowed(false)
+    }
 
     /// Cuentas guardadas de Explorer en el Llavero (solo nombres, sin leer contraseñas: no avisa).
     static func accounts() -> [String] {
@@ -173,6 +182,8 @@ enum FTPSecrets {
     /// Pide el permiso ahora: macOS pregunta por cada contraseña que no puede leer
     /// (pulsar «Permitir siempre» y no vuelve a salir).
     static func requestPermission() {
+        SecKeychainSetUserInteractionAllowed(true)
+        defer { SecKeychainSetUserInteractionAllowed(false) }
         for account in accounts() { _ = password(for: account, interactive: true) }
     }
 
@@ -186,7 +197,7 @@ enum FTPSecrets {
         quiet[kSecUseAuthenticationUI as String] = kSecUseAuthenticationUIFail
         guard let password, !password.isEmpty else {
             let status = SecItemDelete(quiet as CFDictionary)
-            if status == errSecInteractionNotAllowed || status == errSecAuthFailed { needsPermission = true }
+            if status == errSecInteractionNotAllowed || status == errSecAuthFailed || status == errSecInteractionRequired { needsPermission = true }
             return
         }
         let data = Data(password.utf8)
@@ -195,7 +206,7 @@ enum FTPSecrets {
             var add = base
             add[kSecValueData as String] = data
             SecItemAdd(add as CFDictionary, nil)
-        } else if status == errSecInteractionNotAllowed || status == errSecAuthFailed {
+        } else if status == errSecInteractionNotAllowed || status == errSecAuthFailed || status == errSecInteractionRequired {
             needsPermission = true
         }
     }

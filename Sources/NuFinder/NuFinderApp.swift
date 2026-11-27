@@ -3,6 +3,7 @@ import SwiftUI
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
+        FTPSecrets.silenceKeychainPrompts() // Fork: el Llavero nunca muestra avisos (solo «Solicitar» en Permisos)
         MenuBarSettings.applySystemItems() // Fork: sin Emoji y dictado en Edición (antes de crear el menú)
         MenuBarSettings.applyWindowTabbing() // Fork: sin pestañas de ventana de macOS
     }
