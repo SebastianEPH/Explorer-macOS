@@ -679,7 +679,7 @@ struct FileListView: View {
             if item.isDirectory {
                 Button("Open in Terminal") { TerminalService.open(at: item.url) }
             } else {
-                Button("Open Parent in Terminal") {
+                Button("Open in Terminal") { // Fork: mismo nombre en todos los menús («Abrir terminal aquí»)
                     TerminalService.open(at: item.url.deletingLastPathComponent())
                 }
             }

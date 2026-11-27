@@ -12,8 +12,9 @@ enum ContextMenuOption: String, CaseIterable, Identifiable {
     case batchRename, symbolicLink, alias, tags, compare, rename, trash
     case newFolder, newFile, newFromTemplate
     // Sobre el espacio vacío de la carpeta
-    case bgNewFolder, bgNewFile, bgNewFromTemplate, bgOpenInTerminal, bgRevealInFinder
-    case bgCopyFolderPath, bgPaste, bgPasteAs, bgHiddenFiles, bgRevealHidden, bgViewAs, bgReload
+    // «Abrir terminal aquí» va igual que en los demás menús: la última de su grupo, justo antes de la línea.
+    case bgNewFolder, bgNewFile, bgNewFromTemplate, bgRevealInFinder, bgCopyFolderPath, bgOpenInTerminal
+    case bgPaste, bgPasteAs, bgHiddenFiles, bgRevealHidden, bgViewAs, bgReload
 
     var id: String { rawValue }
 
@@ -22,7 +23,6 @@ enum ContextMenuOption: String, CaseIterable, Identifiable {
     /// Nombre tal como sale en el menú real de ese tipo (algunas opciones cambian de nombre).
     func title(in scope: ContextMenuScope) -> LocalizedStringKey {
         switch (self, scope) {
-        case (.openInTerminal, .file), (.openInTerminal, .image), (.openInTerminal, .archive): "Open Parent in Terminal"
         case (.paste, .folder): "Paste into Folder"
         default: title
         }

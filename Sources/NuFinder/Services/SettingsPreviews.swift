@@ -260,7 +260,7 @@ extension ContextMenuOption {
 
     /// Donde el menú real pone una línea separadora antes de esta opción.
     var startsGroup: Bool {
-        [.cut, .trash, .newFolder, .bgOpenInTerminal, .bgPaste, .bgHiddenFiles].contains(self)
+        [.cut, .trash, .newFolder, .bgRevealInFinder, .bgPaste, .bgHiddenFiles].contains(self)
     }
 
     var hasSubmenu: Bool {

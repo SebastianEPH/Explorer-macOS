@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         AppearanceSettings.apply() // Fork
         TextPredictionSettings.apply() // Fork: sin texto gris de predicción al escribir nombres
         AppIconService.start() // Fork: icono elegido en Ajustes (claro/oscuro)
+        FTPServerController.shared.start() // Fork: servidor FTP si está encendido
         DispatchQueue.main.async { MenuBarSettings.startCleaning() } // Fork: sin «Autorrelleno» en Edición
         // A SwiftPM executable reaches didFinishLaunching before SwiftUI has
         // necessarily installed its WindowGroup. Activate on the next run-loop
@@ -230,6 +231,7 @@ struct FreeloaderApp: App {
             }
             }
             ExplorerMenus(browser: { browser }, commandPaletteKey: commandPaletteKey) // Fork: menú Opciones y navegación
+            FTPMenu(currentFolder: { keyFocus.windowBrowser?.currentURL }) // Fork: cliente y servidor FTP
         }
         Settings {
             SettingsView()

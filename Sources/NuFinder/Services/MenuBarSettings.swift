@@ -283,6 +283,7 @@ struct MenuBarSection: View {
     @AppStorage(MenuBarSettings.showsCommandsKey) private var showsCommands = false
     @AppStorage(MenuBarSettings.hidesEmojiKey) private var hidesEmoji = true
     @AppStorage(MenuBarSettings.hidesWindowTabsKey) private var hidesWindowTabs = true
+    @AppStorage(FTPSettings.showsMenuKey) private var showsFTP = true
 
     var body: some View {
         Section("Menu Bar") {
@@ -303,6 +304,10 @@ struct MenuBarSection: View {
                 Label("“Commands” menu", systemImage: "command")
                 Text("Off: the Command Palette moves to the Options menu.")
             }
+            Toggle(isOn: $showsFTP) {
+                Label("“FTP” menu", systemImage: "network")
+                Text("Turns the FTP client and server on and off, connects to servers and shares the current folder.")
+            }
             ForEach(MenuExtras.allCases) { extra in MenuExtraToggle(extra: extra) }
             Toggle(isOn: $hidesEmoji) {
                 Label("Remove Emoji & Symbols, Dictation and AutoFill from Edit", systemImage: "face.smiling")
@@ -320,6 +325,7 @@ struct MenuBarSection: View {
         if showsGo { list.append("Go") }
         if showsCommands { list.append("Commands") }
         if showsOptions { list.append("Options") }
+        if showsFTP { list.append("FTP") }
         list += ["Window", "Help"]
         return list
     }

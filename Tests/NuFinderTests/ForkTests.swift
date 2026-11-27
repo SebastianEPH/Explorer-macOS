@@ -161,10 +161,26 @@ struct ForkTests {
     }
 
     @Test func contextMenuTitlesMatchRealMenu() {
-        #expect(ContextMenuOption.openInTerminal.title(in: .file) == "Open Parent in Terminal")
+        #expect(ContextMenuOption.openInTerminal.title(in: .file) == "Open in Terminal")
         #expect(ContextMenuOption.openInTerminal.title(in: .folder) == "Open in Terminal")
         #expect(ContextMenuOption.paste.title(in: .folder) == "Paste into Folder")
         #expect(ContextMenuOption.paste.title(in: .file) == "Paste")
+    }
+
+    // «Abrir terminal aquí»: mismo nombre y mismo sitio (la última de su grupo, antes de la línea) en todos los menús.
+    @Test func terminalOptionIsStandardInEveryMenu() throws {
+        for scope in ContextMenuScope.allCases {
+            let options = scope.options
+            let terminal = try #require(options.firstIndex { $0 == .openInTerminal || $0 == .bgOpenInTerminal })
+            #expect(options[terminal].title(in: scope) == "Open in Terminal")
+            #expect(terminal + 1 < options.count && options[terminal + 1].startsGroup, "\(scope)")
+            #expect(!options[terminal].startsGroup, "\(scope)")
+        }
+        // Con la configuración por defecto del usuario (Mostrar en Finder y Copiar ruta ocultos) sigue antes de la línea.
+        let hidden = DefaultSettings.mine[ContextMenuSettings.hiddenKey] as! String
+        let visible = ContextMenuScope.background.options.filter { ContextMenuSettings.isVisible($0, scope: .background, in: hidden) }
+        let index = visible.firstIndex(of: .bgOpenInTerminal)!
+        #expect(visible[index + 1] == .bgPaste && visible[index + 1].startsGroup)
     }
 
     @Test func rightClickSelectsLikeWindows() {

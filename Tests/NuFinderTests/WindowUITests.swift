@@ -121,6 +121,29 @@ struct WindowUITests {
         #expect(!after.contains("Copy Path"), "el menú sigue con la opción oculta: \(after)")
     }
 
+    /// Clic derecho sobre un archivo: «Abrir terminal aquí» (no «carpeta superior»), justo antes de la línea de Cortar.
+    /// Flujo: en Ajustes se ve con el mismo nombre → en la ventana real sale igual y en el mismo sitio.
+    @Test func terminalItemHasSameNameAndPlaceOnFiles() async throws {
+        let defaults = UserDefaults.standard
+        let savedHidden = defaults.string(forKey: ContextMenuSettings.hiddenKey)
+        defer { defaults.set(savedHidden, forKey: ContextMenuSettings.hiddenKey) }
+        defaults.set("", forKey: ContextMenuSettings.hiddenKey)
+        #expect(ContextMenuOption.openInTerminal.title(in: .file) == "Open in Terminal") // lo que muestra Ajustes
+
+        let url = try folder("terminal", files: ["nota.txt"])
+        let window = try await openWindow(at: url)
+        defer { window.close() }
+        let browser = try #require(KeyWindowFocus.shared.browser(for: window))
+        for _ in 0..<40 where browser.displayedItems.isEmpty { try await spin(0.1) }
+        browser.viewMode = .list
+        try await spin(1)
+        let menu = try #require(firstRowMenu(in: window))
+        let terminal = String(localized: "Open in Terminal")
+        #expect(!menu.contains(String(localized: "Open Parent in Terminal")), "\(menu)")
+        let index = try #require(menu.firstIndex(of: terminal), "\(menu)")
+        #expect(menu[index + 1].isEmpty && menu[index + 2] == String(localized: "Cut"), "\(menu)") // línea y luego Cortar
+    }
+
     // MARK: valores por defecto propios
 
     /// Mi configuración por defecto: una ventana nueva abre en iconos y sin «Copy Path»;
