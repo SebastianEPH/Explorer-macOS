@@ -970,3 +970,28 @@
 "FTP doesn’t encrypt: use it only on networks you trust." = "FTP no cifra: úsalo solo en redes de confianza.";
 "FTP  ›  Connect to an FTP Server… · Share a Folder by FTP…" = "FTP  ›  Conectarse a un servidor FTP… · Compartir una carpeta por FTP…";
 "SMB (Windows, NAS, Mac)  ›  Connect to an SMB Server… · Share a Folder by SMB…" = "SMB (Windows, NAS, Mac)  ›  Conectarse a un servidor SMB… · Compartir una carpeta por SMB…";
+
+/* Fork: Ajustes → Red (Mis servidores) */
+"New server" = "Servidor nuevo";
+"My Servers" = "Mis servidores";
+"FTP Server of this Mac" = "Servidor FTP de este Mac";
+"Share by SMB" = "Compartir por SMB";
+"You haven’t added any server yet. Press “Add Server” and fill in its details." = "Aún no has añadido ningún servidor. Pulsa «Añadir servidor» y rellena sus datos.";
+"Add FTP Server" = "Añadir servidor FTP";
+"Add SMB Server (Windows, NAS, Mac)" = "Añadir servidor SMB (Windows, NAS, Mac)";
+"Saved in ~/.explorer/red.json. Passwords go to the macOS Keychain." = "Se guarda en ~/.explorer/red.json. Las contraseñas van al Llavero de macOS.";
+"Server details" = "Datos del servidor";
+"e.g. “NAS at home”" = "p. ej. «NAS de casa»";
+"Shared folder on that computer" = "Carpeta compartida de ese equipo";
+"Anonymous (no user)" = "Anónimo (sin usuario)";
+"Guest (no user)" = "Invitado (sin usuario)";
+"My FTP Servers" = "Mis servidores FTP";
+"My SMB Servers" = "Mis servidores SMB";
+"None yet" = "Ninguno todavía";
+"Add FTP Server…" = "Añadir servidor FTP…";
+"Add SMB Server…" = "Añadir servidor SMB…";
+"Quick Connect…" = "Conexión rápida…";
+"Share from this Mac by FTP" = "Compartir desde este Mac por FTP";
+"Share from this Mac by SMB" = "Compartir desde este Mac por SMB";
+"Configure FTP Server…" = "Configurar servidor FTP…";
+"Configure SMB Sharing…" = "Configurar compartir por SMB…";

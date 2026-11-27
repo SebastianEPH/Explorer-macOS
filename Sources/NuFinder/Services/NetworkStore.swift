@@ -6,6 +6,8 @@ import Foundation
 /// Llavero de macOS (`FTPSecrets`). Se puede abrir, copiar o respaldar a mano.
 struct SavedServer: Codable, Hashable, Identifiable, Sendable {
     enum Kind: String, Codable, CaseIterable, Sendable { case ftp, smb }
+    /// Identificador fijo (no cambia al editar): la contraseña del Llavero va con él.
+    var key = UUID().uuidString
     var kind: Kind = .smb
     var host: String
     var port: Int = 445
@@ -15,8 +17,12 @@ struct SavedServer: Codable, Hashable, Identifiable, Sendable {
     var path: String = ""
     var name: String = ""
 
-    var id: String { "\(kind.rawValue)://\(user)@\(host):\(port)/\(path)" }
-    var title: String { name.isEmpty ? (user.isEmpty || anonymous ? host : "\(user)@\(host)") : name }
+    var id: String { key }
+    /// Mismo destino (para no repetir un servidor en la lista); no mira el nombre ni la clave.
+    var target: String { "\(kind.rawValue)://\(user)@\(host):\(port)/\(path)" }
+    static func == (a: SavedServer, b: SavedServer) -> Bool { a.target == b.target && a.anonymous == b.anonymous && a.name == b.name }
+    func hash(into hasher: inout Hasher) { hasher.combine(target) }
+    var title: String { host.isEmpty && name.isEmpty ? String(localized: "New server") : name.isEmpty ? (user.isEmpty || anonymous ? host : "\(user)@\(host)") : name }
     static func defaultPort(_ kind: Kind) -> Int { kind == .ftp ? 21 : 445 }
 
     init(kind: Kind = .smb, host: String, port: Int? = nil, user: String = "", anonymous: Bool = false, path: String = "", name: String = "") {
@@ -26,6 +32,7 @@ struct SavedServer: Codable, Hashable, Identifiable, Sendable {
 
     init(from decoder: Decoder) throws { // tolera archivos editados a mano con campos de menos
         let c = try decoder.container(keyedBy: CodingKeys.self)
+        key = try c.decodeIfPresent(String.self, forKey: .key) ?? UUID().uuidString
         kind = try c.decodeIfPresent(Kind.self, forKey: .kind) ?? .smb
         host = try c.decode(String.self, forKey: .host)
         port = try c.decodeIfPresent(Int.self, forKey: .port) ?? SavedServer.defaultPort(kind)
@@ -141,13 +148,18 @@ final class NetworkStore: ObservableObject {
 
     /// Guarda (o sube al principio) un servidor usado.
     func remember(_ server: SavedServer) {
-        var list = config.servers.filter { $0.id != server.id }
+        var server = server
+        if let existing = config.servers.first(where: { $0.key == server.key || $0.target == server.target }) {
+            server.key = existing.key
+            if server.name.isEmpty { server.name = existing.name }
+        }
+        var list = config.servers.filter { $0.key != server.key }
         list.insert(server, at: 0)
         config.servers = Array(list.prefix(30))
     }
 
     func forget(_ server: SavedServer) {
-        config.servers.removeAll { $0.id == server.id }
+        config.servers.removeAll { $0.key == server.key }
         FTPSecrets.setPassword(nil, for: server.id)
     }
 }
