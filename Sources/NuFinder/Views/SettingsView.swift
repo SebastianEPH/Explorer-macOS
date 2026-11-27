@@ -89,6 +89,7 @@ struct SettingsView: View {
         Section("Keyboard Shortcuts") {
             LabeledContent { HStack { KeyCapsView(keys: ["⌘", "⇧", commandPaletteKey]); TextField("", text: $commandPaletteKey).frame(width: 40) } } label: { Label("Command Palette", systemImage: "command"); Text("Search for any action by name.") } // Fork
             LabeledContent { HStack { KeyCapsView(keys: ["⌘", "⌥", terminalKey]); TextField("", text: $terminalKey).frame(width: 40) } } label: { Label("Open Terminal", systemImage: "terminal"); Text("Opens the current folder in the terminal.") }
+            CommandPaletteSettingsRow() // Fork
             Text("Enter a single letter. Changes apply immediately.")
                 .font(.caption)
                 .foregroundStyle(.secondary)

@@ -144,6 +144,48 @@ struct WindowUITests {
         #expect(menu[index + 1].isEmpty && menu[index + 2] == String(localized: "Cut"), "\(menu)") // línea y luego Cortar
     }
 
+    // MARK: paleta de comandos
+
+    /// Busca también en español: «carpeta» encuentra «New Folder» (antes solo en inglés).
+    @Test func commandPaletteSearchesTranslatedNames() throws {
+        let es = try #require(Bundle(path: "Localization/es.lproj"))
+        #expect(CommandPaletteExtras.matches("New Folder", "carpeta", bundle: es))
+        #expect(CommandPaletteExtras.matches("Icon View", "ICONOS", bundle: es))
+        #expect(CommandPaletteExtras.matches("New Folder", "folder", bundle: es)) // el original sigue valiendo
+        #expect(!CommandPaletteExtras.matches("Reload", "carpeta", bundle: es))
+    }
+
+    /// Flujo: ⌘⇧P en una ventana real → sale la hoja con la paleta → clic en la X → se cierra.
+    /// Con el ajuste apagado la cabecera no se dibuja (original: solo Esc).
+    @Test func commandPaletteHasWorkingCloseButton() async throws {
+        let defaults = UserDefaults.standard
+        let saved = defaults.object(forKey: CommandPaletteExtras.closeButtonKey)
+        defer { defaults.set(saved, forKey: CommandPaletteExtras.closeButtonKey) }
+        defaults.removeObject(forKey: CommandPaletteExtras.closeButtonKey)
+
+        let window = try await openWindow(at: try folder("palette"))
+        defer { window.close() }
+        let browser = try #require(KeyWindowFocus.shared.browser(for: window))
+        browser.showsCommandPalette = true
+        try await spin(1)
+        let sheet = try #require(window.attachedSheet, "no salió la paleta")
+        let content = try #require(sheet.contentView)
+        // La X está arriba a la derecha (dentro del margen de 16 pt).
+        let point = NSPoint(x: content.bounds.maxX - 28, y: content.isFlipped ? 30 : content.bounds.maxY - 30)
+        let location = content.convert(point, to: nil)
+        for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
+            let event = try #require(NSEvent.mouseEvent(with: type, location: location, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                windowNumber: sheet.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1))
+            sheet.sendEvent(event)
+        }
+        try await spin(1)
+        #expect(!browser.showsCommandPalette && window.attachedSheet == nil, "la X no cerró la paleta")
+
+        defaults.set(false, forKey: CommandPaletteExtras.closeButtonKey)
+        let off = NSHostingView(rootView: CommandPaletteHeader(close: {}))
+        #expect(off.fittingSize.height == 0)
+    }
+
     // MARK: valores por defecto propios
 
     /// Mi configuración por defecto: una ventana nueva abre en iconos y sin «Copy Path»;

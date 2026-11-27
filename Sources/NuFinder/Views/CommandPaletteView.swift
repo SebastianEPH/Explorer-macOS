@@ -16,6 +16,7 @@ struct CommandPaletteView: View {
 
     var body: some View {
         VStack(spacing: 12) {
+            CommandPaletteHeader { dismiss() } // Fork: título y botón de cerrar
             TextField("Type a command", text: $query)
                 .textFieldStyle(.roundedBorder)
                 .focused($searchFocused)
@@ -37,7 +38,7 @@ struct CommandPaletteView: View {
 
     private var filteredCommands: [String] {
         guard !query.isEmpty else { return commands }
-        return commands.filter { $0.localizedCaseInsensitiveContains(query) }
+        return commands.filter { CommandPaletteExtras.matches($0, query) } // Fork: también en español
     }
 
     private func run(_ command: String) {

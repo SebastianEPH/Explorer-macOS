@@ -832,3 +832,10 @@
 "“Servers” menu" = "Menú «Servidores»";
 "FTP, SMB and other protocols, each with its client and server." = "FTP, SMB y otros protocolos, cada uno con su cliente y su servidor.";
 "Server Settings…" = "Ajustes de servidores…";
+
+/* Fork: paleta de comandos */
+"Type to find an action and click it. Esc closes." = "Escribe para buscar una acción y haz clic en ella. Esc la cierra.";
+"Preview: top of the Command Palette" = "Vista previa: parte de arriba de la paleta de comandos";
+"Title and close button in the Command Palette" = "Título y botón de cerrar en la paleta de comandos";
+"The Command Palette (⌘⇧P) finds any action by name. Off: as in the original, it only closes with Esc." = "La paleta de comandos (⌘⇧P) busca cualquier acción por su nombre. Apagado: como en el original, solo se cierra con Esc.";
+"Close" = "Cerrar";
