@@ -1,5 +1,6 @@
 import Foundation
 import Security
+import SwiftUI
 
 /// Fork: permisos de administrador con el diálogo de autorización de macOS (el de los candados de
 /// Ajustes del Sistema), que admite **Touch ID**, en vez de `do shell script … with administrator
@@ -151,5 +152,42 @@ enum AdminAuthorization {
         guard let error else { return nil }
         if (error[NSAppleScript.errorNumber] as? Int) == -128 { return String(localized: "Cancelled") }
         return error[NSAppleScript.errorMessage] as? String ?? String(localized: "Unknown error")
+    }
+}
+
+/// Fila «Permiso de administrador» de Ajustes → Sistema → Permisos (mismo formato que las demás):
+/// estado, «Solicitar» (Touch ID ya y queda recordado) y «Olvidar»; debajo, el interruptor «Recordar».
+struct AdminPermissionRow: View {
+    @AppStorage(AdminAuthorization.rememberKey) private var remember = true
+    @State private var remembered = AdminAuthorization.isRemembered
+    @State private var message: String?
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: remembered ? "checkmark.circle.fill" : "touchid")
+                .foregroundStyle(remembered ? Color.green : Color.orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Administrator (Touch ID)")
+                Text(remembered ? "Remembered: Explorer won’t ask again (SMB server: turn on/off and share folders)."
+                                : "Needed to turn the SMB server on/off and share folders. Asked with Touch ID.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Toggle("Remember after the first Touch ID", isOn: $remember).font(.caption).toggleStyle(.checkbox)
+                if let message { DisabledReason("\(message)") }
+            }
+            Spacer()
+            if remembered {
+                Button("Forget") { message = AdminAuthorization.forget(); remembered = AdminAuthorization.isRemembered }
+            } else {
+                Button("Request") {
+                    Task.detached {
+                        let error = AdminAuthorization.rememberNow()
+                        await MainActor.run { message = error; remembered = AdminAuthorization.isRemembered }
+                    }
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            remembered = AdminAuthorization.isRemembered
+        }
     }
 }

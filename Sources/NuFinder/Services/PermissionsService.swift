@@ -202,6 +202,7 @@ struct PermissionsSection: View {
                         .help(Text("Open System Settings"))
                 }
             }
+            AdminPermissionRow() // Fork: permiso de administrador con Touch ID, recordado
             HStack {
                 Button("Request All") {
                     DispatchQueue.global(qos: .userInitiated).async {

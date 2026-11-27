@@ -1075,3 +1075,9 @@
 "After the first Touch ID, Explorer can turn the SMB server on and off and share folders without asking again. Only those commands are allowed, nothing else." = "Tras el primer Touch ID, Explorer puede encender y apagar el servidor SMB y compartir carpetas sin volver a preguntar. Solo se permiten esas órdenes, nada más.";
 "Administrator permission" = "Permiso de administrador";
 "To log in from Windows, turn on “Windows File Sharing” for your user in System Settings → Sharing → File Sharing → Options." = "Para entrar desde Windows, activa «Compartir archivos de Windows» para tu usuario en Ajustes del Sistema → Compartir → Compartir archivos → Opciones.";
+
+"Administrator (Touch ID)" = "Administrador (Touch ID)";
+"Remembered: Explorer won’t ask again (SMB server: turn on/off and share folders)." = "Recordado: Explorer no volverá a pedirlo (servidor SMB: encender, apagar y compartir carpetas).";
+"Needed to turn the SMB server on/off and share folders. Asked with Touch ID." = "Hace falta para encender o apagar el servidor SMB y compartir carpetas. Se pide con Touch ID.";
+"Remember after the first Touch ID" = "Recordar tras el primer Touch ID";
+"Administrator permission remembered" = "Permiso de administrador recordado";
