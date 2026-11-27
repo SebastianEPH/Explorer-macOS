@@ -129,6 +129,8 @@ struct FolderChoicePicker: View {
     let emptyLabel: LocalizedStringKey
     @Binding var value: String
 
+    @State private var pickingFolder = false
+
     var body: some View {
         Picker(selection: $value) {
             Text(emptyLabel).tag("")
@@ -140,14 +142,15 @@ struct FolderChoicePicker: View {
                 Label(URL(filePath: value).lastPathComponent, systemImage: "folder").tag(value)
             }
         } label: { Label(title, systemImage: symbol) }
-        Button("Choose Another Folder…", systemImage: "folder.badge.plus") {
-            let panel = NSOpenPanel()
-            panel.canChooseDirectories = true
-            panel.canChooseFiles = false
-            if panel.runModal() == .OK, let url = panel.url { value = url.path }
-        }
+        Button("Choose Another Folder…", systemImage: "folder.badge.plus") { pickingFolder = true } // selector de Explorer, no el del Finder
         .buttonStyle(.link)
         .frame(maxWidth: .infinity, alignment: .trailing)
+        .sheet(isPresented: $pickingFolder) {
+            FolderPicker(title: title, confirm: "Choose") { url in
+                if let url { value = url.path }
+                pickingFolder = false
+            }
+        }
     }
 }
 

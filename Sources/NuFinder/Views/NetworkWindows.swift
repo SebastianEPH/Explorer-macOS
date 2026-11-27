@@ -148,12 +148,49 @@ struct ProtocolPage: View {
     @State private var password = ""
     @State private var error: String?
     @State private var busy = false
+    @State private var pickerDone: ((String) -> Void)?
 
     private var name: String { kind == .ftp ? "FTP" : "SMB" }
     private var connections: [SavedServer] { store.config.servers.filter { $0.kind == kind } }
     private var index: Int? { store.config.servers.firstIndex { $0.key == selected } }
 
+    /// Pestaña: conexiones (cliente) o mi servidor; se recuerda por protocolo.
+    @AppStorage private var tab: String
+    init(kind: SavedServer.Kind) {
+        self.kind = kind
+        _tab = AppStorage(wrappedValue: "connections", "network.tab.\(kind.rawValue)")
+    }
+
     var body: some View {
+        Section {
+            Picker("", selection: $tab) {
+                Label(kind == .ftp ? "My FTP Connections" : "My SMB Connections", systemImage: "arrow.down.circle").tag("connections")
+                Label(kind == .ftp ? "My FTP Server" : "My SMB Server", systemImage: "desktopcomputer").tag("server")
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+        } footer: {
+            Text(tab == "connections" ? "Computers you connect to (client)." : "This Mac sharing with others (server).")
+        }
+        .sheet(isPresented: Binding(get: { pickerDone != nil }, set: { if !$0 { pickerDone = nil } })) {
+            FolderPicker(title: "Choose the folder to share", confirm: "Share This Folder") { url in
+                if let url { pickerDone?(url.path) }
+                pickerDone = nil
+            }
+        }
+        .onAppear(perform: addRequested)
+        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in addRequested() }
+        .onChange(of: tab) { _, new in
+            // La contraseña de la ficha visible (conexión elegida o mi servidor), nunca la de la otra pestaña.
+            password = FTPSecrets.password(for: new == "server" ? FTPSettings.serverPasswordAccount : selected ?? "") ?? ""
+        }
+
+        if tab == "connections" { connectionsTab } else { serverTab }
+    }
+
+    // MARK: Pestaña «Mis conexiones» (cliente)
+
+    @ViewBuilder private var connectionsTab: some View {
         Section {
             if connections.isEmpty {
                 Text(kind == .ftp ? "No FTP connections yet. Add one with its address, user and password."
@@ -168,30 +205,33 @@ struct ProtocolPage: View {
             }
             Button { add() } label: { Label(kind == .ftp ? "Add FTP Connection" : "Add SMB Connection", systemImage: "plus") }
         } header: { Text(kind == .ftp ? "My FTP Connections" : "My SMB Connections") } footer: {
-            Text("Computers you connect to. Saved in ~/.explorer/red.json; passwords go to the macOS Keychain.")
+            Text("Saved in ~/.explorer/red.json; passwords go to the macOS Keychain.")
         }
-        .onAppear(perform: addRequested)
-        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in addRequested() }
-
         if let index { connectionForm($store.config.servers[index]) }
+    }
 
+    // MARK: Pestaña «Mi servidor»
+
+    @ViewBuilder private var serverTab: some View {
         Section {
             if kind == .ftp {
                 ItemRow(symbol: "desktopcomputer", title: String(localized: "This Mac"),
                         detail: ftp.isRunning ? (ftp.addresses.first ?? "") + " · " + (store.config.share.folderPath as NSString).lastPathComponent
                                               : String(localized: "Stopped"),
-                        selected: selected == "mine", dot: ftp.isRunning) { select("mine") }
+                        selected: false, dot: ftp.isRunning) {}
             } else {
                 ItemRow(symbol: "desktopcomputer", title: String(localized: "This Mac"),
                         detail: smb.running ? String(localized: "On · \(smb.shares.count) shared folders") : String(localized: "Stopped"),
-                        selected: selected == "mine", dot: smb.running) { select("mine") }
+                        selected: false, dot: smb.running) {}
             }
         } header: { Text(kind == .ftp ? "My FTP Server" : "My SMB Server") } footer: {
             Text(kind == .ftp ? "This Mac shares a folder by FTP (built into Explorer)." : "This Mac shares folders by SMB (macOS File Sharing).")
         }
-        .task { await smb.refresh() }
-
-        if selected == "mine" { if kind == .ftp { ftpServerForm } else { smbServerForm } }
+        .task {
+            await smb.refresh()
+            password = FTPSecrets.password(for: FTPSettings.serverPasswordAccount) ?? ""
+        }
+        if kind == .ftp { ftpServerForm } else { smbServerForm }
     }
 
     // MARK: Ficha de una conexión
@@ -305,6 +345,7 @@ struct ProtocolPage: View {
     private func addRequested() {
         guard UserDefaults.standard.string(forKey: ProtocolPage.addKey) == kind.rawValue else { return }
         UserDefaults.standard.removeObject(forKey: ProtocolPage.addKey)
+        tab = "connections"
         add()
     }
 
@@ -328,13 +369,8 @@ struct ProtocolPage: View {
         }
     }
 
-    private func chooseFolder(_ done: (String) -> Void) {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.prompt = String(localized: "Share")
-        if panel.runModal() == .OK, let url = panel.url { done(url.path) }
-    }
+    /// Abre el selector de carpetas de Explorer (no el panel de macOS/Finder).
+    private func chooseFolder(_ done: @escaping (String) -> Void) { pickerDone = done }
 }
 
 // MARK: Menú

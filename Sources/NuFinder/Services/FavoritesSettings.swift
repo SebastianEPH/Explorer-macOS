@@ -146,6 +146,8 @@ struct FavoritesSection: View {
     @State private var icons = FavoritesSettings.icons
     @State private var confirmingReset = false
 
+    @State private var pickingFolder = false
+
     var body: some View {
         Section("Favorites") {
             ForEach(Array(locations.enumerated()), id: \.element.id) { index, location in
@@ -166,6 +168,12 @@ struct FavoritesSection: View {
             Text("Names, icons, order and hidden items are reset. Added folders stay.")
         }
         .onReceive(NotificationCenter.default.publisher(for: FavoritesSettings.didChange)) { _ in reload() }
+        .sheet(isPresented: $pickingFolder) {
+            FolderPicker(title: "Choose a folder for Favorites", confirm: "Add to Favorites") { url in
+                if let url { FavoritesSettings.add(url) }
+                pickingFolder = false
+            }
+        }
     }
 
     private func row(_ location: FavoriteLocation, index: Int) -> some View {
@@ -220,12 +228,5 @@ struct FavoritesSection: View {
         icons = FavoritesSettings.icons
     }
 
-    private func addFolder() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.allowsMultipleSelection = true
-        guard panel.runModal() == .OK else { return }
-        panel.urls.forEach(FavoritesSettings.add)
-    }
+    private func addFolder() { pickingFolder = true } // selector propio de Explorer, no el del Finder
 }

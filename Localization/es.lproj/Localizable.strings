@@ -1026,3 +1026,21 @@
 "SMB (Windows, NAS, Mac)  ›  My SMB Connections · My SMB Server" = "SMB (Windows, NAS, Mac)  ›  Mis conexiones SMB · Mi servidor SMB";
 "Your connections and your server for each protocol, one click away." = "Tus conexiones y tu servidor de cada protocolo, a un clic.";
 "New connection" = "Conexión nueva";
+
+/* Fork: selector de carpetas propio */
+"Choose the folder to share" = "Elige la carpeta que quieres compartir";
+"Share This Folder" = "Compartir esta carpeta";
+"No folders inside" = "No hay carpetas dentro";
+"Choose a folder for Favorites" = "Elige una carpeta para Favoritos";
+"Choose" = "Elegir";
+
+/* Fork: selector de carpetas (2) */
+"Type a path" = "Escribir una ruta";
+"Search" = "Buscar";
+"This folder is empty" = "Esta carpeta está vacía";
+"No results" = "Sin resultados";
+"That folder doesn’t exist" = "Esa carpeta no existe";
+
+"Computers you connect to (client)." = "Equipos a los que te conectas (cliente).";
+"This Mac sharing with others (server)." = "Este Mac compartiendo con otros (servidor).";
+"Saved in ~/.explorer/red.json; passwords go to the macOS Keychain." = "Se guarda en ~/.explorer/red.json; las contraseñas van al Llavero de macOS.";
