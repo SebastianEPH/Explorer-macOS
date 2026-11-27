@@ -372,9 +372,9 @@ struct ProtocolPage: View {
     @ViewBuilder private var adminSection: some View {
         Section {
             HStack {
-                Image(systemName: AdminAuthorization.isRemembered ? "checkmark.circle.fill" : "touchid")
+                Image(systemName: AdminAuthorization.isRemembered ? "checkmark.circle.fill" : "lock.fill")
                     .foregroundStyle(AdminAuthorization.isRemembered ? Color.green : Color.orange)
-                Text(AdminAuthorization.isRemembered ? "Administrator permission remembered" : "Asks with Touch ID")
+                Text(AdminAuthorization.isRemembered ? "Administrator permission remembered" : "Needs the administrator permission (once)")
                 Spacer()
                 Button("Permissions…") { SettingsOpener.open(tab: "system", page: "permissions") }
             }

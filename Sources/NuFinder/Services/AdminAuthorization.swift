@@ -164,14 +164,14 @@ struct AdminPermissionRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            Image(systemName: remembered ? "checkmark.circle.fill" : "touchid")
+            Image(systemName: remembered ? "checkmark.circle.fill" : "lock.fill")
                 .foregroundStyle(remembered ? Color.green : Color.orange)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Administrator (Touch ID)")
+                Text("Administrator")
                 Text(remembered ? "Remembered: Explorer won’t ask again (SMB server: turn on/off and share folders)."
-                                : "Needed to turn the SMB server on/off and share folders. Asked with Touch ID.")
+                                : "Needed to turn the SMB server on/off and share folders. Press Request and type your password once; macOS doesn’t allow Touch ID for this in apps that aren’t Apple’s.")
                     .font(.caption).foregroundStyle(.secondary)
-                Toggle("Remember after the first Touch ID", isOn: $remember).font(.caption).toggleStyle(.checkbox)
+                Toggle("Remember (don’t ask again)", isOn: $remember).font(.caption).toggleStyle(.checkbox)
                 if let message { DisabledReason("\(message)") }
             }
             Spacer()
