@@ -171,15 +171,15 @@ final class SMBServerController: ObservableObject {
 }
 
 /// Menú «SMB»: encender/apagar el servidor de macOS, compartir la carpeta actual, conectarse.
-struct SMBMenu: Commands {
+struct SMBMenuItems: View {
     @AppStorage(SMBServer.showsMenuKey) private var showsMenu = true
     @ObservedObject private var server = SMBServerController.shared
     let currentFolder: () -> URL?
     let connect: () -> Void
 
-    var body: some Commands {
+    var body: some View {
         if showsMenu {
-            CommandMenu("SMB") {
+            Menu("SMB") {
                 Toggle("SMB Server (macOS File Sharing)", isOn: Binding(
                     get: { server.running }, set: { on in Task { await server.setRunning(on) } }))
                 Button("Share Current Folder via SMB") {
@@ -241,7 +241,7 @@ struct SMBSettingsSection: View {
                 Button("Share a Folder…") { chooseFolder() }.disabled(server.busy)
             }
             Toggle(isOn: $showsMenu) {
-                Label("“SMB” menu in the menu bar", systemImage: "menubar.rectangle")
+                Label("SMB in the “Servers” menu", systemImage: "menubar.rectangle")
                 Text("Turns the server on and off, shares the current folder and connects to servers.")
             }
             HStack {
@@ -283,5 +283,25 @@ struct SMBServerPreview: View {
             Spacer()
         }
         .animation(.default, value: running)
+    }
+}
+
+/// Menú «Servidores» de la barra de menús: un submenú por protocolo (FTP, SMB…), cada uno con
+/// su cliente y su servidor. Protocolo nuevo → su submenú aquí.
+struct ServersMenu: Commands {
+    static let showsKey = "menu.showsServers"
+    @AppStorage(ServersMenu.showsKey) private var shows = true
+    let currentFolder: () -> URL?
+    let connectSMB: () -> Void
+
+    var body: some Commands {
+        if shows {
+            CommandMenu("Servers") {
+                FTPMenuItems(currentFolder: currentFolder)
+                SMBMenuItems(currentFolder: currentFolder, connect: connectSMB)
+                Divider()
+                Button("Server Settings…") { SettingsOpener.open(tab: "network", page: "ftp") }
+            }
+        }
     }
 }

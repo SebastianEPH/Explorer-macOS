@@ -25,7 +25,7 @@ struct FTPSettingsSection: View {
                 Text("Adds “Connect to FTP Server…” (⌥⌘K) to the FTP menu: browse a server, download to the current folder, upload by dragging files. Passwords are kept in the Keychain.")
             }
             Toggle(isOn: $showsMenu) {
-                Label("“FTP” menu in the menu bar", systemImage: "menubar.rectangle")
+                Label("FTP in the “Servers” menu", systemImage: "menubar.rectangle")
                 Text("Turns the client and the server on and off from the menu bar.")
             }
         }

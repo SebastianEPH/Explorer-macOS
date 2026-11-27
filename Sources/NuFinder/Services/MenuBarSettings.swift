@@ -285,6 +285,7 @@ struct MenuBarSection: View {
     @AppStorage(MenuBarSettings.hidesWindowTabsKey) private var hidesWindowTabs = true
     @AppStorage(FTPSettings.showsMenuKey) private var showsFTP = true
     @AppStorage(SMBServer.showsMenuKey) private var showsSMB = true
+    @AppStorage(ServersMenu.showsKey) private var showsServers = true
 
     var body: some View {
         Section("Menu Bar") {
@@ -305,12 +306,16 @@ struct MenuBarSection: View {
                 Label("“Commands” menu", systemImage: "command")
                 Text("Off: the Command Palette moves to the Options menu.")
             }
+            Toggle(isOn: $showsServers) {
+                Label("“Servers” menu", systemImage: "server.rack")
+                Text("FTP, SMB and other protocols, each with its client and server.")
+            }
             Toggle(isOn: $showsFTP) {
-                Label("“FTP” menu", systemImage: "network")
+                Label("“Servers” → FTP", systemImage: "network")
                 Text("Turns the FTP client and server on and off, connects to servers and shares the current folder.")
             }
             Toggle(isOn: $showsSMB) {
-                Label("“SMB” menu", systemImage: "externaldrive.connected.to.line.below")
+                Label("“Servers” → SMB", systemImage: "externaldrive.connected.to.line.below")
                 Text("Turns the macOS SMB server on and off, shares the current folder and connects to servers.")
             }
             ForEach(MenuExtras.allCases) { extra in MenuExtraToggle(extra: extra) }
@@ -330,8 +335,7 @@ struct MenuBarSection: View {
         if showsGo { list.append("Go") }
         if showsCommands { list.append("Commands") }
         if showsOptions { list.append("Options") }
-        if showsFTP { list.append("FTP") }
-        if showsSMB { list.append("SMB") }
+        if showsServers { list.append("Servers") }
         list += ["Window", "Help"]
         return list
     }

@@ -126,8 +126,8 @@ final class FTPServerController: ObservableObject {
 
 // MARK: Menú «FTP»
 
-/// Menú «FTP» de la barra de menús: activar/desactivar cliente y servidor, conectarse y compartir.
-struct FTPMenu: Commands {
+/// Submenú «FTP» del menú «Servidores»: activar/desactivar cliente y servidor, conectarse y compartir.
+struct FTPMenuItems: View {
     @AppStorage(FTPSettings.showsMenuKey) private var showsMenu = true
     @AppStorage(FTPSettings.clientEnabledKey) private var clientEnabled = false
     @AppStorage(FTPSettings.serverEnabledKey) private var serverEnabled = false
@@ -135,9 +135,9 @@ struct FTPMenu: Commands {
     @ObservedObject private var server = FTPServerController.shared
     let currentFolder: () -> URL?
 
-    var body: some Commands {
+    var body: some View {
         if showsMenu {
-            CommandMenu("FTP") {
+            Menu("FTP") {
                 Toggle("FTP Client", isOn: $clientEnabled)
                 Button("Connect to FTP Server…") { FTPClientWindow.open() }
                     .keyboardShortcut("k", modifiers: [.command, .option])

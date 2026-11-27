@@ -232,8 +232,7 @@ struct FreeloaderApp: App {
             }
             }
             ExplorerMenus(browser: { browser }, commandPaletteKey: commandPaletteKey) // Fork: menú Opciones y navegación
-            FTPMenu(currentFolder: { keyFocus.windowBrowser?.currentURL }) // Fork: cliente y servidor FTP
-            SMBMenu(currentFolder: { keyFocus.windowBrowser?.currentURL }, connect: { browser.requestConnectToServer() }) // Fork: servidor SMB
+            ServersMenu(currentFolder: { keyFocus.windowBrowser?.currentURL }, connectSMB: { browser.requestConnectToServer() }) // Fork: menú Servidores (FTP, SMB…)
         }
         Settings {
             SettingsView()
