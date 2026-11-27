@@ -138,11 +138,14 @@ struct FTPMenuItems: View {
     var body: some View {
         if showsMenu {
             Menu("FTP") {
+                Section("Client") {
                 Toggle("FTP Client", isOn: $clientEnabled)
                 Button("Connect to FTP Server…") { FTPClientWindow.open() }
                     .keyboardShortcut("k", modifiers: [.command, .option])
                     .disabled(!clientEnabled)
-                Divider()
+                Button("FTP Client Settings…") { SettingsOpener.open(tab: "servers", page: "ftpClient") }
+                }
+                Section("Server") {
                 Toggle("FTP Server", isOn: $serverEnabled)
                 if let address = server.addresses.first {
                     Text("Running at \(address)")
@@ -157,8 +160,8 @@ struct FTPMenuItems: View {
                     if let url = currentFolder() { serverRoot = url.path; serverEnabled = true }
                 }
                 .disabled(currentFolder() == nil)
-                Divider()
-                Button("FTP Settings…") { SettingsOpener.open(tab: "network", page: "ftp") }
+                Button("FTP Server Settings…") { SettingsOpener.open(tab: "servers", page: "ftpServer") }
+                }
             }
         }
     }

@@ -1,8 +1,9 @@
 import AppKit
 import SwiftUI
 
-/// Fork: Ajustes → Red → FTP. Cliente y servidor, cada uno con su interruptor y su vista previa.
+/// Fork: Ajustes → Servidores → Cliente FTP / Servidor FTP (apartados separados, `part`).
 struct FTPSettingsSection: View {
+    var part = "client"
     @AppStorage(FTPSettings.clientEnabledKey) private var clientEnabled = false
     @AppStorage(FTPSettings.serverEnabledKey) private var serverEnabled = false
     @AppStorage(FTPSettings.serverPortKey) private var port = FTPSettings.defaultPort
@@ -18,7 +19,11 @@ struct FTPSettingsSection: View {
     private var rootPath: String { root.isEmpty ? NSHomeDirectory() : root }
 
     var body: some View {
-        Section("FTP Client") {
+        if part == "client" { clientSection } else { serverSection }
+    }
+
+    private var clientSection: some View {
+        Section {
             SettingsPreviewBox(title: "Preview: the FTP client window") { FTPClientPreview(enabled: clientEnabled) }
             Toggle(isOn: $clientEnabled) {
                 Label("FTP Client", systemImage: "network")
@@ -26,10 +31,13 @@ struct FTPSettingsSection: View {
             }
             Toggle(isOn: $showsMenu) {
                 Label("FTP in the “Servers” menu", systemImage: "menubar.rectangle")
-                Text("Turns the client and the server on and off from the menu bar.")
+                Text("Shows the FTP submenu (client and server) in the menu bar.")
             }
         }
-        Section("FTP Server") {
+    }
+
+    private var serverSection: some View {
+        Section {
             SettingsPreviewBox(title: "Preview: what other computers connect to") {
                 FTPServerPreview(running: server.isRunning, address: server.addresses.first
                                  ?? "ftp://\(FTPSettings.localAddresses().first ?? "127.0.0.1"):\(port)",
@@ -138,5 +146,18 @@ struct FTPServerPreview: View {
             Spacer()
         }
         .animation(.default, value: running)
+    }
+}
+
+/// Pestaña «Servidores» de Ajustes (mismo nombre que el menú): un apartado por protocolo y papel.
+/// Protocolo nuevo → «Cliente X» y «Servidor X» aquí.
+enum ServersSettings {
+    static var pages: [SettingsPage] {
+        [
+            SettingsPage("ftpClient", "FTP Client", "arrow.down.circle") { FTPSettingsSection(part: "client") },
+            SettingsPage("ftpServer", "FTP Server", "server.rack") { FTPSettingsSection(part: "server") },
+            SettingsPage("smbClient", "SMB Client", "link") { SMBClientSettingsSection() },
+            SettingsPage("smbServer", "SMB Server", "externaldrive.connected.to.line.below") { SMBSettingsSection() },
+        ]
     }
 }

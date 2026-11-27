@@ -180,6 +180,11 @@ struct SMBMenuItems: View {
     var body: some View {
         if showsMenu {
             Menu("SMB") {
+                Section("Client") {
+                Button("Connect to SMB Server…") { connect() }
+                Button("SMB Client Settings…") { SettingsOpener.open(tab: "servers", page: "smbClient") }
+                }
+                Section("Server") {
                 Toggle("SMB Server (macOS File Sharing)", isOn: Binding(
                     get: { server.running }, set: { on in Task { await server.setRunning(on) } }))
                 Button("Share Current Folder via SMB") {
@@ -200,15 +205,14 @@ struct SMBMenuItems: View {
                     }
                 }
                 Button("Refresh Status") { Task { await server.refresh() } }
-                Divider()
-                Button("Connect to SMB Server…") { connect() }
-                Button("SMB Settings…") { SettingsOpener.open(tab: "network", page: "smb") }
+                Button("SMB Server Settings…") { SettingsOpener.open(tab: "servers", page: "smbServer") }
+                }
             }
         }
     }
 }
 
-/// Ajustes → Red → SMB.
+/// Ajustes → Servidores → Servidor SMB.
 struct SMBSettingsSection: View {
     @AppStorage(SMBServer.showsMenuKey) private var showsMenu = true
     @ObservedObject private var server = SMBServerController.shared
@@ -216,7 +220,7 @@ struct SMBSettingsSection: View {
     @State private var guest = false
 
     var body: some View {
-        Section("SMB Server") {
+        Section {
             SettingsPreviewBox(title: "Preview: what other computers connect to") {
                 SMBServerPreview(running: server.running, address: SMBServer.addresses().first ?? "smb://", shares: server.shares)
             }
@@ -239,10 +243,6 @@ struct SMBSettingsSection: View {
                 Toggle("Allow guests", isOn: $guest)
                 Spacer()
                 Button("Share a Folder…") { chooseFolder() }.disabled(server.busy)
-            }
-            Toggle(isOn: $showsMenu) {
-                Label("SMB in the “Servers” menu", systemImage: "menubar.rectangle")
-                Text("Turns the server on and off, shares the current folder and connects to servers.")
             }
             HStack {
                 Text("To log in from Windows, your user needs “Windows File Sharing” turned on in System Settings → Sharing → File Sharing → Options.")
@@ -290,17 +290,63 @@ struct SMBServerPreview: View {
 /// su cliente y su servidor. Protocolo nuevo → su submenú aquí.
 struct ServersMenu: Commands {
     static let showsKey = "menu.showsServers"
+    /// El mismo nombre en la barra de menús y en la pestaña de Ajustes.
+    static let title = "Servers"
     @AppStorage(ServersMenu.showsKey) private var shows = true
     let currentFolder: () -> URL?
     let connectSMB: () -> Void
 
     var body: some Commands {
         if shows {
-            CommandMenu("Servers") {
+            CommandMenu(LocalizedStringKey(ServersMenu.title)) {
                 FTPMenuItems(currentFolder: currentFolder)
                 SMBMenuItems(currentFolder: currentFolder, connect: connectSMB)
                 Divider()
-                Button("Server Settings…") { SettingsOpener.open(tab: "network", page: "ftp") }
+                Button("Server Settings…") { SettingsOpener.open(tab: "servers", page: "ftpClient") }
+            }
+        }
+    }
+}
+
+/// Ajustes → Servidores → Cliente SMB: conectarse a carpetas compartidas de otros equipos
+/// (el «Conectar al servidor…» del autor) y sus servidores recientes.
+struct SMBClientSettingsSection: View {
+    static let recentKey = "recentSMBServers" // del autor (BrowserModel)
+    @AppStorage(SMBServer.showsMenuKey) private var showsMenu = true
+    @State private var recent = UserDefaults.standard.stringArray(forKey: SMBClientSettingsSection.recentKey) ?? []
+
+    var body: some View {
+        Section {
+            SettingsPreviewBox(title: "Preview: connecting to another computer") {
+                HStack(spacing: 12) {
+                    Image(systemName: "desktopcomputer").font(.title)
+                    Image(systemName: "arrow.right").foregroundStyle(.secondary)
+                    Image(systemName: "externaldrive.connected.to.line.below").font(.title)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(verbatim: recent.first ?? "smb://192.168.1.20/Documentos").font(.callout.monospaced())
+                        Text("Opens in an Explorer tab, like any folder").font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+            }
+            LabeledContent {
+                Button("Connect to SMB Server…") { KeyWindowFocus.shared.windowBrowser?.requestConnectToServer() }
+            } label: {
+                Label("Connect", systemImage: "link")
+                Text("Opens shared folders from Windows, NAS drives or other Macs. macOS asks for the user and password.")
+            }
+            ForEach(recent, id: \.self) { address in
+                LabeledContent {
+                    Button("Forget") {
+                        recent.removeAll { $0 == address }
+                        UserDefaults.standard.set(recent, forKey: SMBClientSettingsSection.recentKey)
+                    }
+                } label: { Label(address, systemImage: "clock.arrow.circlepath") }
+            }
+            if recent.isEmpty { Text("No recent servers").font(.caption).foregroundStyle(.secondary) }
+            Toggle(isOn: $showsMenu) {
+                Label("SMB in the “Servers” menu", systemImage: "menubar.rectangle")
+                Text("Shows the SMB submenu (client and server) in the menu bar.")
             }
         }
     }

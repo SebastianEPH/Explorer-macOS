@@ -136,4 +136,33 @@ struct SMBTests {
             #expect(window.contentView?.fittingSize.height ?? 0 > 200)
         }
     }
+
+    // Menú y Ajustes con el mismo nombre; cliente y servidor de cada protocolo en apartados separados,
+    // y cada «Ajustes de…» de los menús lleva a un apartado que existe.
+    @Test func serversSettingsMatchTheMenu() throws {
+        let source = try String(contentsOfFile: "Sources/NuFinder/Views/SettingsView.swift", encoding: .utf8)
+        #expect(source.contains("settingsTab(LocalizedStringKey(ServersMenu.title)"))
+        #expect(!source.contains("\"Network\""))
+        let ids = ServersSettings.pages.map(\.id)
+        #expect(ids == ["ftpClient", "ftpServer", "smbClient", "smbServer"])
+        let menus = try ["Sources/NuFinder/Services/FTPService.swift", "Sources/NuFinder/Services/SMBServerService.swift"]
+            .map { try String(contentsOfFile: $0, encoding: .utf8) }.joined()
+        let opened = menus.components(separatedBy: "SettingsOpener.open(tab: \"").dropFirst().map { part -> (String, String) in
+            let tab = String(part.prefix { $0 != "\"" })
+            let page = part.components(separatedBy: "page: \"")[1].prefix { $0 != "\"" }
+            return (tab, String(page))
+        }
+        #expect(opened.count >= 5)
+        for (tab, page) in opened { #expect(tab == "servers" && ids.contains(page), "\(tab)/\(page)") }
+        let es = try #require(Bundle(path: "Localization/es.lproj"))
+        #expect(es.localizedString(forKey: ServersMenu.title, value: nil, table: nil) == "Servidores")
+    }
+
+    /// La pestaña real se dibuja con sus cuatro apartados (cliente y servidor por separado).
+    @Test func clientAndServerPagesRenderSeparately() async throws {
+        for page in ServersSettings.pages {
+            let view = NSHostingView(rootView: Form { page.content }.formStyle(.grouped).frame(width: 600))
+            #expect(view.fittingSize.height > 100, "\(page.id)")
+        }
+    }
 }

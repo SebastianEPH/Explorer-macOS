@@ -53,7 +53,7 @@ struct SettingsView: View {
                 SettingsPage("updates", "Updates", "arrow.down.circle") { UpdatesSection() }
             ])
             .settingsTab("System", systemImage: "lock.shield").tag("system")
-            SettingsPagesView(tab: "network", pages: [SettingsPage("ftp", "FTP", "network") { FTPSettingsSection() }, SettingsPage("smb", "SMB", "externaldrive.connected.to.line.below") { SMBSettingsSection() }]).settingsTab("Network", systemImage: "network").tag("network") // Fork
+            SettingsPagesView(tab: "servers", pages: ServersSettings.pages).settingsTab(LocalizedStringKey(ServersMenu.title), systemImage: "server.rack").tag("servers") // Fork: mismo nombre que el menú
         }
         .onChange(of: commandPaletteKey) { _, value in commandPaletteKey = sanitized(value, fallback: "p") }
         .onChange(of: terminalKey) { _, value in terminalKey = sanitized(value, fallback: "t") }

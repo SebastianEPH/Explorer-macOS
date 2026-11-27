@@ -839,3 +839,17 @@
 "Title and close button in the Command Palette" = "Título y botón de cerrar en la paleta de comandos";
 "The Command Palette (⌘⇧P) finds any action by name. Off: as in the original, it only closes with Esc." = "La paleta de comandos (⌘⇧P) busca cualquier acción por su nombre. Apagado: como en el original, solo se cierra con Esc.";
 "Close" = "Cerrar";
+
+/* Fork: Ajustes → Servidores */
+"Client" = "Cliente";
+"FTP Client Settings…" = "Ajustes del cliente FTP…";
+"FTP Server Settings…" = "Ajustes del servidor FTP…";
+"SMB Client Settings…" = "Ajustes del cliente SMB…";
+"SMB Server Settings…" = "Ajustes del servidor SMB…";
+"SMB Client" = "Cliente SMB";
+"Preview: connecting to another computer" = "Vista previa: conectarse a otro equipo";
+"Opens in an Explorer tab, like any folder" = "Se abre en una pestaña de Explorer, como cualquier carpeta";
+"Opens shared folders from Windows, NAS drives or other Macs. macOS asks for the user and password." = "Abre carpetas compartidas de Windows, discos NAS u otros Mac. macOS pide el usuario y la contraseña.";
+"No recent servers" = "No hay servidores recientes";
+"Shows the FTP submenu (client and server) in the menu bar." = "Muestra el submenú FTP (cliente y servidor) en la barra de menús.";
+"Shows the SMB submenu (client and server) in the menu bar." = "Muestra el submenú SMB (cliente y servidor) en la barra de menús.";
