@@ -1064,3 +1064,14 @@
 "With password" = "Con contraseña";
 "No password" = "Sin contraseña";
 "Not authorized" = "No autorizado";
+
+/* Fork: permiso de administrador recordado */
+"Permission remembered" = "Permiso recordado";
+"Asks with Touch ID" = "Se pide con Touch ID";
+"Explorer won’t ask again for the SMB server." = "Explorer no volverá a pedirlo para el servidor SMB.";
+"macOS asks for Touch ID (or your password) when you change the SMB server." = "macOS pide Touch ID (o tu contraseña) al cambiar el servidor SMB.";
+"Allow Now" = "Permitir ahora";
+"Remember the permission" = "Recordar el permiso";
+"After the first Touch ID, Explorer can turn the SMB server on and off and share folders without asking again. Only those commands are allowed, nothing else." = "Tras el primer Touch ID, Explorer puede encender y apagar el servidor SMB y compartir carpetas sin volver a preguntar. Solo se permiten esas órdenes, nada más.";
+"Administrator permission" = "Permiso de administrador";
+"To log in from Windows, turn on “Windows File Sharing” for your user in System Settings → Sharing → File Sharing → Options." = "Para entrar desde Windows, activa «Compartir archivos de Windows» para tu usuario en Ajustes del Sistema → Compartir → Compartir archivos → Opciones.";

@@ -82,21 +82,30 @@ enum SMBServer {
     private static let serverPrefs = "/Library/Preferences/SystemConfiguration/com.apple.smb.server"
 
     /// Lo mismo que el interruptor «Compartir archivos» de Ajustes del Sistema.
+    // Cada orden privilegiada va precedida de `$SUDO`: vacío cuando el guion ya corre como
+    // administrador (Touch ID) y `sudo -n` cuando el permiso está recordado (`AdminAuthorization`).
+    static let launchctlCommands = ["/bin/launchctl enable system/com.apple.smbd",
+                                    "/bin/launchctl bootstrap system \(smbPlist)",
+                                    "/bin/launchctl bootout system/com.apple.smbd",
+                                    "/bin/launchctl disable system/com.apple.smbd",
+                                    "/usr/bin/defaults write \(serverPrefs) EnabledServices -array disk",
+                                    "/usr/bin/defaults delete \(serverPrefs) EnabledServices"]
+
     static func enableScript() -> String {
-        "/bin/launchctl enable system/com.apple.smbd; /bin/launchctl bootstrap system \(smbPlist) 2>/dev/null; "
-            + "/usr/bin/defaults write \(serverPrefs) EnabledServices -array disk; true"
+        "$SUDO /bin/launchctl enable system/com.apple.smbd; $SUDO /bin/launchctl bootstrap system \(smbPlist) 2>/dev/null; "
+            + "$SUDO /usr/bin/defaults write \(serverPrefs) EnabledServices -array disk; true"
     }
 
     static func disableScript() -> String {
-        "/usr/bin/defaults delete \(serverPrefs) EnabledServices 2>/dev/null; "
-            + "/bin/launchctl bootout system/com.apple.smbd 2>/dev/null; /bin/launchctl disable system/com.apple.smbd; true"
+        "$SUDO /usr/bin/defaults delete \(serverPrefs) EnabledServices 2>/dev/null; "
+            + "$SUDO /bin/launchctl bootout system/com.apple.smbd 2>/dev/null; $SUDO /bin/launchctl disable system/com.apple.smbd; true"
     }
 
     static func addScript(path: String, name: String, readOnly: Bool, guest: Bool) -> String {
-        "/usr/sbin/sharing -a \(quoted(path)) -n \(quoted(name)) -S \(quoted(name)) -s 001 -g \(guest ? "001" : "000") -R \(readOnly ? 1 : 0)"
+        "$SUDO /usr/sbin/sharing -a \(quoted(path)) -n \(quoted(name)) -S \(quoted(name)) -s 001 -g \(guest ? "001" : "000") -R \(readOnly ? 1 : 0)"
     }
 
-    static func removeScript(name: String) -> String { "/usr/sbin/sharing -r \(quoted(name))" }
+    static func removeScript(name: String) -> String { "$SUDO /usr/sbin/sharing -r \(quoted(name))" }
 
     static func setEnabled(_ on: Bool) -> String? { runner.runAsAdmin(on ? enableScript() : disableScript()) }
 

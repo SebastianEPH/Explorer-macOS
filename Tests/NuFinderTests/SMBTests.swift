@@ -67,9 +67,12 @@ struct SMBTests {
     // Rutas con espacios y comillas no rompen la orden de shell ni el AppleScript.
     @Test func scriptsAreSafelyQuoted() {
         let script = SMBServer.addScript(path: "/Users/a/Mis 'cosas'", name: "Mis 'cosas'", readOnly: true, guest: false)
-        #expect(script == "/usr/sbin/sharing -a '/Users/a/Mis '\\''cosas'\\''' -n 'Mis '\\''cosas'\\''' -S 'Mis '\\''cosas'\\''' -s 001 -g 000 -R 1")
+        #expect(script == "$SUDO /usr/sbin/sharing -a '/Users/a/Mis '\\''cosas'\\''' -n 'Mis '\\''cosas'\\''' -S 'Mis '\\''cosas'\\''' -s 001 -g 000 -R 1")
         #expect(SMBServer.appleScriptEscaped(#"a "b" \c"#) == #"a \"b\" \\c"#)
-        #expect(SMBServer.removeScript(name: "X") == "/usr/sbin/sharing -r 'X'")
+        #expect(SMBServer.removeScript(name: "X") == "$SUDO /usr/sbin/sharing -r 'X'")
+        // La regla de sudo solo permite las órdenes del servidor SMB.
+        let rule = AdminAuthorization.sudoersRule(user: "ana")
+        #expect(rule.contains("ana ALL=(root) NOPASSWD: /usr/sbin/sharing *") && !rule.contains("ALL=(ALL)") && !rule.contains("/bin/sh"))
         #expect(SMBServer.enableScript().contains("launchctl enable system/com.apple.smbd"))
         #expect(SMBServer.disableScript().contains("launchctl disable system/com.apple.smbd"))
     }

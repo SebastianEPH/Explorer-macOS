@@ -364,8 +364,45 @@ struct ProtocolPage: View {
 
     @State private var smbReadOnly = false
     @State private var smbGuest = false
+    @AppStorage(AdminAuthorization.rememberKey) private var rememberAdmin = true
+    @State private var adminRemembered = AdminAuthorization.isRemembered
+    @State private var adminMessage: String?
+
+    /// Permiso de administrador: Touch ID una vez y recordado (o Touch ID cada vez).
+    @ViewBuilder private var adminSection: some View {
+        Section {
+            HStack {
+                Image(systemName: adminRemembered ? "lock.open.fill" : "touchid")
+                    .foregroundStyle(adminRemembered ? Color.green : Color.accentColor)
+                VStack(alignment: .leading) {
+                    Text(adminRemembered ? "Permission remembered" : "Asks with Touch ID")
+                    Text(adminRemembered ? "Explorer won’t ask again for the SMB server." : "macOS asks for Touch ID (or your password) when you change the SMB server.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                if adminRemembered {
+                    Button("Forget") { adminMessage = AdminAuthorization.forget(); adminRemembered = AdminAuthorization.isRemembered }
+                } else {
+                    Button("Allow Now") {
+                        Task.detached {
+                            let error = AdminAuthorization.rememberNow()
+                            await MainActor.run { adminMessage = error; adminRemembered = AdminAuthorization.isRemembered }
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            }
+            Toggle(isOn: $rememberAdmin) {
+                Text("Remember the permission")
+                Text("After the first Touch ID, Explorer can turn the SMB server on and off and share folders without asking again. Only those commands are allowed, nothing else.")
+            }
+            if let adminMessage { DisabledReason("\(adminMessage)") }
+        } header: { Text("Administrator permission") }
+    }
 
     @ViewBuilder private var smbServerForm: some View {
+        adminSection
+            .onChange(of: smb.busy) { _, _ in adminRemembered = AdminAuthorization.isRemembered }
         Section("My SMB server details") {
             HStack {
                 Text(smb.running ? "macOS File Sharing is on" : "macOS File Sharing is off")
@@ -399,7 +436,7 @@ struct ProtocolPage: View {
                 AccessLine(label: "Mac", value: "smb://" + host)
             }
             HStack {
-                Text("Asks for your administrator password. To log in from Windows, turn on “Windows File Sharing” for your user in System Settings → Sharing → File Sharing → Options.")
+                Text("To log in from Windows, turn on “Windows File Sharing” for your user in System Settings → Sharing → File Sharing → Options.")
                     .font(.caption).foregroundStyle(.secondary)
                 Button("Open…") { SMBServer.openSystemSharing() }
             }

@@ -52,8 +52,69 @@ enum AdminAuthorization {
         }
     }
 
-    /// Ejecuta un guion de shell como administrador. nil = bien; si no, el error.
+    // MARK: Recordar el permiso (no volver a pedirlo)
+
+    /// Encendido = tras el primer Touch ID se instala una regla de sudo solo para las órdenes del
+    /// servidor SMB, y después no se vuelve a pedir nada. Apagado = Touch ID cada vez (tras unos minutos).
+    static let rememberKey = "admin.remember"
+    static let sudoersPath = "/etc/sudoers.d/explorer"
+    static var wantsRemember: Bool { UserDefaults.standard.object(forKey: rememberKey) as? Bool ?? true }
+    static var isRemembered: Bool { FileManager.default.fileExists(atPath: sudoersPath) }
+
+    /// Solo estas órdenes, solo para este usuario, sin contraseña. Nada más.
+    static func sudoersRule(user: String = NSUserName()) -> String {
+        let commands = ["/usr/sbin/sharing *"] + SMBServer.launchctlCommands + ["/bin/rm -f \(sudoersPath)"]
+        let escaped = commands.map { $0.replacingOccurrences(of: ":", with: "\\:").replacingOccurrences(of: ",", with: "\\,") }
+        return "# Explorer: servidor SMB sin volver a pedir permiso (se quita en Ajustes → Red → SMB)\n"
+            + "\(user) ALL=(root) NOPASSWD: " + escaped.joined(separator: ", ") + "\n"
+    }
+
+    /// Guion (como administrador) que instala la regla, comprobada antes con visudo.
+    static func installRuleScript() -> String {
+        let temp = "/tmp/explorer-sudoers-\(UUID().uuidString)"
+        return "printf '%s' \(SMBServer.quoted(sudoersRule())) > \(temp) && /usr/sbin/visudo -cf \(temp) >/dev/null && "
+            + "/usr/bin/install -m 0440 -o root -g wheel \(temp) \(sudoersPath); rm -f \(temp)"
+    }
+
+    /// Pedir el permiso ahora (Touch ID) y recordarlo, sin esperar a un cambio.
+    static func rememberNow() -> String? { runPrivileged(installRuleScript()) }
+
+    /// Olvidar el permiso recordado.
+    static func forget() -> String? {
+        guard isRemembered else { return nil }
+        let (code, _) = shell("/usr/bin/sudo -n /bin/rm -f \(sudoersPath)")
+        return code == 0 ? nil : runPrivileged("/bin/rm -f \(sudoersPath)")
+    }
+
+    private static func shell(_ script: String) -> (Int32, String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", script]
+        let pipe = Pipe()
+        process.standardOutput = pipe; process.standardError = pipe
+        guard (try? process.run()) != nil else { return (-1, "") }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return (process.terminationStatus, String(decoding: data, as: UTF8.self))
+    }
+
+    /// Ejecuta un guion con permisos: si están recordados, sin preguntar; si no, Touch ID
+    /// (y si se quiere recordar, aprovecha ese mismo Touch ID para instalar la regla).
     static func run(_ script: String) -> String? {
+        if isRemembered {
+            let (code, output) = shell("SUDO='/usr/bin/sudo -n'; " + script)
+            if code == 0 { return nil }
+            if !output.contains("password is required") && !output.contains("contraseña") {
+                return output.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            // La regla ya no vale (p. ej. cambió el usuario): se pide de nuevo.
+        }
+        let body = "SUDO=''; " + script + (wantsRemember && !isRemembered ? "; " + installRuleScript() : "")
+        return runPrivileged(body)
+    }
+
+    /// Ejecuta un guion de shell como administrador (Touch ID). nil = bien; si no, el error.
+    static func runPrivileged(_ script: String) -> String? {
         guard let execute else { return runWithAppleScript(script) }
         let (ref, error) = authorize()
         guard let ref else { return error }
