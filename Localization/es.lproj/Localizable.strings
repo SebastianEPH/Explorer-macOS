@@ -802,3 +802,27 @@
 "Delete the selected items from the server?" = "¿Eliminar del servidor los elementos seleccionados?";
 "“FTP” menu" = "Menú «FTP»";
 "Turns the FTP client and server on and off, connects to servers and shares the current folder." = "Enciende y apaga el cliente y el servidor FTP, conecta con servidores y comparte la carpeta actual.";
+
+/* Fork: servidor SMB */
+"SMB" = "SMB";
+"SMB Server" = "Servidor SMB";
+"SMB Server (macOS File Sharing)" = "Servidor SMB (Compartir archivos de macOS)";
+"Share Current Folder via SMB" = "Compartir la carpeta actual por SMB";
+"Stop Sharing" = "Dejar de compartir";
+"Copy Server Address (%@)" = "Copiar dirección del servidor (%@)";
+"Refresh Status" = "Actualizar estado";
+"Connect to SMB Server…" = "Conectar a servidor SMB…";
+"SMB Settings…" = "Ajustes de SMB…";
+"Windows, Linux, phones and other Macs see your shared folders. Uses the server built into macOS; it asks for your administrator password for each change." = "Windows, Linux, móviles y otros Mac ven tus carpetas compartidas. Usa el servidor que trae macOS; pide tu contraseña de administrador en cada cambio.";
+"%@ · %@%@" = "%@ · %@%@";
+"Guests" = "Invitados";
+"Allow guests" = "Permitir invitados";
+"Share a Folder…" = "Compartir una carpeta…";
+"“SMB” menu in the menu bar" = "Menú «SMB» en la barra de menús";
+"Turns the server on and off, shares the current folder and connects to servers." = "Enciende y apaga el servidor, comparte la carpeta actual y conecta con servidores.";
+"To log in from Windows, your user needs “Windows File Sharing” turned on in System Settings → Sharing → File Sharing → Options." = "Para entrar desde Windows, tu usuario necesita «Compartir archivos de Windows» activado en Ajustes del Sistema → Compartir → Compartir archivos → Opciones.";
+"Open…" = "Abrir…";
+"No shared folders" = "No hay carpetas compartidas";
+"Unknown error" = "Error desconocido";
+"“SMB” menu" = "Menú «SMB»";
+"Turns the macOS SMB server on and off, shares the current folder and connects to servers." = "Enciende y apaga el servidor SMB de macOS, comparte la carpeta actual y conecta con servidores.";
