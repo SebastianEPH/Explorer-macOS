@@ -8,12 +8,15 @@ enum FTPSettings {
     static let defaultPort = 2121
 
     static func config(_ share: NetworkConfig.Share, password: String? = nil) -> FTPServer.Config {
-        FTPServer.Config(
-            port: UInt16(clamping: max(0, share.port)),
-            root: URL(fileURLWithPath: share.folderPath, isDirectory: true),
-            user: share.user,
-            password: password ?? FTPSecrets.password(for: serverPasswordAccount) ?? "",
+        let root = URL(fileURLWithPath: share.folderPath, isDirectory: true)
+        var config = FTPServer.Config(
+            port: UInt16(clamping: max(0, share.port)), root: root,
             anonymous: share.anonymous, readOnly: share.readOnly, localOnly: share.localOnly)
+        config.accounts = share.users.filter { !$0.name.isEmpty }.map { user in
+            FTPServer.Account(name: user.name, password: FTPSecrets.password(for: user.key) ?? "", readOnly: user.readOnly,
+                              root: user.folder.isEmpty ? nil : URL(fileURLWithPath: user.folder, isDirectory: true))
+        }
+        return config
     }
 
     /// Direcciones IPv4 de este Mac en la red (para decir a otros a dónde conectarse).

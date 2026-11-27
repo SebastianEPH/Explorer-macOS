@@ -168,7 +168,8 @@ struct FTPTests {
         let root = try folder("flow"), downloads = try folder("flow-dl")
         try Data("dato".utf8).write(to: root.appendingPathComponent("informe.txt"))
         var share = NetworkConfig.Share()
-        share.folder = root.path; share.port = 0; share.user = "ana"; share.readOnly = false; share.localOnly = true
+        share.folder = root.path; share.port = 0; share.readOnly = false; share.localOnly = true
+        share.users = [FTPUser(key: FTPSettings.serverPasswordAccount, name: "ana", readOnly: false)]
         let controller = FTPServerController.shared
         defer { controller.stopForTests() }
 

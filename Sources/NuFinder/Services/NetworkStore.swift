@@ -58,6 +58,27 @@ struct SavedServer: Codable, Hashable, Identifiable, Sendable {
     var ftpAddress: FTPServerAddress { FTPServerAddress(host: host, port: port, user: user, anonymous: anonymous) }
 }
 
+/// Un usuario de mi servidor FTP. La contraseña (opcional) va en el Llavero con `key`.
+struct FTPUser: Codable, Equatable, Identifiable, Sendable {
+    var key = "ftpuser." + UUID().uuidString
+    var name: String
+    var readOnly = true
+    /// Carpeta propia ("" = la carpeta compartida del servidor).
+    var folder = ""
+    var id: String { key }
+
+    init(key: String = "ftpuser." + UUID().uuidString, name: String, readOnly: Bool = true, folder: String = "") {
+        self.key = key; self.name = name; self.readOnly = readOnly; self.folder = folder
+    }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        key = try c.decodeIfPresent(String.self, forKey: .key) ?? "ftpuser." + UUID().uuidString
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+        readOnly = try c.decodeIfPresent(Bool.self, forKey: .readOnly) ?? true
+        folder = try c.decodeIfPresent(String.self, forKey: .folder) ?? ""
+    }
+}
+
 struct NetworkConfig: Codable, Equatable, Sendable {
     /// La carpeta que compartes desde este Mac (servidor FTP propio de Explorer).
     struct Share: Codable, Equatable, Sendable {
@@ -68,6 +89,8 @@ struct NetworkConfig: Codable, Equatable, Sendable {
         var anonymous = false
         var readOnly = true
         var localOnly = false
+        /// Usuarios que pueden entrar (cada uno con su contraseña opcional, permisos y carpeta).
+        var users: [FTPUser] = [FTPUser(key: "server", name: NSUserName())]
 
         init() {}
         init(from decoder: Decoder) throws {
@@ -79,6 +102,11 @@ struct NetworkConfig: Codable, Equatable, Sendable {
             anonymous = try c.decodeIfPresent(Bool.self, forKey: .anonymous) ?? false
             readOnly = try c.decodeIfPresent(Bool.self, forKey: .readOnly) ?? true
             localOnly = try c.decodeIfPresent(Bool.self, forKey: .localOnly) ?? false
+            users = try c.decodeIfPresent([FTPUser].self, forKey: .users) ?? []
+            if !c.contains(.users), !user.isEmpty {
+                // Versión anterior (un solo usuario): pasa a la lista; su contraseña sigue en el Llavero («server»).
+                users = [FTPUser(key: "server", name: user, readOnly: readOnly)]
+            }
         }
         var folderPath: String { folder.isEmpty ? NSHomeDirectory() : folder }
     }

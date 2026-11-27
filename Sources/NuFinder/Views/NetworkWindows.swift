@@ -277,21 +277,87 @@ struct ProtocolPage: View {
                 }
             }
             TextField("Port", value: share.port, format: .number.grouping(.never))
-            Toggle("Anonymous (no user)", isOn: share.anonymous)
-            if !store.config.share.anonymous {
-                TextField("User", text: share.user)
-                SecureField("Password", text: $password)
-                    .onChange(of: password) { _, value in
-                        FTPSecrets.setPassword(value, for: FTPSettings.serverPasswordAccount)
-                        FTPServerController.shared.passwordChanged()
-                    }
-                if password.isEmpty { DisabledReason("Set a password, otherwise nobody can log in.") }
-            }
-            Toggle("Read only", isOn: share.readOnly)
             Toggle("Only this Mac (127.0.0.1)", isOn: share.localOnly)
             if let address = ftp.addresses.first { AccessLine(label: "Address to connect", value: address) }
             Text("FTP doesn’t encrypt: use it only on networks you trust.").font(.caption).foregroundStyle(.secondary)
         }
+        usersSection
+    }
+
+    // MARK: Usuarios de mi servidor FTP
+
+    @State private var selectedUser: String?
+    @State private var userPassword = ""
+
+    @ViewBuilder private var usersSection: some View {
+        let share = $store.config.share
+        Section {
+            ForEach(store.config.share.users) { user in
+                ItemRow(symbol: "person.fill", title: user.name.isEmpty ? String(localized: "New user") : user.name,
+                        detail: userDetail(user), selected: user.key == selectedUser) { selectUser(user.key) }
+            }
+            Toggle(isOn: share.anonymous) {
+                Text("Anonymous access")
+                Text("Anyone can enter with the user “anonymous” and no password.")
+            }
+            if store.config.share.anonymous { Toggle("Anonymous: read only", isOn: share.readOnly) }
+            Button { addUser() } label: { Label("Add User", systemImage: "person.badge.plus") }
+            if store.config.share.users.isEmpty && !store.config.share.anonymous {
+                DisabledReason("Add a user or turn on anonymous access, otherwise nobody can enter.")
+            }
+        } header: { Text("Users") } footer: {
+            Text("Each user can have their own password (optional), permissions and folder. Passwords go to the macOS Keychain.")
+        }
+
+        if let index = store.config.share.users.firstIndex(where: { $0.key == selectedUser }) {
+            let user = share.users[index]
+            Section("User details") {
+                TextField("User", text: user.name, prompt: Text("e.g. “ana”"))
+                SecureField("Password (optional)", text: $userPassword)
+                    .onChange(of: userPassword) { _, value in
+                        FTPSecrets.setPassword(value.isEmpty ? nil : value, for: user.wrappedValue.key)
+                        FTPServerController.shared.passwordChanged()
+                    }
+                if userPassword.isEmpty {
+                    Text("No password: anyone who knows this user name can enter.").font(.caption).foregroundStyle(.orange)
+                }
+                Toggle("Read only", isOn: user.readOnly)
+                LabeledContent("Folder") {
+                    HStack {
+                        Text(user.wrappedValue.folder.isEmpty ? String(localized: "Same as the server") : user.wrappedValue.folder)
+                            .lineLimit(1).truncationMode(.middle).foregroundStyle(.secondary)
+                        if !user.wrappedValue.folder.isEmpty { Button("Use the server’s") { user.wrappedValue.folder = "" } }
+                        Button("Change…") { chooseFolder { user.wrappedValue.folder = $0 } }
+                    }
+                }
+                HStack {
+                    Spacer()
+                    Button("Delete User", role: .destructive) {
+                        FTPSecrets.setPassword(nil, for: user.wrappedValue.key)
+                        store.config.share.users.remove(at: index)
+                        selectedUser = nil
+                    }
+                }
+            }
+        }
+    }
+
+    private func userDetail(_ user: FTPUser) -> String {
+        var parts = [user.readOnly ? String(localized: "Read only") : String(localized: "Read and write")]
+        parts.append(FTPSecrets.password(for: user.key)?.isEmpty == false ? String(localized: "With password") : String(localized: "No password"))
+        if !user.folder.isEmpty { parts.append((user.folder as NSString).lastPathComponent) }
+        return parts.joined(separator: " · ")
+    }
+
+    private func selectUser(_ key: String) {
+        selectedUser = key
+        userPassword = FTPSecrets.password(for: key) ?? ""
+    }
+
+    private func addUser() {
+        let user = FTPUser(name: "")
+        store.config.share.users.append(user)
+        selectUser(user.key)
     }
 
     // MARK: Ficha de mi servidor SMB

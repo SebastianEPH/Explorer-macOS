@@ -13,6 +13,16 @@ final class FTPServer: @unchecked Sendable {
         var anonymous = false
         var readOnly = true
         var localOnly = false // solo este Mac (127.0.0.1)
+        /// Varios usuarios, cada uno con su contraseña (vacía = sin contraseña), permisos y carpeta.
+        var accounts: [Account] = []
+    }
+
+    struct Account: Equatable, Sendable {
+        var name: String
+        var password: String = ""
+        var readOnly = true
+        /// Carpeta propia; nil = la carpeta compartida del servidor.
+        var root: URL? = nil
     }
 
     enum State: Equatable, Sendable {
@@ -166,6 +176,9 @@ final class FTPSession: @unchecked Sendable {
     private var user: String?
     private var loggedIn = false
     private var cwd = "/"
+    /// Carpeta y permisos del usuario que ha entrado (al principio, los del servidor).
+    private lazy var root: URL = config.root
+    private lazy var readOnly: Bool = config.readOnly
     private var renameFrom: URL?
     private var dataListener: NWListener?
     private var dataConnection: NWConnection?
@@ -237,6 +250,13 @@ final class FTPSession: @unchecked Sendable {
             } else { reply(331, "Password required") }
         case "PASS":
             let anonymous = config.anonymous && ["anonymous", "ftp"].contains((user ?? "").lowercased())
+            // Usuario de la lista: contraseña vacía = entra con cualquier contraseña (o ninguna).
+            if let account = config.accounts.first(where: { $0.name == user }),
+               account.password.isEmpty || account.password == argument {
+                root = account.root ?? config.root
+                readOnly = account.readOnly
+                loggedIn = true; reply(230, "Logged in"); return
+            }
             let valid = !config.user.isEmpty && user == config.user && argument == config.password
             if anonymous || valid { loggedIn = true; reply(230, "Logged in") } else { reply(530, "Login incorrect") }
         case "AUTH": reply(502, "TLS not supported")
@@ -271,7 +291,7 @@ final class FTPSession: @unchecked Sendable {
                 self.reply(257, "\"\(FTPPath.virtual(cwd: self.cwd, argument: argument))\" created")
             }
         case "RNFR":
-            guard !config.readOnly else { reply(550, "Read-only"); return }
+            guard !readOnly else { reply(550, "Read-only"); return }
             guard let url = target(argument) else { reply(550, "Not found"); return }
             renameFrom = url; reply(350, "Ready for RNTO")
         case "RNTO":
@@ -284,15 +304,15 @@ final class FTPSession: @unchecked Sendable {
 
     /// Archivo que existe dentro de la carpeta compartida.
     private func target(_ argument: String) -> URL? {
-        guard let url = FTPPath.resolve(root: config.root, virtual: FTPPath.virtual(cwd: cwd, argument: argument)),
+        guard let url = FTPPath.resolve(root: root, virtual: FTPPath.virtual(cwd: cwd, argument: argument)),
               FileManager.default.fileExists(atPath: url.path) else { return nil }
         return url
     }
 
     private func modify(_ argument: String, mustExist: Bool = true, _ action: (URL) throws -> Void, done: () -> Void) {
-        guard !config.readOnly else { reply(550, "Read-only server"); return }
+        guard !readOnly else { reply(550, "Read-only server"); return }
         let path = FTPPath.virtual(cwd: cwd, argument: argument)
-        guard path != "/", let url = mustExist ? target(argument) : FTPPath.resolve(root: config.root, virtual: path) else {
+        guard path != "/", let url = mustExist ? target(argument) : FTPPath.resolve(root: root, virtual: path) else {
             reply(550, "Not found"); return
         }
         do { try action(url); done() } catch { reply(550, error.localizedDescription) }
@@ -301,7 +321,7 @@ final class FTPSession: @unchecked Sendable {
     private func changeDirectory(_ argument: String) {
         let path = FTPPath.virtual(cwd: cwd, argument: argument)
         var isDirectory: ObjCBool = false
-        guard let url = FTPPath.resolve(root: config.root, virtual: path),
+        guard let url = FTPPath.resolve(root: root, virtual: path),
               FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory), isDirectory.boolValue else {
             reply(550, "No such directory"); return
         }
@@ -374,7 +394,7 @@ final class FTPSession: @unchecked Sendable {
 
     private func list(_ argument: String, namesOnly: Bool) {
         let cleaned = argument.split(separator: " ").filter { !$0.hasPrefix("-") }.joined(separator: " ")
-        guard let url = cleaned.isEmpty ? FTPPath.resolve(root: config.root, virtual: cwd) : target(cleaned) else {
+        guard let url = cleaned.isEmpty ? FTPPath.resolve(root: root, virtual: cwd) : target(cleaned) else {
             reply(550, "Not found"); return
         }
         withData { [self] connection in
@@ -397,9 +417,9 @@ final class FTPSession: @unchecked Sendable {
     }
 
     private func store(_ argument: String, append: Bool) {
-        guard !config.readOnly else { reply(550, "Read-only server"); return }
+        guard !readOnly else { reply(550, "Read-only server"); return }
         let path = FTPPath.virtual(cwd: cwd, argument: argument)
-        guard path != "/", let url = FTPPath.resolve(root: config.root, virtual: path) else { reply(550, "Not allowed"); return }
+        guard path != "/", let url = FTPPath.resolve(root: root, virtual: path) else { reply(550, "Not allowed"); return }
         if !append || !FileManager.default.fileExists(atPath: url.path) {
             guard FileManager.default.createFile(atPath: url.path, contents: nil) else { reply(550, "Can't create file"); return }
         }

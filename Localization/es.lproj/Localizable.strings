@@ -1044,3 +1044,22 @@
 "Computers you connect to (client)." = "Equipos a los que te conectas (cliente).";
 "This Mac sharing with others (server)." = "Este Mac compartiendo con otros (servidor).";
 "Saved in ~/.explorer/red.json; passwords go to the macOS Keychain." = "Se guarda en ~/.explorer/red.json; las contraseñas van al Llavero de macOS.";
+
+/* Fork: usuarios del servidor FTP */
+"New user" = "Usuario nuevo";
+"Anonymous access" = "Acceso anónimo";
+"Anyone can enter with the user “anonymous” and no password." = "Cualquiera puede entrar con el usuario «anonymous» y sin contraseña.";
+"Anonymous: read only" = "Anónimo: solo lectura";
+"Add User" = "Añadir usuario";
+"Add a user or turn on anonymous access, otherwise nobody can enter." = "Añade un usuario o activa el acceso anónimo; si no, nadie podrá entrar.";
+"Users" = "Usuarios";
+"Each user can have their own password (optional), permissions and folder. Passwords go to the macOS Keychain." = "Cada usuario puede tener su propia contraseña (opcional), permisos y carpeta. Las contraseñas van al Llavero de macOS.";
+"User details" = "Datos del usuario";
+"e.g. “ana”" = "p. ej. «ana»";
+"Password (optional)" = "Contraseña (opcional)";
+"No password: anyone who knows this user name can enter." = "Sin contraseña: cualquiera que sepa este nombre de usuario puede entrar.";
+"Same as the server" = "La misma del servidor";
+"Use the server’s" = "Usar la del servidor";
+"Delete User" = "Eliminar usuario";
+"With password" = "Con contraseña";
+"No password" = "Sin contraseña";
