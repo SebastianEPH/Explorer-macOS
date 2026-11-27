@@ -370,6 +370,8 @@ struct ProtocolPage: View {
 
     /// El permiso de administrador se gestiona en Ajustes → Sistema → Permisos; aquí solo se ve y se enlaza.
     @ViewBuilder private var adminSection: some View {
+        // Solo si falta el permiso: si ya está recordado no hay nada que decir.
+        if !AdminAuthorization.isRemembered {
         Section {
             HStack {
                 Image(systemName: AdminAuthorization.isRemembered ? "checkmark.circle.fill" : "lock.fill")
@@ -378,6 +380,7 @@ struct ProtocolPage: View {
                 Spacer()
                 Button("Permissions…") { SettingsOpener.open(tab: "system", page: "permissions") }
             }
+        }
         }
     }
 
