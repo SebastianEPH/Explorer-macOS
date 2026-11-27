@@ -1089,3 +1089,16 @@
 
 "Needed to turn the SMB server on/off and share folders. Press Request and use Touch ID once." = "Hace falta para encender o apagar el servidor SMB y compartir carpetas. Pulsa Solicitar y usa Touch ID una vez.";
 "Needed to turn the SMB server on/off and share folders. Press Request and type your password once (Touch ID for sudo is off on this Mac)." = "Hace falta para encender o apagar el servidor SMB y compartir carpetas. Pulsa Solicitar y escribe tu contraseña una vez (Touch ID para sudo está desactivado en este Mac).";
+
+"Keychain (FTP passwords)" = "Llavero (contraseñas de FTP)";
+"No saved passwords yet." = "Aún no hay contraseñas guardadas.";
+"Explorer can read its %lld saved passwords without asking." = "Explorer puede leer sus %lld contraseñas guardadas sin preguntar.";
+"macOS asks before Explorer reads some saved passwords. Press Request and choose “Always Allow”." = "macOS pregunta antes de que Explorer lea algunas contraseñas guardadas. Pulsa Solicitar y elige «Permitir siempre».";
+
+"Others can open and copy, but not change or delete." = "Los demás pueden abrir y copiar, pero no cambiar ni borrar.";
+"Anyone on the network can enter without a user or password." = "Cualquiera en la red puede entrar sin usuario ni contraseña.";
+"Choose Folder and Share…" = "Elegir carpeta y compartir…";
+"Share another folder" = "Compartir otra carpeta";
+"To add someone, create a user in System Settings → Users & Groups; they log in with that user and password." = "Para añadir a alguien, crea un usuario en Ajustes del Sistema → Usuarios y grupos; entra con ese usuario y su contraseña.";
+"Users & Groups…" = "Usuarios y grupos…";
+"SMB uses the user accounts of this Mac. Guests (if allowed on a folder) enter without a user." = "SMB usa las cuentas de usuario de este Mac. Los invitados (si se permiten en una carpeta) entran sin usuario.";

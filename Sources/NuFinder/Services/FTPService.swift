@@ -13,7 +13,12 @@ enum FTPSettings {
             port: UInt16(clamping: max(0, share.port)), root: root,
             anonymous: share.anonymous, readOnly: share.readOnly, localOnly: share.localOnly)
         config.accounts = share.users.filter { !$0.name.isEmpty }.map { user in
-            FTPServer.Account(name: user.name, password: FTPSecrets.password(for: user.key) ?? "", readOnly: user.readOnly,
+            // Si el Llavero no deja leerla, NO es «sin contraseña»: se pone una imposible (nadie entra
+            // hasta dar el permiso en Sistema → Permisos → Llavero).
+            FTPSecrets.needsPermission = false
+            let stored = FTPSecrets.password(for: user.key)
+            let password = FTPSecrets.needsPermission ? UUID().uuidString : (stored ?? "")
+            return FTPServer.Account(name: user.name, password: password, readOnly: user.readOnly,
                               root: user.folder.isEmpty ? nil : URL(fileURLWithPath: user.folder, isDirectory: true))
         }
         return config

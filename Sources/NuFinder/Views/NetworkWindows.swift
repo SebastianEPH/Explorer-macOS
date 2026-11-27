@@ -246,8 +246,11 @@ struct ProtocolPage: View {
             Toggle(kind == .ftp ? "Anonymous (no user)" : "Guest (no user)", isOn: server.anonymous)
             if !server.wrappedValue.anonymous {
                 TextField("User", text: server.user)
-                SecureField("Password", text: $password)
-                    .onChange(of: password) { _, value in FTPSecrets.setPassword(value.isEmpty ? nil : value, for: server.wrappedValue.key) }
+                // Se guarda solo cuando la persona escribe (no al abrir la ficha: eso tocaba el Llavero).
+                SecureField("Password", text: Binding(get: { password }, set: { value in
+                    password = value
+                    FTPSecrets.setPassword(value.isEmpty ? nil : value, for: server.wrappedValue.key)
+                }))
             }
             HStack {
                 if let error { Label(error, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange).lineLimit(2) }
@@ -313,11 +316,11 @@ struct ProtocolPage: View {
             let user = share.users[index]
             Section("User details") {
                 TextField("User", text: user.name, prompt: Text("e.g. “ana”"))
-                SecureField("Password (optional)", text: $userPassword)
-                    .onChange(of: userPassword) { _, value in
-                        FTPSecrets.setPassword(value.isEmpty ? nil : value, for: user.wrappedValue.key)
-                        FTPServerController.shared.passwordChanged()
-                    }
+                SecureField("Password (optional)", text: Binding(get: { userPassword }, set: { value in
+                    userPassword = value // solo al escribir: al abrir la ficha no se toca el Llavero
+                    FTPSecrets.setPassword(value.isEmpty ? nil : value, for: user.wrappedValue.key)
+                    FTPServerController.shared.passwordChanged()
+                }))
                 if userPassword.isEmpty {
                     Text("No password: anyone who knows this user name can enter.").font(.caption).foregroundStyle(.orange)
                 }
@@ -386,6 +389,7 @@ struct ProtocolPage: View {
 
     @ViewBuilder private var smbServerForm: some View {
         adminSection
+        smbUsersSection
         Section("My SMB server details") {
             HStack {
                 Text(smb.running ? "macOS File Sharing is on" : "macOS File Sharing is off")
@@ -402,18 +406,7 @@ struct ProtocolPage: View {
                     Text(verbatim: "\(item.path) · \(item.readOnly ? String(localized: "Read only") : String(localized: "Read and write"))\(item.guest ? " · " + String(localized: "Guests") : "")")
                 }
             }
-            HStack {
-                Toggle("Read only", isOn: $smbReadOnly)
-                Toggle("Allow guests", isOn: $smbGuest)
-                Spacer()
-                Button("Share a Folder…") {
-                    chooseFolder { path in
-                        let ro = smbReadOnly, guest = smbGuest
-                        Task { await smb.share(URL(fileURLWithPath: path), readOnly: ro, guest: guest) }
-                    }
-                }
-                .disabled(smb.busy)
-            }
+
             if smb.running, let host = SMBServer.addresses().first?.replacingOccurrences(of: "smb://", with: "") {
                 AccessLine(label: "Windows", value: "\\\\" + host)
                 AccessLine(label: "Mac", value: "smb://" + host)
@@ -423,6 +416,53 @@ struct ProtocolPage: View {
                     .font(.caption).foregroundStyle(.secondary)
                 Button("Open…") { SMBServer.openSystemSharing() }
             }
+        }
+        smbNewShareSection
+    }
+
+    /// «Compartir otra carpeta»: opciones en filas propias y el botón al final.
+    @ViewBuilder private var smbNewShareSection: some View {
+        Section {
+            Toggle(isOn: $smbReadOnly) {
+                Text("Read only")
+                Text("Others can open and copy, but not change or delete.")
+            }
+            Toggle(isOn: $smbGuest) {
+                Text("Allow guests")
+                Text("Anyone on the network can enter without a user or password.")
+            }
+            HStack {
+                Spacer()
+                Button("Choose Folder and Share…") {
+                    chooseFolder { path in
+                        let ro = smbReadOnly, guest = smbGuest
+                        Task { await smb.share(URL(fileURLWithPath: path), readOnly: ro, guest: guest) }
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(smb.busy)
+            }
+        } header: { Text("Share another folder") }
+    }
+
+    /// Usuarios que pueden entrar por SMB: las cuentas de este Mac (SMB no tiene usuarios propios).
+    @ViewBuilder private var smbUsersSection: some View {
+        Section {
+            ForEach(SMBUsers.list(), id: \.name) { user in
+                ItemRow(symbol: user.isAdmin ? "person.badge.key.fill" : "person.fill", title: user.fullName,
+                        detail: user.name + (user.isAdmin ? " · " + String(localized: "Administrator") : ""),
+                        selected: false) {}
+            }
+            HStack {
+                Text("To add someone, create a user in System Settings → Users & Groups; they log in with that user and password.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button("Users & Groups…") {
+                    NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Users-Groups-Settings.extension")!)
+                }
+            }
+        } header: { Text("Users") } footer: {
+            Text("SMB uses the user accounts of this Mac. Guests (if allowed on a folder) enter without a user.")
         }
     }
 

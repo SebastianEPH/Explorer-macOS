@@ -203,6 +203,7 @@ struct PermissionsSection: View {
                 }
             }
             AdminPermissionRow() // Fork: permiso de administrador con Touch ID, recordado
+            KeychainPermissionRow() // Fork: contraseñas de FTP en el Llavero, sin avisos sueltos
             HStack {
                 Button("Request All") {
                     DispatchQueue.global(qos: .userInitiated).async {

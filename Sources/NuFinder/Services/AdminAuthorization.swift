@@ -212,3 +212,41 @@ struct AdminPermissionRow: View {
         }
     }
 }
+
+/// Fila «Llavero» de Ajustes → Sistema → Permisos: las contraseñas de FTP guardadas por Explorer.
+/// Explorer nunca provoca avisos al leerlas; si macOS pide permiso, se concede desde aquí.
+struct KeychainPermissionRow: View {
+    @State private var ok = true
+    @State private var count = 0
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: ok ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                .foregroundStyle(ok ? Color.green : Color.orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Keychain (FTP passwords)")
+                Text(ok ? (count == 0 ? "No saved passwords yet." : "Explorer can read its \(count) saved passwords without asking.")
+                        : "macOS asks before Explorer reads some saved passwords. Press Request and choose “Always Allow”.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            if !ok {
+                Button("Request") {
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        FTPSecrets.requestPermission()
+                        refresh()
+                    }
+                }
+            }
+        }
+        .onAppear(perform: refresh)
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in refresh() }
+    }
+
+    private func refresh() {
+        DispatchQueue.global(qos: .utility).async {
+            let granted = FTPSecrets.hasPermission(), total = FTPSecrets.accounts().count
+            DispatchQueue.main.async { ok = granted; count = total }
+        }
+    }
+}

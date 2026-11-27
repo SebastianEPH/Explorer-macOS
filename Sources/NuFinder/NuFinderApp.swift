@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         TextPredictionSettings.apply() // Fork: sin texto gris de predicción al escribir nombres
         AppIconService.start() // Fork: icono elegido en Ajustes (claro/oscuro)
         FTPServerController.shared.start() // Fork: servidor FTP si está encendido
+        SMBServerController.shared.start() // Fork: estado del servidor SMB (solo publica cambios)
         SMBServerController.shared.start() // Fork: estado del servidor SMB de macOS
         DispatchQueue.main.async { MenuBarSettings.startCleaning() } // Fork: sin «Autorrelleno» en Edición
         // A SwiftPM executable reaches didFinishLaunching before SwiftUI has

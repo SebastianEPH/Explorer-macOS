@@ -22,6 +22,32 @@ enum SMBServer {
         var run: @Sendable (_ executable: String, _ arguments: [String]) -> (Int32, String)
         /// Guion de shell con permisos de administrador → nil si fue bien, si no el error.
         var runAsAdmin: @Sendable (_ script: String) -> String?
+        /// El de verdad (no el de las pruebas).
+        var isDefault = false
+    }
+
+    /// ¿Algo escucha en ese puerto de este Mac? Conexión TCP a 127.0.0.1 con 1 s de espera.
+    static func portIsOpen(_ port: UInt16) -> Bool {
+        let fd = socket(AF_INET, SOCK_STREAM, 0)
+        guard fd >= 0 else { return false }
+        defer { close(fd) }
+        _ = fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)
+        var address = sockaddr_in()
+        address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        address.sin_family = sa_family_t(AF_INET)
+        address.sin_port = port.bigEndian
+        address.sin_addr.s_addr = inet_addr("127.0.0.1")
+        let result = withUnsafePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) }
+        }
+        if result == 0 { return true }
+        guard errno == EINPROGRESS else { return false }
+        var pollfd = pollfd(fd: fd, events: Int16(POLLOUT), revents: 0)
+        guard poll(&pollfd, 1, 1000) > 0 else { return false }
+        var error: Int32 = 0
+        var length = socklen_t(MemoryLayout<Int32>.size)
+        getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &length)
+        return error == 0
     }
 
     nonisolated(unsafe) static var runner = Runner(
@@ -37,7 +63,8 @@ enum SMBServer {
             process.waitUntilExit()
             return (process.terminationStatus, String(decoding: data, as: UTF8.self))
         },
-        runAsAdmin: { script in AdminAuthorization.run(script) }) // Fork: Touch ID (autorización de macOS)
+        runAsAdmin: { script in AdminAuthorization.run(script) }, // Fork: Touch ID (sudo) o contraseña, recordado
+        isDefault: true)
 
     static func appleScriptEscaped(_ text: String) -> String {
         text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
@@ -50,6 +77,8 @@ enum SMBServer {
 
     /// ¿Hay algo escuchando en el puerto 445? (lo abre launchd cuando Compartir archivos está activo).
     static func isRunning() -> Bool {
+        // Dentro de la app `netstat` devolvía 0 bytes (siempre «Detenido»): se intenta conectar al 445.
+        if runner.isDefault { return portIsOpen(445) }
         let (_, output) = runner.run("/usr/sbin/netstat", ["-an", "-p", "tcp"])
         return parseListening(output)
     }
@@ -148,9 +177,17 @@ final class SMBServerController: ObservableObject {
         Task { await refresh() }
     }
 
-    func refresh() async {
+    private var lastRefresh = Date.distantPast
+    private var refreshing = false
+
+    /// Solo publica si algo cambió (publicar siempre rehacía los menús en bucle y colgaba la app)
+    /// y como mucho una vez cada 2 s, salvo `force` (tras encender, apagar o compartir).
+    func refresh(force: Bool = false) async {
+        guard !refreshing, force || Date().timeIntervalSince(lastRefresh) > 2 else { return }
+        refreshing = true; defer { refreshing = false; lastRefresh = Date() }
         let (isRunning, list) = await Task.detached { (SMBServer.isRunning(), SMBServer.shares()) }.value
-        running = isRunning; shares = list
+        if running != isRunning { running = isRunning }
+        if shares != list { shares = list }
     }
 
     private func change(_ work: @escaping @Sendable () -> String?) async {
@@ -158,7 +195,7 @@ final class SMBServerController: ObservableObject {
         let error = await Task.detached { work() }.value
         if let error { message = error } else { message = nil }
         busy = false
-        await refresh()
+        await refresh(force: true)
     }
 
     func setRunning(_ on: Bool) async { await change { SMBServer.setEnabled(on) } }
@@ -190,5 +227,46 @@ struct SMBServerPreview: View {
             Spacer()
         }
         .animation(.default, value: running)
+    }
+}
+
+/// Cuentas de este Mac que pueden entrar por SMB (las de personas: UID ≥ 501, no ocultas).
+enum SMBUsers {
+    struct User: Sendable { let name: String; let fullName: String; let isAdmin: Bool }
+
+    /// Se lee una vez (dscl tarda); al volver a Ajustes se vuelve a leer.
+    nonisolated(unsafe) private static var cache: (date: Date, users: [User])?
+    static func list() -> [User] {
+        if let cache, Date().timeIntervalSince(cache.date) < 30 { return cache.users }
+        let users = read()
+        cache = (Date(), users)
+        return users
+    }
+
+    private static func read() -> [User] {
+        let admins = Set(output("/usr/bin/dscl", [".", "-read", "/Groups/admin", "GroupMembership"])
+            .replacingOccurrences(of: "GroupMembership:", with: "").split(separator: " ").map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) })
+        return output("/usr/bin/dscl", [".", "-list", "/Users", "UniqueID"]).split(separator: "\n").compactMap { line -> User? in
+            let parts = line.split(separator: " ", omittingEmptySubsequences: true)
+            guard parts.count == 2, let uid = Int(parts[1]), uid >= 501, !parts[0].hasPrefix("_") else { return nil }
+            let name = String(parts[0])
+            let full = output("/usr/bin/dscl", [".", "-read", "/Users/\(name)", "RealName"])
+                .replacingOccurrences(of: "RealName:", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+            return User(name: name, fullName: full.isEmpty ? name : full, isAdmin: admins.contains(name))
+        }
+    }
+
+    private static func output(_ tool: String, _ args: [String]) -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: tool)
+        process.arguments = args
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+        process.standardInput = FileHandle.nullDevice
+        guard (try? process.run()) != nil else { return "" }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return String(decoding: data, as: UTF8.self)
     }
 }
