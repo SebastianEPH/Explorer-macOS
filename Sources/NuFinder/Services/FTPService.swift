@@ -126,43 +126,87 @@ final class FTPServerController: ObservableObject {
 
 // MARK: Menú «FTP»
 
-/// Submenú «FTP» del menú «Servidores»: activar/desactivar cliente y servidor, conectarse y compartir.
+/// Submenú «FTP» del menú «Red». Cliente y servidor por separado, cada uno con su estado
+/// arriba (qué está pasando ahora) y botones claros (Conectar / Desconectar, Iniciar / Detener).
 struct FTPMenuItems: View {
     @AppStorage(FTPSettings.showsMenuKey) private var showsMenu = true
     @AppStorage(FTPSettings.clientEnabledKey) private var clientEnabled = false
     @AppStorage(FTPSettings.serverEnabledKey) private var serverEnabled = false
     @AppStorage(FTPSettings.serverRootKey) private var serverRoot = ""
+    @AppStorage(FTPSettings.serverReadOnlyKey) private var readOnly = true
     @ObservedObject private var server = FTPServerController.shared
+    @ObservedObject private var client = FTPClientModel.shared
     let currentFolder: () -> URL?
+
+    private var rootPath: String { serverRoot.isEmpty ? NSHomeDirectory() : serverRoot }
 
     var body: some View {
         if showsMenu {
             Menu("FTP") {
                 Section("Client") {
-                Toggle("FTP Client", isOn: $clientEnabled)
-                Button("Connect to FTP Server…") { FTPClientWindow.open() }
-                    .keyboardShortcut("k", modifiers: [.command, .option])
-                    .disabled(!clientEnabled)
-                Button("FTP Client Settings…") { SettingsOpener.open(tab: "servers", page: "ftpClient") }
+                    if let host = client.connectedHost {
+                        Label("Connected to \(host)", systemImage: "circle.fill")
+                        Button("Show FTP Client") { FTPClientWindow.open() }
+                        Button("Disconnect") { client.disconnect() }
+                    } else {
+                        Label("Not connected", systemImage: "circle")
+                        Button("Connect to FTP Server…") { clientEnabled = true; FTPClientWindow.open() }
+                            .keyboardShortcut("k", modifiers: [.command, .option])
+                    }
+                    if !client.saved.isEmpty {
+                        Menu("Recent Servers") {
+                            ForEach(client.saved) { saved in
+                                Button(saved.anonymous ? saved.host : "\(saved.user)@\(saved.host)") {
+                                    clientEnabled = true
+                                    client.pick(saved)
+                                    FTPClientWindow.open()
+                                    Task { await client.connect() }
+                                }
+                            }
+                        }
+                    }
+                    Button("FTP Client Settings…") { SettingsOpener.open(tab: "servers", page: "ftpClient") }
                 }
                 Section("Server") {
-                Toggle("FTP Server", isOn: $serverEnabled)
-                if let address = server.addresses.first {
-                    Text("Running at \(address)")
-                    Button("Copy Server Address") {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(address, forType: .string)
+                    switch server.state {
+                    case .running:
+                        Label("Running at \(server.addresses.first ?? "")", systemImage: "circle.fill")
+                        Button("Stop Server") { serverEnabled = false }
+                        Button("Copy Server Address") {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(server.addresses.first ?? "", forType: .string)
+                        }
+                    case .failed(let message):
+                        Label("Couldn’t start: \(message)", systemImage: "exclamationmark.triangle")
+                        Button("Start Server") { serverEnabled = false; serverEnabled = true }
+                    case .stopped:
+                        Label("Stopped", systemImage: "circle")
+                        Button("Start Server") { serverEnabled = true }
                     }
-                } else if case .failed(let message) = server.state {
-                    Text("Couldn’t start: \(message)")
-                }
-                Button("Share Current Folder via FTP") {
-                    if let url = currentFolder() { serverRoot = url.path; serverEnabled = true }
-                }
-                .disabled(currentFolder() == nil)
-                Button("FTP Server Settings…") { SettingsOpener.open(tab: "servers", page: "ftpServer") }
+                    Label("Shared folder: \((rootPath as NSString).lastPathComponent) · \(readOnly ? String(localized: "Read only") : String(localized: "Read and write"))",
+                          systemImage: "folder")
+                    Button("Change Shared Folder…") { FTPSettings.chooseRoot() }
+                    if let url = currentFolder(), url.path != rootPath {
+                        Button("Share “\(url.lastPathComponent)” (current folder)") { serverRoot = url.path; serverEnabled = true }
+                    }
+                    Button("Show Shared Folder in Explorer") { WindowService.open(at: URL(fileURLWithPath: rootPath)) }
+                    Button("FTP Server Settings…") { SettingsOpener.open(tab: "servers", page: "ftpServer") }
                 }
             }
         }
+    }
+}
+
+extension FTPSettings {
+    /// Elegir la carpeta compartida del servidor FTP (menú y Ajustes).
+    @MainActor static func chooseRoot() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.prompt = String(localized: "Share")
+        let current = UserDefaults.standard.string(forKey: serverRootKey) ?? ""
+        panel.directoryURL = URL(fileURLWithPath: current.isEmpty ? NSHomeDirectory() : current)
+        NSApp.activate(ignoringOtherApps: true)
+        if panel.runModal() == .OK, let url = panel.url { UserDefaults.standard.set(url.path, forKey: serverRootKey) }
     }
 }

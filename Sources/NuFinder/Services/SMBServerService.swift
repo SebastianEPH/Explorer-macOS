@@ -170,42 +170,77 @@ final class SMBServerController: ObservableObject {
     func unshare(_ share: SMBShare) async { await change { SMBServer.unshare(share) } }
 }
 
-/// Menú «SMB»: encender/apagar el servidor de macOS, compartir la carpeta actual, conectarse.
+/// Submenú «SMB» del menú «Red»: cliente (conectarse a otros equipos) y servidor (el de macOS),
+/// cada uno con su estado y botones claros.
 struct SMBMenuItems: View {
     @AppStorage(SMBServer.showsMenuKey) private var showsMenu = true
     @ObservedObject private var server = SMBServerController.shared
     let currentFolder: () -> URL?
     let connect: () -> Void
 
+    private var recent: [String] { UserDefaults.standard.stringArray(forKey: SMBClientSettingsSection.recentKey) ?? [] }
+    private var mounted: [URL] {
+        (FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: [.volumeURLForRemountingKey], options: [.skipHiddenVolumes]) ?? [])
+            .filter { (try? $0.resourceValues(forKeys: [.volumeURLForRemountingKey]).volumeURLForRemounting?.scheme) == "smb" }
+    }
+
     var body: some View {
         if showsMenu {
             Menu("SMB") {
                 Section("Client") {
-                Button("Connect to SMB Server…") { connect() }
-                Button("SMB Client Settings…") { SettingsOpener.open(tab: "servers", page: "smbClient") }
-                }
-                Section("Server") {
-                Toggle("SMB Server (macOS File Sharing)", isOn: Binding(
-                    get: { server.running }, set: { on in Task { await server.setRunning(on) } }))
-                Button("Share Current Folder via SMB") {
-                    if let url = currentFolder() { Task { await server.share(url) } }
-                }
-                .disabled(currentFolder() == nil)
-                if !server.shares.isEmpty {
-                    Menu("Stop Sharing") {
-                        ForEach(server.shares) { share in
-                            Button(share.name) { Task { await server.unshare(share) } }
+                    if mounted.isEmpty {
+                        Label("Not connected", systemImage: "circle")
+                    } else {
+                        ForEach(mounted, id: \.self) { volume in
+                            Menu {
+                                Button("Open") { WindowService.open(at: volume) }
+                                Button("Disconnect") { try? NSWorkspace.shared.unmountAndEjectDevice(at: volume) }
+                            } label: { Label("Connected to \(volume.lastPathComponent)", systemImage: "circle.fill") }
                         }
                     }
-                }
-                if server.running, let address = SMBServer.addresses().first {
-                    Button("Copy Server Address (\(address))") {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(address, forType: .string)
+                    Button("Connect to SMB Server…") { connect() }
+                    if !recent.isEmpty {
+                        Menu("Recent Servers") {
+                            ForEach(recent, id: \.self) { address in
+                                Button(address) { KeyWindowFocus.shared.windowBrowser?.requestConnectToServer(address) }
+                            }
+                        }
                     }
+                    Button("SMB Client Settings…") { SettingsOpener.open(tab: "servers", page: "smbClient") }
                 }
-                Button("Refresh Status") { Task { await server.refresh() } }
-                Button("SMB Server Settings…") { SettingsOpener.open(tab: "servers", page: "smbServer") }
+                Section("Server") {
+                    if server.running {
+                        Label("Running at \(SMBServer.addresses().first ?? "smb://")", systemImage: "circle.fill")
+                        Button("Stop Server") { Task { await server.setRunning(false) } }
+                        Button("Copy Server Address") {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(SMBServer.addresses().first ?? "", forType: .string)
+                        }
+                    } else {
+                        Label("Stopped", systemImage: "circle")
+                        Button("Start Server") { Task { await server.setRunning(true) } }
+                    }
+                    Menu {
+                        ForEach(server.shares) { share in
+                            Menu(share.name) {
+                                Text(verbatim: share.path)
+                                Button("Show in Explorer") { WindowService.open(at: URL(fileURLWithPath: share.path)) }
+                                Button("Stop Sharing") { Task { await server.unshare(share) } }
+                            }
+                        }
+                        if server.shares.isEmpty { Text("No shared folders") }
+                    } label: { Label("Shared folders (\(server.shares.count))", systemImage: "folder") }
+                    if let url = currentFolder(), !server.shares.contains(where: { $0.path == url.path }) {
+                        Button("Share “\(url.lastPathComponent)” (current folder)") { Task { await server.share(url) } }
+                    }
+                    Button("Share Another Folder…") {
+                        let panel = NSOpenPanel()
+                        panel.canChooseDirectories = true; panel.canChooseFiles = false
+                        panel.prompt = String(localized: "Share")
+                        NSApp.activate(ignoringOtherApps: true)
+                        if panel.runModal() == .OK, let url = panel.url { Task { await server.share(url) } }
+                    }
+                    Button("SMB Server Settings…") { SettingsOpener.open(tab: "servers", page: "smbServer") }
                 }
             }
         }
@@ -214,27 +249,41 @@ struct SMBMenuItems: View {
 
 /// Ajustes → Servidores → Servidor SMB.
 struct SMBSettingsSection: View {
-    @AppStorage(SMBServer.showsMenuKey) private var showsMenu = true
     @ObservedObject private var server = SMBServerController.shared
     @State private var readOnly = false
     @State private var guest = false
 
     var body: some View {
-        Section {
+        Section("Status") {
             SettingsPreviewBox(title: "Preview: what other computers connect to") {
                 SMBServerPreview(running: server.running, address: SMBServer.addresses().first ?? "smb://", shares: server.shares)
             }
-            Toggle(isOn: Binding(get: { server.running }, set: { on in Task { await server.setRunning(on) } })) {
-                Label("SMB Server (macOS File Sharing)", systemImage: "externaldrive.connected.to.line.below")
-                Text("Windows, Linux, phones and other Macs see your shared folders. Uses the server built into macOS; it asks for your administrator password for each change.")
+            StatusRow(on: server.running,
+                      title: server.running ? "Running at \(SMBServer.addresses().first ?? "smb://")" : "Stopped",
+                      detail: String(localized: "Uses the server built into macOS (File Sharing); it asks for your administrator password for each change.")) {
+                if server.busy { ProgressView().controlSize(.small) }
+                if server.running {
+                    Button("Copy Server Address") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(SMBServer.addresses().first ?? "", forType: .string)
+                    }
+                    Button("Stop Server") { Task { await server.setRunning(false) } }.disabled(server.busy)
+                } else {
+                    Button("Start Server") { Task { await server.setRunning(true) } }.buttonStyle(.borderedProminent).disabled(server.busy)
+                }
             }
-            .disabled(server.busy)
             if let message = server.message { DisabledReason("\(message)") }
+        }
+        Section("Shared Folders") {
+            if server.shares.isEmpty { Text("No shared folders").foregroundStyle(.secondary) }
             ForEach(server.shares) { share in
                 LabeledContent {
-                    Button("Stop Sharing") { Task { await server.unshare(share) } }.disabled(server.busy)
+                    HStack {
+                        Button("Show in Explorer") { WindowService.open(at: URL(fileURLWithPath: share.path)) }
+                        Button("Stop Sharing") { Task { await server.unshare(share) } }.disabled(server.busy)
+                    }
                 } label: {
-                    Label(share.name, systemImage: "folder.fill.badge.person.crop")
+                    Label(share.name, systemImage: "folder.fill")
                     Text("\(share.path) · \(share.readOnly ? String(localized: "Read only") : String(localized: "Read and write"))\(share.guest ? " · " + String(localized: "Guests") : "")")
                 }
             }
@@ -244,6 +293,8 @@ struct SMBSettingsSection: View {
                 Spacer()
                 Button("Share a Folder…") { chooseFolder() }.disabled(server.busy)
             }
+        }
+        Section("Access") {
             HStack {
                 Text("To log in from Windows, your user needs “Windows File Sharing” turned on in System Settings → Sharing → File Sharing → Options.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -315,8 +366,24 @@ struct SMBClientSettingsSection: View {
     @AppStorage(SMBServer.showsMenuKey) private var showsMenu = true
     @State private var recent = UserDefaults.standard.stringArray(forKey: SMBClientSettingsSection.recentKey) ?? []
 
+    private var mounted: [URL] {
+        (FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: [.volumeURLForRemountingKey], options: [.skipHiddenVolumes]) ?? [])
+            .filter { (try? $0.resourceValues(forKeys: [.volumeURLForRemountingKey]).volumeURLForRemounting?.scheme) == "smb" }
+    }
+
     var body: some View {
-        Section {
+        Section("Status") {
+            StatusRow(on: !mounted.isEmpty,
+                      title: mounted.isEmpty ? "Not connected" : "Connected to \(mounted.map(\.lastPathComponent).joined(separator: ", "))",
+                      detail: String(localized: "Shared folders you connect to open in an Explorer tab.")) {
+                ForEach(mounted, id: \.self) { volume in
+                    Button("Disconnect") { try? NSWorkspace.shared.unmountAndEjectDevice(at: volume) }
+                }
+                Button("Connect to SMB Server…") { KeyWindowFocus.shared.windowBrowser?.requestConnectToServer() }
+                    .buttonStyle(.borderedProminent)
+            }
+        }
+        Section("Recent Servers") {
             SettingsPreviewBox(title: "Preview: connecting to another computer") {
                 HStack(spacing: 12) {
                     Image(systemName: "desktopcomputer").font(.title)
@@ -329,14 +396,9 @@ struct SMBClientSettingsSection: View {
                     Spacer()
                 }
             }
-            LabeledContent {
-                Button("Connect to SMB Server…") { KeyWindowFocus.shared.windowBrowser?.requestConnectToServer() }
-            } label: {
-                Label("Connect", systemImage: "link")
-                Text("Opens shared folders from Windows, NAS drives or other Macs. macOS asks for the user and password.")
-            }
             ForEach(recent, id: \.self) { address in
                 LabeledContent {
+                    Button("Connect") { KeyWindowFocus.shared.windowBrowser?.requestConnectToServer(address) }
                     Button("Forget") {
                         recent.removeAll { $0 == address }
                         UserDefaults.standard.set(recent, forKey: SMBClientSettingsSection.recentKey)
@@ -344,6 +406,8 @@ struct SMBClientSettingsSection: View {
                 } label: { Label(address, systemImage: "clock.arrow.circlepath") }
             }
             if recent.isEmpty { Text("No recent servers").font(.caption).foregroundStyle(.secondary) }
+        }
+        Section("Options") {
             Toggle(isOn: $showsMenu) {
                 Label("SMB in the “Servers” menu", systemImage: "menubar.rectangle")
                 Text("Shows the SMB submenu (client and server) in the menu bar.")

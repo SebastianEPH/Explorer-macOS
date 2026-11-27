@@ -7,6 +7,9 @@ import UniformTypeIdentifiers
 /// renombrar y borrar.
 @MainActor
 final class FTPClientModel: ObservableObject {
+    /// El de la ventana del cliente: el menú «Red» muestra si está conectado y a qué.
+    static let shared = FTPClientModel()
+    var connectedHost: String? { client.map { $0.address.host } }
     @Published var address = FTPServerAddress(host: "")
     @Published var password = ""
     @Published var remember = true
@@ -96,7 +99,7 @@ enum FTPClientWindow {
     @MainActor private static var window: NSWindow?
 
     @MainActor
-    static func open(model: FTPClientModel = FTPClientModel()) {
+    static func open(model: FTPClientModel = .shared) {
         if let window, window.isVisible { window.makeKeyAndOrderFront(nil); return }
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 720, height: 480),
                               styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)

@@ -853,3 +853,30 @@
 "No recent servers" = "No hay servidores recientes";
 "Shows the FTP submenu (client and server) in the menu bar." = "Muestra el submenú FTP (cliente y servidor) en la barra de menús.";
 "Shows the SMB submenu (client and server) in the menu bar." = "Muestra el submenú SMB (cliente y servidor) en la barra de menús.";
+
+/* Fork: menú y Ajustes de Red con estado */
+"Status" = "Estado";
+"Saved Servers" = "Servidores guardados";
+"Connected to %@" = "Conectado a %@";
+"Not connected" = "Sin conexión";
+"Show FTP Client" = "Mostrar el cliente FTP";
+"Connect to browse a server's files." = "Conéctate para ver los archivos de un servidor.";
+"Stop Server" = "Detener servidor";
+"Start Server" = "Iniciar servidor";
+"Other devices can connect now." = "Otros dispositivos ya pueden conectarse.";
+"Nothing is listening. Start it to share the folder below." = "No está escuchando. Inícialo para compartir la carpeta de abajo.";
+"Shared Folder" = "Carpeta compartida";
+"Change…" = "Cambiar…";
+"Show in Explorer" = "Mostrar en Explorer";
+"Access" = "Acceso";
+"Shared Folders" = "Carpetas compartidas";
+"Uses the server built into macOS (File Sharing); it asks for your administrator password for each change." = "Usa el servidor que trae macOS (Compartir archivos); pide tu contraseña de administrador en cada cambio.";
+"Shared folders you connect to open in an Explorer tab." = "Las carpetas compartidas a las que te conectas se abren en una pestaña de Explorer.";
+"Browse a server, download to the current folder, upload by dragging files. Passwords are kept in the Keychain." = "Recorre un servidor, descarga a la carpeta actual y sube arrastrando archivos. Las contraseñas se guardan en el Llavero.";
+"Shared folder: %@ · %@" = "Carpeta compartida: %@ · %@";
+"Change Shared Folder…" = "Cambiar carpeta compartida…";
+"Share “%@” (current folder)" = "Compartir «%@» (carpeta actual)";
+"Show Shared Folder in Explorer" = "Mostrar la carpeta compartida en Explorer";
+"Shared folders (%lld)" = "Carpetas compartidas (%lld)";
+"Share Another Folder…" = "Compartir otra carpeta…";
+"Share" = "Compartir";

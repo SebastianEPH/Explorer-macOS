@@ -22,12 +22,42 @@ struct FTPSettingsSection: View {
         if part == "client" { clientSection } else { serverSection }
     }
 
-    private var clientSection: some View {
-        Section {
+    @ObservedObject private var client = FTPClientModel.shared
+
+    // MARK: Cliente FTP: Estado · Servidores guardados · Opciones
+
+    @ViewBuilder private var clientSection: some View {
+        Section("Status") {
             SettingsPreviewBox(title: "Preview: the FTP client window") { FTPClientPreview(enabled: clientEnabled) }
+            StatusRow(on: client.connectedHost != nil,
+                      title: client.connectedHost != nil ? "Connected to \(client.connectedHost ?? "")" : "Not connected",
+                      detail: client.connectedHost != nil ? "\(client.path)" : String(localized: "Connect to browse a server's files.")) {
+                if client.connectedHost != nil {
+                    Button("Show FTP Client") { FTPClientWindow.open() }
+                    Button("Disconnect") { client.disconnect() }
+                } else {
+                    Button("Connect to FTP Server…") { clientEnabled = true; FTPClientWindow.open() }.buttonStyle(.borderedProminent)
+                }
+            }
+        }
+        Section("Saved Servers") {
+            if client.saved.isEmpty { Text("No saved servers").foregroundStyle(.secondary) }
+            ForEach(client.saved) { saved in
+                LabeledContent {
+                    HStack {
+                        Button("Connect") { clientEnabled = true; client.pick(saved); FTPClientWindow.open(); Task { await client.connect() } }
+                        Button("Forget") { FTPSettings.forget(saved); client.saved = FTPSettings.savedServers() }
+                    }
+                } label: {
+                    Label(saved.anonymous ? saved.host : "\(saved.user)@\(saved.host)", systemImage: "server.rack")
+                    Text(verbatim: "ftp://\(saved.host):\(saved.port)")
+                }
+            }
+        }
+        Section("Options") {
             Toggle(isOn: $clientEnabled) {
                 Label("FTP Client", systemImage: "network")
-                Text("Adds “Connect to FTP Server…” (⌥⌘K) to the FTP menu: browse a server, download to the current folder, upload by dragging files. Passwords are kept in the Keychain.")
+                Text("Browse a server, download to the current folder, upload by dragging files. Passwords are kept in the Keychain.")
             }
             Toggle(isOn: $showsMenu) {
                 Label("FTP in the “Servers” menu", systemImage: "menubar.rectangle")
@@ -36,63 +66,95 @@ struct FTPSettingsSection: View {
         }
     }
 
-    private var serverSection: some View {
-        Section {
+    // MARK: Servidor FTP: Estado · Carpeta compartida · Acceso · Red
+
+    @ViewBuilder private var serverSection: some View {
+        Section("Status") {
             SettingsPreviewBox(title: "Preview: what other computers connect to") {
                 FTPServerPreview(running: server.isRunning, address: server.addresses.first
                                  ?? "ftp://\(FTPSettings.localAddresses().first ?? "127.0.0.1"):\(port)",
                                  folder: (rootPath as NSString).lastPathComponent, readOnly: readOnly, anonymous: anonymous)
             }
-            Toggle(isOn: $serverEnabled) {
-                Label("FTP Server", systemImage: "server.rack")
-                Text("Shares a folder with other devices on your network. Off: nothing listens, as in the original.")
+            StatusRow(on: server.isRunning,
+                      title: server.isRunning ? "Running at \(server.addresses.first ?? "")" : "Stopped",
+                      detail: server.isRunning ? String(localized: "Other devices can connect now.") : String(localized: "Nothing is listening. Start it to share the folder below.")) {
+                if server.isRunning {
+                    Button("Copy Server Address") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(server.addresses.first ?? "", forType: .string)
+                    }
+                    Button("Stop Server") { serverEnabled = false }
+                } else {
+                    Button("Start Server") { serverEnabled = true }.buttonStyle(.borderedProminent)
+                }
             }
             if case .failed(let message) = server.state, serverEnabled {
                 DisabledReason("Couldn’t start: \(message). Try another port.")
             }
-            Group {
-                LabeledContent {
-                    HStack {
-                        Text(rootPath).lineLimit(1).truncationMode(.middle).foregroundStyle(.secondary)
-                        Button("Choose…") { chooseRoot() }
-                    }
-                } label: { Label("Shared folder", systemImage: "folder"); Text("Clients see this folder as “/” and can’t leave it.") }
-                LabeledContent {
-                    TextField("", value: $port, format: .number.grouping(.never)).frame(width: 80)
-                } label: { Label("Port", systemImage: "number"); Text("2121 by default (ports below 1024 need administrator rights).") }
-                Toggle(isOn: $readOnly) {
-                    Label("Read only", systemImage: "lock")
-                    Text("Clients can download but not upload, rename or delete.")
+        }
+        Section("Shared Folder") {
+            LabeledContent {
+                HStack {
+                    Button("Change…") { FTPSettings.chooseRoot() }
+                    Button("Show in Explorer") { WindowService.open(at: URL(fileURLWithPath: rootPath)) }
                 }
-                Toggle(isOn: $anonymous) {
-                    Label("Allow anonymous access", systemImage: "person.fill.questionmark")
-                    Text("Anyone on the network can connect without a password.")
-                }
-                TextField(text: $user) { Label("User", systemImage: "person") }
-                SecureField(text: $password) { Label("Password", systemImage: "key") }
-                    .onChange(of: password) { _, value in
-                        FTPSecrets.setPassword(value, for: FTPSettings.serverPasswordAccount)
-                        Task { await FTPServerController.shared.apply() }
-                    }
-                if password.isEmpty && !anonymous {
-                    DisabledReason("Set a password or allow anonymous access, otherwise nobody can log in.")
-                }
-                Toggle(isOn: $localOnly) {
-                    Label("Only this Mac", systemImage: "desktopcomputer")
-                    Text("Listens on 127.0.0.1 only, invisible to the network.")
-                }
-                Text("FTP sends passwords and files unencrypted: use it only on networks you trust.")
-                    .font(.caption).foregroundStyle(.secondary)
+            } label: {
+                Label((rootPath as NSString).lastPathComponent, systemImage: "folder.fill")
+                Text(rootPath)
+            }
+            Text("Clients see this folder as “/” and can’t leave it.").font(.caption).foregroundStyle(.secondary)
+            Toggle(isOn: $readOnly) {
+                Label("Read only", systemImage: "lock")
+                Text("Clients can download but not upload, rename or delete.")
             }
         }
+        Section("Access") {
+            TextField(text: $user) { Label("User", systemImage: "person") }
+            SecureField(text: $password) { Label("Password", systemImage: "key") }
+                .onChange(of: password) { _, value in
+                    FTPSecrets.setPassword(value, for: FTPSettings.serverPasswordAccount)
+                    Task { await FTPServerController.shared.apply() }
+                }
+            if password.isEmpty && !anonymous {
+                DisabledReason("Set a password or allow anonymous access, otherwise nobody can log in.")
+            }
+            Toggle(isOn: $anonymous) {
+                Label("Allow anonymous access", systemImage: "person.fill.questionmark")
+                Text("Anyone on the network can connect without a password.")
+            }
+        }
+        Section("Network") {
+            LabeledContent {
+                TextField("", value: $port, format: .number.grouping(.never)).frame(width: 80)
+            } label: { Label("Port", systemImage: "number"); Text("2121 by default (ports below 1024 need administrator rights).") }
+            Toggle(isOn: $localOnly) {
+                Label("Only this Mac", systemImage: "desktopcomputer")
+                Text("Listens on 127.0.0.1 only, invisible to the network.")
+            }
+            Text("FTP sends passwords and files unencrypted: use it only on networks you trust.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
     }
+}
 
-    private func chooseRoot() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.directoryURL = URL(fileURLWithPath: rootPath)
-        if panel.runModal() == .OK, let url = panel.url { root = url.path }
+/// Fila de estado: punto verde/gris, qué pasa ahora y los botones para cambiarlo.
+struct StatusRow<Actions: View>: View {
+    let on: Bool
+    let title: LocalizedStringKey
+    let detail: String
+    @ViewBuilder var actions: Actions
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Circle().fill(on ? Color.green : Color.secondary.opacity(0.5)).frame(width: 10, height: 10)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.headline)
+                Text(detail).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+            }
+            Spacer()
+            actions
+        }
+        .padding(.vertical, 4)
     }
 }
 
