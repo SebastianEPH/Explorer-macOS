@@ -289,9 +289,7 @@ struct MenuBarSection: View {
     @AppStorage(MenuBarSettings.showsCommandsKey) private var showsCommands = false
     @AppStorage(MenuBarSettings.hidesEmojiKey) private var hidesEmoji = true
     @AppStorage(MenuBarSettings.hidesWindowTabsKey) private var hidesWindowTabs = true
-    @AppStorage(FTPSettings.showsMenuKey) private var showsFTP = true
-    @AppStorage(SMBServer.showsMenuKey) private var showsSMB = true
-    @AppStorage(ServersMenu.showsKey) private var showsServers = true
+    @AppStorage(NetworkSettings.showsMenuKey) private var showsNetwork = true
 
     var body: some View {
         Section("Menu Bar") {
@@ -312,17 +310,9 @@ struct MenuBarSection: View {
                 Label("“Commands” menu", systemImage: "command")
                 Text("Off: the Command Palette moves to the Options menu.")
             }
-            Toggle(isOn: $showsServers) {
-                Label("“Servers” menu", systemImage: "server.rack")
-                Text("FTP, SMB and other protocols, each with its client and server.")
-            }
-            Toggle(isOn: $showsFTP) {
-                Label("“Servers” → FTP", systemImage: "network")
-                Text("Turns the FTP client and server on and off, connects to servers and shares the current folder.")
-            }
-            Toggle(isOn: $showsSMB) {
-                Label("“Servers” → SMB", systemImage: "externaldrive.connected.to.line.below")
-                Text("Turns the macOS SMB server on and off, shares the current folder and connects to servers.")
+            Toggle(isOn: $showsNetwork) {
+                Label("“Network” menu", systemImage: "network")
+                Text("Connect to other computers and share a folder of this Mac.")
             }
             ForEach(MenuExtras.allCases) { extra in MenuExtraToggle(extra: extra) }
             Toggle(isOn: $hidesEmoji) {
@@ -341,7 +331,7 @@ struct MenuBarSection: View {
         if showsGo { list.append("Go") }
         if showsCommands { list.append("Commands") }
         if showsOptions { list.append("Options") }
-        if showsServers { list.append(ServersMenu.title) }
+        if showsNetwork { list.append(NetworkMenu.title) }
         list += ["Window", "Help"]
         return list
     }

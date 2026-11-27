@@ -101,65 +101,94 @@ struct FTPTests {
         await #expect(throws: (any Error).self) { _ = try await anonymous.list("/") }
     }
 
-    // MARK: unitarias de ajustes
+    // MARK: unitarias de ~/.explorer/red.json
 
-    // Todo apagado por defecto (= original): ni cliente ni servidor; el servidor, solo lectura en 2121.
-    @Test func defaultsAreOff() {
-        let d = UserDefaults(suiteName: "FTP.\(UUID().uuidString)")!
-        #expect(!d.bool(forKey: FTPSettings.clientEnabledKey) && !d.bool(forKey: FTPSettings.serverEnabledKey))
-        let config = FTPSettings.config(d)
-        #expect(config.port == 2121 && config.readOnly && !config.anonymous && !config.localOnly)
-        #expect(config.root.path == NSHomeDirectory())
-        #expect(DefaultSettings.mine[FTPSettings.serverEnabledKey] == nil)
+    @MainActor private func tempStore(_ legacy: UserDefaults? = nil) -> (NetworkStore, URL) {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("red-\(UUID().uuidString)/red.json")
+        return (NetworkStore(file: file, legacy: legacy ?? UserDefaults(suiteName: "R.\(UUID().uuidString)")!), file)
     }
 
-    @Test func savedServersKeepPasswordsOutOfDefaults() {
-        let d = UserDefaults(suiteName: "FTP.\(UUID().uuidString)")!
+    // Nada compartido por defecto (= original); carpeta = inicio, solo lectura, 2121. Las pruebas nunca usan el archivo real.
+    @Test @MainActor func defaultsAreOffAndTestsUseTempFile() {
+        let (store, _) = tempStore()
+        #expect(!store.config.share.enabled && store.config.share.readOnly && store.config.share.port == 2121)
+        #expect(store.config.share.folderPath == NSHomeDirectory() && store.config.servers.isEmpty)
+        #expect(NetworkStore.shared.file != NetworkStore.defaultFile)
+    }
+
+    // Se guarda como texto legible, sin contraseñas, y se lee igual al abrir de nuevo.
+    @Test @MainActor func configIsSavedAsReadableJSONWithoutPasswords() throws {
         FTPSecrets.memory = [:]; defer { FTPSecrets.memory = nil }
-        let a = FTPServerAddress(host: "a.local", port: 21, user: "ana")
-        FTPSettings.save(a, d); FTPSettings.save(.init(host: "b.local"), d); FTPSettings.save(a, d)
-        #expect(FTPSettings.savedServers(d).map(\.host) == ["a.local", "b.local"])
-        FTPSecrets.setPassword("clave", for: a.id)
-        #expect(String(decoding: d.data(forKey: FTPSettings.savedServersKey) ?? Data(), as: UTF8.self).contains("clave") == false)
-        FTPSettings.forget(a, d)
-        #expect(FTPSettings.savedServers(d).map(\.host) == ["b.local"] && FTPSecrets.password(for: a.id) == nil)
+        let (store, file) = tempStore()
+        let nas = SavedServer(kind: .smb, host: "nas.local", user: "ana", path: "Fotos", name: "NAS de casa")
+        store.remember(nas); store.remember(SavedServer(kind: .ftp, host: "b.com")); store.remember(nas)
+        FTPSecrets.setPassword("clave", for: nas.id)
+        store.config.share.folder = "/tmp"; store.config.share.enabled = true
+        let text = try String(contentsOf: file, encoding: .utf8)
+        #expect(text.contains("\"host\" : \"nas.local\"") && text.contains("\"folder\" : \"/tmp\"") && !text.contains("clave"))
+        let reopened = NetworkStore(file: file)
+        #expect(reopened.config.servers.map(\.host) == ["nas.local", "b.com"] && reopened.config.share.enabled)
+        reopened.forget(nas)
+        #expect(reopened.config.servers.map(\.host) == ["b.com"] && FTPSecrets.password(for: nas.id) == nil)
+        // Editado a mano con campos de menos: se entiende igual.
+        try Data(#"{"servers":[{"host":"x"}]}"#.utf8).write(to: file)
+        #expect(NetworkStore(file: file).config.servers.first?.port == 445)
+    }
+
+    // Lo de versiones anteriores (UserDefaults) pasa al archivo una vez y se borra de allí.
+    @Test @MainActor func migratesOldSettings() throws {
+        let d = UserDefaults(suiteName: "R.\(UUID().uuidString)")!
+        d.set(true, forKey: "ftp.server.enabled"); d.set("/tmp", forKey: "ftp.server.root")
+        d.set(try JSONEncoder().encode([FTPServerAddress(host: "viejo.com", port: 21, user: "u")]), forKey: "ftp.client.servers")
+        let (store, file) = tempStore(d)
+        #expect(store.config.share.enabled && store.config.share.folder == "/tmp")
+        #expect(store.config.servers == [SavedServer(kind: .ftp, host: "viejo.com", port: 21, user: "u")])
+        #expect(d.object(forKey: "ftp.server.enabled") == nil && FileManager.default.fileExists(atPath: file.path))
+    }
+
+    // Lo que escribe la persona en «Dirección»: se adivina el tipo.
+    @Test func addressIsUnderstood() {
+        #expect(SavedServer.parse("192.168.1.20") == SavedServer(kind: .smb, host: "192.168.1.20"))
+        #expect(SavedServer.parse("nas.local/Fotos")?.path == "Fotos")
+        #expect(SavedServer.parse("\\\\PC\\Documentos") == SavedServer(kind: .smb, host: "PC", path: "Documentos"))
+        #expect(SavedServer.parse("ftp://ana@mi-web.com:2121/www") == SavedServer(kind: .ftp, host: "mi-web.com", port: 2121, user: "ana", path: "www"))
+        #expect(SavedServer.parse("mi-web.com", kind: .ftp)?.port == 21)
+        #expect(SavedServer.parse("  ") == nil)
+        #expect(SMBMount.url(for: SavedServer(host: "nas.local", path: "Mis Fotos"))?.absoluteString == "smb://nas.local/Mis%20Fotos")
     }
 
     // MARK: completas y de flujo (app de verdad)
 
-    /// Flujo: en Ajustes se enciende el servidor → escucha → el cliente de la app se conecta en su
-    /// ventana, ve la carpeta, descarga a la carpeta de Explorer y sube → se apaga → ya no responde.
-    @Test @MainActor func settingsServerAndClientWindowFlow() async throws {
+    /// Flujo «Compartir una carpeta»: se activa → escucha → se conecta con «Conectarse a un servidor»
+    /// (dirección ftp://…) → se abre el explorador FTP con la carpeta → descarga y sube → se apaga → ya no responde.
+    @Test @MainActor func shareAndConnectFlow() async throws {
         _ = NSApplication.shared
         FTPSecrets.memory = [FTPSettings.serverPasswordAccount: "pw"]; defer { FTPSecrets.memory = nil }
-        let d = UserDefaults(suiteName: "FTP.\(UUID().uuidString)")!
         let root = try folder("flow"), downloads = try folder("flow-dl")
         try Data("dato".utf8).write(to: root.appendingPathComponent("informe.txt"))
-        d.set(root.path, forKey: FTPSettings.serverRootKey)
-        d.set(0, forKey: FTPSettings.serverPortKey)
-        d.set("ana", forKey: FTPSettings.serverUserKey)
-        d.set(false, forKey: FTPSettings.serverReadOnlyKey)
-        d.set(true, forKey: FTPSettings.serverLocalOnlyKey)
+        var share = NetworkConfig.Share()
+        share.folder = root.path; share.port = 0; share.user = "ana"; share.readOnly = false; share.localOnly = true
         let controller = FTPServerController.shared
         defer { controller.stopForTests() }
 
-        await controller.apply(d)
-        #expect(!controller.isRunning) // apagado: no escucha
-        d.set(true, forKey: FTPSettings.serverEnabledKey)
-        await controller.apply(d)
+        await controller.apply(share)
+        #expect(!controller.isRunning) // sin activar: no escucha
+        share.enabled = true
+        await controller.apply(share)
         let port = try #require(controller.port)
         #expect(controller.addresses == ["ftp://127.0.0.1:\(port)"])
 
-        let model = FTPClientModel()
-        model.address = .init(host: "127.0.0.1", port: Int(port), user: "ana")
-        model.password = "pw"; model.remember = false
+        let (store, _) = tempStore()
+        let server = try #require(SavedServer.parse("ftp://ana@127.0.0.1:\(port)"))
+        #expect(server.kind == .ftp)
+        let model = FTPClientModel.shared
         model.downloadFolder = { downloads }
-        FTPClientWindow.open(model: model)
+        let error = await NetworkConnector.connect(server, password: "pw", remember: false, store: store)
+        #expect(error == nil)
         let window = try #require(FTPClientWindow.current)
-        #expect(window.title == String(localized: "FTP Client"))
-        await model.connect()
-        #expect(model.client != nil && model.message == nil)
+        defer { window.close(); model.disconnect() }
         #expect(model.entries.map(\.name) == ["informe.txt"])
+        #expect(store.config.servers.first?.host == "127.0.0.1") // queda en «Recientes»
 
         model.selection = ["informe.txt"]
         await model.download()
@@ -168,24 +197,33 @@ struct FTPTests {
         try Data("arriba".utf8).write(to: local)
         await model.upload([local])
         #expect(model.entries.map(\.name) == ["informe.txt", "subido.txt"])
-        await model.makeFolder("Carpeta")
-        await model.open(model.child("Carpeta"))
-        #expect(model.path == "/Carpeta" && model.entries.isEmpty)
-        await model.goUp()
-        #expect(model.entries.first?.name == "Carpeta")
 
-        // Cambiar la contraseña en Ajustes reinicia el servidor con la nueva.
-        FTPSecrets.memory?[FTPSettings.serverPasswordAccount] = "otra"
-        await controller.apply(d)
-        await model.reload()
-        #expect(model.message != nil)
+        // Contraseña mala: se dice por qué y no se abre nada nuevo.
+        let bad = await NetworkConnector.connect(server, password: "mal", remember: false, store: store)
+        #expect(bad != nil)
 
-        d.set(false, forKey: FTPSettings.serverEnabledKey)
-        await controller.apply(d)
+        share.enabled = false
+        await controller.apply(share)
         #expect(!controller.isRunning && controller.addresses.isEmpty)
-        let client = FTPClient(address: model.address, password: "otra")
-        await #expect(throws: (any Error).self) { _ = try await client.list("/") }
-        window.close()
+        await #expect(throws: (any Error).self) { _ = try await FTPClient(address: server.ftpAddress, password: "pw").list("/") }
+    }
+
+    /// Las dos ventanas se dibujan en rápida y en avanzada (la avanzada enseña más opciones).
+    @Test @MainActor func connectAndShareWindowsHaveQuickAndAdvanced() async throws {
+        let d = UserDefaults.standard
+        let saved = [d.object(forKey: "network.connect.advanced"), d.object(forKey: "network.share.advanced")]
+        defer { d.set(saved[0], forKey: "network.connect.advanced"); d.set(saved[1], forKey: "network.share.advanced") }
+        for kind in [NetworkWindow.connect, .share] {
+            d.set(false, forKey: "network.\(kind.rawValue).advanced")
+            NetworkWindow.open(kind)
+            try await Task.sleep(for: .milliseconds(400))
+            let window = try #require(NetworkWindow.current(kind))
+            let quick = window.frame.height
+            d.set(true, forKey: "network.\(kind.rawValue).advanced")
+            try await Task.sleep(for: .milliseconds(400))
+            #expect(window.frame.height > quick, "\(kind)")
+            NetworkWindow.close(kind)
+        }
     }
 
     /// Clientes antiguos (FileZilla, Windows) usan PASV en vez de EPSV.

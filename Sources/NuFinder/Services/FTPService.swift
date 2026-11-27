@@ -1,50 +1,19 @@
 import AppKit
+import Combine
 import SwiftUI
 
-/// Fork: ajustes y estado del FTP (cliente y servidor). Todo apagado por defecto = original.
-/// Se controla desde el menú «FTP» de la barra de menús y desde Ajustes → Red → FTP.
+/// Fork: utilidades del FTP. La configuración vive en `~/.explorer/red.json` (`NetworkStore`).
 enum FTPSettings {
-    static let clientEnabledKey = "ftp.client.enabled"
-    static let serverEnabledKey = "ftp.server.enabled"
-    static let serverPortKey = "ftp.server.port"
-    static let serverRootKey = "ftp.server.root"
-    static let serverUserKey = "ftp.server.user"
-    static let serverAnonymousKey = "ftp.server.anonymous"
-    static let serverReadOnlyKey = "ftp.server.readOnly"
-    static let serverLocalOnlyKey = "ftp.server.localOnly"
-    static let savedServersKey = "ftp.client.servers"
-    static let showsMenuKey = "menu.showsFTP"
     static let serverPasswordAccount = "server"
-
     static let defaultPort = 2121
 
-    static func config(_ defaults: UserDefaults = .standard) -> FTPServer.Config {
-        let rootPath = defaults.string(forKey: serverRootKey) ?? ""
-        let port = defaults.object(forKey: serverPortKey) as? Int ?? defaultPort
-        return FTPServer.Config(
-            port: UInt16(clamping: max(0, port)),
-            root: URL(fileURLWithPath: rootPath.isEmpty ? NSHomeDirectory() : rootPath, isDirectory: true),
-            user: defaults.string(forKey: serverUserKey) ?? NSUserName(),
-            password: FTPSecrets.password(for: serverPasswordAccount) ?? "",
-            anonymous: defaults.bool(forKey: serverAnonymousKey),
-            readOnly: defaults.object(forKey: serverReadOnlyKey) as? Bool ?? true,
-            localOnly: defaults.bool(forKey: serverLocalOnlyKey))
-    }
-
-    static func savedServers(_ defaults: UserDefaults = .standard) -> [FTPServerAddress] {
-        guard let data = defaults.data(forKey: savedServersKey) else { return [] }
-        return (try? JSONDecoder().decode([FTPServerAddress].self, from: data)) ?? []
-    }
-
-    static func save(_ address: FTPServerAddress, _ defaults: UserDefaults = .standard) {
-        var list = savedServers(defaults).filter { $0.id != address.id }
-        list.insert(address, at: 0)
-        defaults.set(try? JSONEncoder().encode(Array(list.prefix(20))), forKey: savedServersKey)
-    }
-
-    static func forget(_ address: FTPServerAddress, _ defaults: UserDefaults = .standard) {
-        defaults.set(try? JSONEncoder().encode(savedServers(defaults).filter { $0.id != address.id }), forKey: savedServersKey)
-        FTPSecrets.setPassword(nil, for: address.id)
+    static func config(_ share: NetworkConfig.Share, password: String? = nil) -> FTPServer.Config {
+        FTPServer.Config(
+            port: UInt16(clamping: max(0, share.port)),
+            root: URL(fileURLWithPath: share.folderPath, isDirectory: true),
+            user: share.user,
+            password: password ?? FTPSecrets.password(for: serverPasswordAccount) ?? "",
+            anonymous: share.anonymous, readOnly: share.readOnly, localOnly: share.localOnly)
     }
 
     /// Direcciones IPv4 de este Mac en la red (para decir a otros a dónde conectarse).
@@ -66,55 +35,57 @@ enum FTPSettings {
     }
 }
 
-/// Servidor FTP de la app: uno solo, se enciende/apaga según `ftp.server.enabled`.
+/// Servidor FTP de la app: uno solo, se enciende/apaga según `share.enabled` de `red.json`.
 @MainActor
 final class FTPServerController: ObservableObject {
     static let shared = FTPServerController()
     @Published private(set) var state: FTPServer.State = .stopped
     private var server: FTPServer?
-    private var observer: NSObjectProtocol?
+    private var subscription: AnyCancellable?
     private var applying = false
+    private var pending: NetworkConfig.Share?
 
     var isRunning: Bool { if case .running = state { true } else { false } }
     var port: UInt16? { if case .running(let port) = state { port } else { nil } }
 
-    /// Dirección para conectarse desde otro equipo (o este Mac).
+    /// Direcciones para conectarse desde otro equipo (o este Mac).
     var addresses: [String] {
         guard let port else { return [] }
         let hosts = server?.config.localOnly == true ? ["127.0.0.1"] : FTPSettings.localAddresses()
         return (hosts.isEmpty ? ["127.0.0.1"] : hosts).map { "ftp://\($0):\(port)" }
     }
 
-    /// Al arrancar la app: si estaba encendido, arranca; y sigue los cambios de Ajustes.
-    func start() {
-        guard observer == nil else { return }
-        observer = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { Task { await FTPServerController.shared.apply() } }
+    /// Al arrancar la app: sigue los cambios de `red.json`.
+    func start(_ store: NetworkStore = .shared) {
+        guard subscription == nil else { return }
+        subscription = store.$config.map(\.share).removeDuplicates().sink { share in
+            Task { await FTPServerController.shared.apply(share) }
         }
-        Task { await apply() }
     }
 
-    /// Enciende, apaga o reinicia (si cambió la configuración) según lo guardado.
-    func apply(_ defaults: UserDefaults? = nil) async {
-        let defaults = defaults ?? .standard
-        // Si llega un cambio mientras arranca, se vuelve a mirar al terminar (no se pierde).
-        guard !applying else { needsApply = true; return }
+    /// Reinicia con la contraseña nueva (está en el Llavero, no en el archivo).
+    func passwordChanged() { Task { await apply(NetworkStore.shared.config.share, force: true) } }
+
+    /// Enciende, apaga o reinicia según la configuración (los cambios que lleguen mientras arranca no se pierden).
+    func apply(_ share: NetworkConfig.Share, force: Bool = false) async {
+        if applying { pending = share; return }
         applying = true
-        repeat { needsApply = false; await applyOnce(defaults) } while needsApply
+        var next: NetworkConfig.Share? = share
+        var restart = force
+        while let current = next {
+            pending = nil
+            await applyOnce(current, restart: restart)
+            restart = false
+            next = pending
+        }
         applying = false
     }
 
-    private var needsApply = false
-
-    private func applyOnce(_ defaults: UserDefaults) async {
-        let wanted = defaults.bool(forKey: FTPSettings.serverEnabledKey)
-        if !wanted && server == nil { state = .stopped; return } // apagado: ni se lee el Llavero
-        let config = FTPSettings.config(defaults)
-        if !wanted || server?.config != config {
-            server?.stop(); server = nil
-            if !wanted { state = .stopped }
-        }
-        guard wanted, server == nil else { return }
+    private func applyOnce(_ share: NetworkConfig.Share, restart: Bool) async {
+        guard share.enabled else { server?.stop(); server = nil; state = .stopped; return }
+        let config = FTPSettings.config(share)
+        if restart || server?.config != config { server?.stop(); server = nil }
+        guard server == nil else { return }
         let new = FTPServer(config: config)
         server = new
         state = await new.start()
@@ -122,91 +93,4 @@ final class FTPServerController: ObservableObject {
     }
 
     func stopForTests() { server?.stop(); server = nil; state = .stopped }
-}
-
-// MARK: Menú «FTP»
-
-/// Submenú «FTP» del menú «Red». Cliente y servidor por separado, cada uno con su estado
-/// arriba (qué está pasando ahora) y botones claros (Conectar / Desconectar, Iniciar / Detener).
-struct FTPMenuItems: View {
-    @AppStorage(FTPSettings.showsMenuKey) private var showsMenu = true
-    @AppStorage(FTPSettings.clientEnabledKey) private var clientEnabled = false
-    @AppStorage(FTPSettings.serverEnabledKey) private var serverEnabled = false
-    @AppStorage(FTPSettings.serverRootKey) private var serverRoot = ""
-    @AppStorage(FTPSettings.serverReadOnlyKey) private var readOnly = true
-    @ObservedObject private var server = FTPServerController.shared
-    @ObservedObject private var client = FTPClientModel.shared
-    let currentFolder: () -> URL?
-
-    private var rootPath: String { serverRoot.isEmpty ? NSHomeDirectory() : serverRoot }
-
-    var body: some View {
-        if showsMenu {
-            Menu("FTP") {
-                Section("Client") {
-                    if let host = client.connectedHost {
-                        Label("Connected to \(host)", systemImage: "circle.fill")
-                        Button("Show FTP Client") { FTPClientWindow.open() }
-                        Button("Disconnect") { client.disconnect() }
-                    } else {
-                        Label("Not connected", systemImage: "circle")
-                        Button("Connect to FTP Server…") { clientEnabled = true; FTPClientWindow.open() }
-                            .keyboardShortcut("k", modifiers: [.command, .option])
-                    }
-                    if !client.saved.isEmpty {
-                        Menu("Recent Servers") {
-                            ForEach(client.saved) { saved in
-                                Button(saved.anonymous ? saved.host : "\(saved.user)@\(saved.host)") {
-                                    clientEnabled = true
-                                    client.pick(saved)
-                                    FTPClientWindow.open()
-                                    Task { await client.connect() }
-                                }
-                            }
-                        }
-                    }
-                    Button("FTP Client Settings…") { SettingsOpener.open(tab: "servers", page: "ftpClient") }
-                }
-                Section("Server") {
-                    switch server.state {
-                    case .running:
-                        Label("Running at \(server.addresses.first ?? "")", systemImage: "circle.fill")
-                        Button("Stop Server") { serverEnabled = false }
-                        Button("Copy Server Address") {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(server.addresses.first ?? "", forType: .string)
-                        }
-                    case .failed(let message):
-                        Label("Couldn’t start: \(message)", systemImage: "exclamationmark.triangle")
-                        Button("Start Server") { serverEnabled = false; serverEnabled = true }
-                    case .stopped:
-                        Label("Stopped", systemImage: "circle")
-                        Button("Start Server") { serverEnabled = true }
-                    }
-                    Label("Shared folder: \((rootPath as NSString).lastPathComponent) · \(readOnly ? String(localized: "Read only") : String(localized: "Read and write"))",
-                          systemImage: "folder")
-                    Button("Change Shared Folder…") { FTPSettings.chooseRoot() }
-                    if let url = currentFolder(), url.path != rootPath {
-                        Button("Share “\(url.lastPathComponent)” (current folder)") { serverRoot = url.path; serverEnabled = true }
-                    }
-                    Button("Show Shared Folder in Explorer") { WindowService.open(at: URL(fileURLWithPath: rootPath)) }
-                    Button("FTP Server Settings…") { SettingsOpener.open(tab: "servers", page: "ftpServer") }
-                }
-            }
-        }
-    }
-}
-
-extension FTPSettings {
-    /// Elegir la carpeta compartida del servidor FTP (menú y Ajustes).
-    @MainActor static func chooseRoot() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.prompt = String(localized: "Share")
-        let current = UserDefaults.standard.string(forKey: serverRootKey) ?? ""
-        panel.directoryURL = URL(fileURLWithPath: current.isEmpty ? NSHomeDirectory() : current)
-        NSApp.activate(ignoringOtherApps: true)
-        if panel.runModal() == .OK, let url = panel.url { UserDefaults.standard.set(url.path, forKey: serverRootKey) }
-    }
 }

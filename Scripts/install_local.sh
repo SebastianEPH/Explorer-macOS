@@ -5,8 +5,12 @@ set -e
 cd "$(dirname "$0")/.."
 
 echo "==> Pruebas"
-swift test 2>&1 | grep -E "error:|✘|Test run with"
-swift test >/dev/null 2>&1 || { echo "Las pruebas fallaron"; exit 1; }
+# Una sola pasada (antes eran dos: el doble de espera).
+log=$(mktemp)
+if swift test >"$log" 2>&1; then status=0; else status=1; fi
+grep -E "error:|✘|Test run with" "$log"
+rm -f "$log"
+[ "$status" = 0 ] || { echo "Las pruebas fallaron"; exit 1; }
 
 echo "==> Compilando"
 export PATH="$(ruby -e 'print Gem.user_dir')/bin:$PATH"

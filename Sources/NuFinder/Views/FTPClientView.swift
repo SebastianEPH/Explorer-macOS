@@ -12,35 +12,28 @@ final class FTPClientModel: ObservableObject {
     var connectedHost: String? { client.map { $0.address.host } }
     @Published var address = FTPServerAddress(host: "")
     @Published var password = ""
-    @Published var remember = true
     @Published private(set) var client: FTPClient?
     @Published private(set) var path = "/"
     @Published private(set) var entries: [FTPEntry] = []
     @Published var selection: Set<String> = []
     @Published private(set) var busy = false
     @Published var message: String?
-    @Published var saved: [FTPServerAddress] = FTPSettings.savedServers()
     /// Carpeta donde se descarga: la de la ventana de Explorer activa (o Descargas).
     var downloadFolder: () -> URL = {
         KeyWindowFocus.shared.windowBrowser?.currentURL
             ?? FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
     }
 
-    func pick(_ server: FTPServerAddress) {
-        address = server
-        password = FTPSecrets.password(for: server.id) ?? ""
-    }
-
-    func connect() async {
+    /// Conecta; devuelve el error si no se pudo (la conexión anterior, si había, se mantiene).
+    @discardableResult
+    func connect(startPath: String = "/") async -> String? {
         let candidate = FTPClient(address: address, password: password)
         busy = true; defer { busy = false }
         do {
-            entries = try await candidate.list("/")
-            client = candidate; path = "/"; message = nil
-            FTPSettings.save(address)
-            FTPSecrets.setPassword(remember && !address.anonymous ? password : nil, for: address.id)
-            saved = FTPSettings.savedServers()
-        } catch { message = error.localizedDescription }
+            entries = try await candidate.list(startPath)
+            client = candidate; path = startPath; message = nil
+            return nil
+        } catch { return error.localizedDescription }
     }
 
     func disconnect() { client = nil; entries = []; selection = []; path = "/" }
@@ -140,39 +133,12 @@ struct FTPClientView: View {
     }
 
     private var connectForm: some View {
-        HStack(spacing: 0) {
-            List(model.saved, selection: Binding(get: { nil as String? }, set: { id in
-                if let server = model.saved.first(where: { $0.id == id }) { model.pick(server) }
-            })) { server in
-                Label(server.anonymous ? server.host : "\(server.user)@\(server.host)", systemImage: "server.rack")
-                    .tag(server.id)
-                    .contextMenu {
-                        Button("Forget") { FTPSettings.forget(server); model.saved = FTPSettings.savedServers() }
-                    }
-            }
-            .frame(width: 200)
-            .overlay { if model.saved.isEmpty { Text("No saved servers").foregroundStyle(.secondary) } }
-            Form {
-                Section("Connect to FTP Server") {
-                    TextField("Server", text: $model.address.host, prompt: Text(verbatim: "192.168.1.10"))
-                    TextField("Port", value: $model.address.port, format: .number.grouping(.never))
-                    Toggle("Anonymous", isOn: $model.address.anonymous)
-                    if !model.address.anonymous {
-                        TextField("User", text: $model.address.user)
-                        SecureField("Password", text: $model.password)
-                        Toggle("Remember password in the Keychain", isOn: $model.remember)
-                    }
-                    HStack {
-                        Spacer()
-                        if model.busy { ProgressView().controlSize(.small) }
-                        Button("Connect") { Task { await model.connect() } }
-                            .keyboardShortcut(.defaultAction)
-                            .disabled(model.address.host.isEmpty || model.busy)
-                    }
-                }
-            }
-            .formStyle(.grouped)
+        VStack(spacing: 12) {
+            Image(systemName: "network.slash").font(.system(size: 40)).foregroundStyle(.secondary)
+            Text("Not connected").font(.title3)
+            Button("Connect to a Server…") { NetworkWindow.open(.connect) }.buttonStyle(.borderedProminent)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var browser: some View {

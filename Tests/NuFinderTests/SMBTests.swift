@@ -79,8 +79,6 @@ struct SMBTests {
         _ = SMBServer.isRunning()
         for share in SMBServer.shares() { #expect(!share.name.isEmpty && share.path.hasPrefix("/")) }
         #expect(SMBServer.addresses().allSatisfy { $0.hasPrefix("smb://") })
-        let d = UserDefaults(suiteName: "SMB.\(UUID().uuidString)")!
-        #expect(d.object(forKey: SMBServer.showsMenuKey) == nil) // el menú sale por defecto (AppStorage = true)
     }
 
     // MARK: completas y de flujo
@@ -120,49 +118,14 @@ struct SMBTests {
         }
     }
 
-    /// La app de verdad: el apartado SMB de Ajustes se dibuja en una ventana con el estado leído.
-    @Test func settingsPageShowsShares() async throws {
-        try await withFake { fake in
-            fake.running = true
-            fake.shares["Fotos"] = ("/Users/x/Fotos", false, false)
-            await SMBServerController.shared.refresh()
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 700, height: 600), styleMask: [.titled], backing: .buffered, defer: false)
-            window.isReleasedWhenClosed = false
-            window.contentView = NSHostingView(rootView: Form { SMBSettingsSection() }.formStyle(.grouped))
-            window.orderFront(nil)
-            defer { window.close() }
-            try await Task.sleep(for: .milliseconds(500))
-            #expect(SMBServerController.shared.shares.map(\.name) == ["Fotos"] && SMBServerController.shared.running)
-            #expect(window.contentView?.fittingSize.height ?? 0 > 200)
-        }
-    }
-
-    // Menú y Ajustes con el mismo nombre; cliente y servidor de cada protocolo en apartados separados,
-    // y cada «Ajustes de…» de los menús lleva a un apartado que existe.
-    @Test func serversSettingsMatchTheMenu() throws {
-        let source = try String(contentsOfFile: "Sources/NuFinder/Views/SettingsView.swift", encoding: .utf8)
-        #expect(source.contains("settingsTab(LocalizedStringKey(ServersMenu.title)"))
-        #expect(!source.contains("\"Network\""))
-        let ids = ServersSettings.pages.map(\.id)
-        #expect(ids == ["ftpClient", "ftpServer", "smbClient", "smbServer"])
-        let menus = try ["Sources/NuFinder/Services/FTPService.swift", "Sources/NuFinder/Services/SMBServerService.swift"]
-            .map { try String(contentsOfFile: $0, encoding: .utf8) }.joined()
-        let opened = menus.components(separatedBy: "SettingsOpener.open(tab: \"").dropFirst().map { part -> (String, String) in
-            let tab = String(part.prefix { $0 != "\"" })
-            let page = part.components(separatedBy: "page: \"")[1].prefix { $0 != "\"" }
-            return (tab, String(page))
-        }
-        #expect(opened.count >= 5)
-        for (tab, page) in opened { #expect(tab == "servers" && ids.contains(page), "\(tab)/\(page)") }
+    // Menú y Ajustes con el mismo nombre («Red»), sin «cliente/servidor/FTP/SMB» en el menú.
+    @Test func networkMenuAndSettingsShareName() throws {
+        let settings = try String(contentsOfFile: "Sources/NuFinder/Views/SettingsView.swift", encoding: .utf8)
+        #expect(settings.contains("settingsTab(LocalizedStringKey(NetworkMenu.title)"))
         let es = try #require(Bundle(path: "Localization/es.lproj"))
-        #expect(es.localizedString(forKey: ServersMenu.title, value: nil, table: nil) == "Red")
-    }
-
-    /// La pestaña real se dibuja con sus cuatro apartados (cliente y servidor por separado).
-    @Test func clientAndServerPagesRenderSeparately() async throws {
-        for page in ServersSettings.pages {
-            let view = NSHostingView(rootView: Form { page.content }.formStyle(.grouped).frame(width: 600))
-            #expect(view.fittingSize.height > 100, "\(page.id)")
-        }
+        #expect(es.localizedString(forKey: NetworkMenu.title, value: nil, table: nil) == "Red")
+        let source = try String(contentsOfFile: "Sources/NuFinder/Views/NetworkWindows.swift", encoding: .utf8)
+        let menu = source.components(separatedBy: "struct NetworkMenu")[1].components(separatedBy: "struct NetworkSettingsSection")[0]
+        for word in ["\"FTP", "\"SMB", "Client", "Server\""] { #expect(!menu.contains("Button(" + word), "\(word)") }
     }
 }

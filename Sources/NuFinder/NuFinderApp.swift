@@ -232,7 +232,7 @@ struct FreeloaderApp: App {
             }
             }
             ExplorerMenus(browser: { browser }, commandPaletteKey: commandPaletteKey) // Fork: menú Opciones y navegación
-            ServersMenu(currentFolder: { keyFocus.windowBrowser?.currentURL }, connectSMB: { browser.requestConnectToServer() }) // Fork: menú Servidores (FTP, SMB…)
+            NetworkMenu(currentFolder: { keyFocus.windowBrowser?.currentURL }) // Fork: menú «Red» (conectarse y compartir)
         }
         Settings {
             SettingsView()
