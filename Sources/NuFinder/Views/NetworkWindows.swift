@@ -391,6 +391,7 @@ struct ProtocolPage: View {
     @ViewBuilder private var smbServerForm: some View {
         adminSection
         smbUsersSection
+            .task { await smb.refresh(force: true); await smb.fixGuestsWithoutAccess() } // siempre visible (adminSection no si ya hay permiso)
         Section("My SMB server details") {
             HStack {
                 Text(smb.running ? "macOS File Sharing is on" : "macOS File Sharing is off")
@@ -412,12 +413,16 @@ struct ProtocolPage: View {
                         Toggle("Read only", isOn: Binding(get: { item.readOnly }, set: { value in
                             Task { await smb.update(item, readOnly: value, guest: item.guest) }
                         }))
-                        Toggle("Guests", isOn: Binding(get: { item.guest }, set: { value in
+                        Toggle("Guests", isOn: Binding(get: { item.guest && item.guestsCanRead }, set: { value in
                             Task { await smb.update(item, readOnly: item.readOnly, guest: value) }
                         }))
+                        .disabled(!item.guestsCanRead)
                     }
                     .toggleStyle(.checkbox)
                     .disabled(smb.busy)
+                    if !item.guestsCanRead {
+                        DisabledReason("This folder doesn’t allow guests (on the disk only your user can open it). To enter you must be a registered user.")
+                    }
                 }
                 .padding(.vertical, 2)
             }
@@ -443,13 +448,10 @@ struct ProtocolPage: View {
                     Label(item.name, systemImage: "folder.fill").font(.callout.weight(.medium))
                     AccessLine(label: "Windows (File Explorer)", value: "\\\\\(ip)\\\(item.name)")
                     AccessLine(label: "Mac, iPhone, Android (smb://)", value: "smb://\(ip)/\(encoded)")
-                    Text(item.guest ? "Anyone on your network can enter without a password (guests on)."
+                    Text(item.guest && item.guestsCanRead ? "Anyone on your network can enter without a password (guests on)."
                                     : "Log in with your Mac user “\(NSUserName())” and its password.")
-                        .font(.caption).foregroundStyle(item.guest ? Color.orange : Color.secondary)
-                    if item.guest && !item.guestsCanRead {
-                        Text("Guests will see “content unavailable”: on the disk only your user can open this folder. Log in with your user instead.")
-                            .font(.caption).foregroundStyle(.orange)
-                    }
+                        .font(.caption).foregroundStyle(item.guest && item.guestsCanRead ? Color.orange : Color.secondary)
+
                 }
             }
             NetworkExposureNote(port: 445)
@@ -472,7 +474,12 @@ struct ProtocolPage: View {
                 Button("Choose Folder and Share…") {
                     chooseFolder { path in
                         let ro = smbReadOnly, guest = smbGuest
-                        Task { await smb.share(URL(fileURLWithPath: path), readOnly: ro, guest: guest) }
+                        Task {
+                            await smb.share(URL(fileURLWithPath: path), readOnly: ro, guest: guest)
+                            if guest && !SMBShare.guestsCanRead(path) {
+                                smb.message = String(localized: "Shared without guests: this folder doesn’t allow them (on the disk only your user can open it). To enter you must be a registered user.")
+                            }
+                        }
                     }
                 }
                 .buttonStyle(.borderedProminent)

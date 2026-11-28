@@ -141,4 +141,16 @@ struct SMBTests {
         #expect(AdminAuthorization.sudoersRule(user: "ana").contains("/usr/sbin/sharing *")) // la regla recordada lo permite
         #expect(!FTPUser(name: "nuevo").readOnly) // lo nuevo empieza en lectura y escritura
     }
+
+    // Carpetas que solo abre su dueño (como ~/Pictures, 700) no admiten invitados; con 755 sí.
+    @Test func guestsOnlyWhereTheDiskAllowsThem() throws {
+        let base = FileManager.default.temporaryDirectory.appendingPathComponent("SMBGuests-\(UUID().uuidString)")
+        let privateDir = base.appendingPathComponent("privada"), openDir = base.appendingPathComponent("abierta")
+        try FileManager.default.createDirectory(at: privateDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: openDir, withIntermediateDirectories: true)
+        chmod(privateDir.path, 0o700); chmod(openDir.path, 0o755)
+        #expect(!SMBShare.guestsCanRead(privateDir.path))
+        #expect(SMBShare.guestsCanRead(openDir.path))
+        #expect(!SMBShare(name: "p", path: privateDir.path, readOnly: false, guest: true).guestsCanRead)
+    }
 }

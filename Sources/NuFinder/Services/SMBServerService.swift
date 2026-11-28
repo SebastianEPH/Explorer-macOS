@@ -220,13 +220,23 @@ final class SMBServerController: ObservableObject {
     }
 
     func share(_ url: URL, readOnly: Bool = false, guest: Bool = false) async {
+        // Invitados en una carpeta que en el disco solo abre su dueño no sirven: se comparte sin ellos.
+        let guest = guest && SMBShare.guestsCanRead(url.path)
         let name = url.lastPathComponent, start = !running
         await change { SMBServer.share(path: url.path, name: name, readOnly: readOnly, guest: guest, startServer: start) }
     }
 
     func unshare(_ share: SMBShare) async { await change { SMBServer.unshare(share) } }
 
+    /// Quita «invitados» de las carpetas que los invitados no pueden abrir en el disco.
+    func fixGuestsWithoutAccess() async {
+        for item in shares where item.guest && !item.guestsCanRead {
+            await update(item, readOnly: item.readOnly, guest: false)
+        }
+    }
+
     func update(_ share: SMBShare, readOnly: Bool, guest: Bool) async {
+        let guest = guest && share.guestsCanRead
         let script = SMBServer.editScript(name: share.name, readOnly: readOnly, guest: guest)
         await change { SMBServer.runner.runAsAdmin(script) }
     }
@@ -301,7 +311,9 @@ enum SMBUsers {
 
 extension SMBShare {
     /// ¿Un invitado (usuario «nobody») puede leer la carpeta en el disco? Si no, verá «contenido no disponible».
-    var guestsCanRead: Bool {
+    var guestsCanRead: Bool { SMBShare.guestsCanRead(path) }
+
+    static func guestsCanRead(_ path: String) -> Bool {
         guard let mode = (try? FileManager.default.attributesOfItem(atPath: path))?[.posixPermissions] as? Int else { return false }
         return mode & 0o005 == 0o005
     }
