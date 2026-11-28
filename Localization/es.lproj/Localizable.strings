@@ -1164,3 +1164,5 @@
 "Logged in, but the folder can’t be opened." = "Entró, pero no puede abrir la carpeta.";
 "It works: “%@” logged in and opened “%@”. Use the same user and password on the iPhone." = "Funciona: «%@» entró y abrió «%@». Usa el mismo usuario y contraseña en el iPhone.";
 "Couldn’t reach this Mac on the network (no route to host)." = "No se pudo llegar a este Mac por la red (no route to host).";
+"The server didn’t answer." = "El servidor no respondió.";
+"Logged in, but the folder isn’t shared with this user." = "Entró, pero la carpeta no está compartida con este usuario.";

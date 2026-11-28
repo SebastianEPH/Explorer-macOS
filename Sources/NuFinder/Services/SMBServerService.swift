@@ -292,32 +292,30 @@ enum SMBUsers {
         return list().first { $0.name == user }?.canUseSMB == on ? nil : String(localized: "macOS didn’t apply the change.")
     }
 
-    /// Prueba de verdad: se conecta a este Mac por SMB con ese usuario y contraseña (como un iPhone),
-    /// abre la carpeta compartida, la lista y se desconecta. nil = entra; si no, el motivo.
+    /// Prueba de verdad: inicia sesión en este Mac por SMB con ese usuario y contraseña (como un iPhone)
+    /// y comprueba que ve la carpeta compartida. Con `smbutil view` (montar el propio Mac con NetFS da
+    /// «No route to host»). La contraseña va en la dirección (`//usuario:clave@IP`) y solo se ve en la
+    /// lista de procesos de este Mac durante la fracción de segundo que dura la prueba.
     static func testLogin(user: String, password: String, share: String) -> String? {
-        var components = URLComponents()
-        // Por la IP de la red, como el iPhone: montar el propio Mac por 127.0.0.1 da «No route to host».
-        components.scheme = "smb"; components.host = FTPSettings.localAddresses().first ?? "127.0.0.1"; components.path = "/" + share
-        guard let url = components.url else { return "URL" }
-        let open = NSMutableDictionary(object: "NoUI", forKey: "UIOption" as NSString)
-        let mountOptions = NSMutableDictionary(object: true, forKey: "MountInDirectory" as NSString)
-        let mountPoint = FileManager.default.temporaryDirectory.appendingPathComponent("explorer-smb-test-\(UUID().uuidString)")
-        try? FileManager.default.createDirectory(at: mountPoint, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: mountPoint) }
-        var mounts: Unmanaged<CFArray>?
-        let status = NetFSMountURLSync(url as CFURL, mountPoint as CFURL, user as CFString, password as CFString,
-                                       open, mountOptions, &mounts)
-        guard status == 0 else {
-            if status == Int32(EAUTH) || status == 80 || status == -6600 { return String(localized: "The server refused the user or password.") }
-            if status == Int32(EHOSTUNREACH) { return String(localized: "Couldn’t reach this Mac on the network (no route to host).") }
-            return SMBMount.Failure(status: status).localizedDescription
-        }
-        let points = (mounts?.takeRetainedValue() as? [String]) ?? []
-        defer { for point in points { unmount(point, MNT_FORCE) } }
-        guard let point = points.first, (try? FileManager.default.contentsOfDirectory(atPath: point)) != nil else {
-            return String(localized: "Logged in, but the folder can’t be opened.")
-        }
-        return nil
+        let host = FTPSettings.localAddresses().first ?? "127.0.0.1"
+        let allowed = CharacterSet.alphanumerics
+        let u = user.addingPercentEncoding(withAllowedCharacters: allowed) ?? user
+        let p = password.addingPercentEncoding(withAllowedCharacters: allowed) ?? password
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/smbutil")
+        process.arguments = ["view", "//\(u):\(p)@\(host)"]
+        let pipe = Pipe()
+        process.standardOutput = pipe; process.standardError = pipe; process.standardInput = FileHandle.nullDevice
+        guard (try? process.run()) != nil else { return "smbutil" }
+        let deadline = DispatchTime.now() + 15
+        let group = DispatchGroup(); group.enter()
+        var text = ""
+        DispatchQueue.global().async { text = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self); group.leave() }
+        if group.wait(timeout: deadline) == .timedOut { process.terminate(); return String(localized: "The server didn’t answer.") }
+        process.waitUntilExit()
+        if text.localizedCaseInsensitiveContains("authentication") { return String(localized: "The server refused the user or password.") }
+        guard process.terminationStatus == 0 else { return text.replacingOccurrences(of: "smbutil: ", with: "").trimmingCharacters(in: .whitespacesAndNewlines) }
+        return text.contains(share) ? nil : String(localized: "Logged in, but the folder isn’t shared with this user.")
     }
 
     /// Se lee una vez (dscl tarda); al volver a Ajustes se vuelve a leer.
