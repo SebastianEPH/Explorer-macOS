@@ -392,6 +392,8 @@ struct ProtocolPage: View {
         adminSection
         smbUsersSection
             .task { await smb.refresh(force: true); await smb.fixGuestsWithoutAccess() } // siempre visible (adminSection no si ya hay permiso)
+            .sheet(isPresented: Binding(get: { accessUser != nil }, set: { if !$0 { accessUser = nil } })) { accessSheet }
+            .id(usersVersion) // vuelve a leer los usuarios tras activar/quitar
         Section("My SMB server details") {
             HStack {
                 Text(smb.running ? "macOS File Sharing is on" : "macOS File Sharing is off")
@@ -483,6 +485,47 @@ struct ProtocolPage: View {
         } header: { Text("Share another folder") }
     }
 
+    @State private var accessUser: String?
+    @State private var accessOn = true
+    @State private var accessPassword = ""
+    @State private var accessError: String?
+    @State private var accessBusy = false
+    @State private var usersVersion = 0
+
+    /// Pide la contraseña del usuario (una vez, no se guarda) y activa o quita el acceso desde iPhone/Windows.
+    private var accessSheet: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(accessOn ? "Allow “\(accessUser ?? "")” from iPhone, Android and Windows" : "Remove access for “\(accessUser ?? "")”")
+                .font(.headline)
+            Text("Type the password of this Mac account. It’s used once to apply the change and isn’t saved.")
+                .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            SecureField("Password", text: $accessPassword).onSubmit(applyAccess)
+            if let accessError { DisabledReason("\(accessError)") }
+            HStack {
+                Spacer()
+                if accessBusy { ProgressView().controlSize(.small) }
+                Button("Cancel") { accessUser = nil }.keyboardShortcut(.cancelAction)
+                Button(accessOn ? "Allow" : "Remove Access", action: applyAccess)
+                    .keyboardShortcut(.defaultAction).buttonStyle(.borderedProminent)
+                    .disabled(accessPassword.isEmpty || accessBusy)
+            }
+        }
+        .padding(20).frame(width: 420)
+    }
+
+    private func applyAccess() {
+        guard let user = accessUser, !accessPassword.isEmpty, !accessBusy else { return }
+        let on = accessOn, password = accessPassword
+        accessBusy = true; accessError = nil
+        Task.detached {
+            let error = SMBUsers.setSMBAccess(on, user: user, password: password)
+            await MainActor.run {
+                accessBusy = false
+                if let error { accessError = error } else { accessUser = nil; accessPassword = ""; usersVersion += 1 }
+            }
+        }
+    }
+
     /// Usuarios que pueden entrar por SMB: las cuentas de este Mac (SMB no tiene usuarios propios).
     @ViewBuilder private var smbUsersSection: some View {
         Section {
@@ -491,15 +534,14 @@ struct ProtocolPage: View {
                     ItemRow(symbol: user.isAdmin ? "person.badge.key.fill" : "person.fill", title: user.fullName,
                             detail: user.name + (user.isAdmin ? " · " + String(localized: "Administrator") : ""),
                             selected: false, dot: user.canUseSMB) {}
-                    if user.canUseSMB {
-                        Text("Can log in from iPhone, Android and Windows.").font(.caption).foregroundStyle(.secondary)
-                    } else {
-                        HStack {
-                            Text("Can’t log in from the iPhone yet. Fix: Open… → “File Sharing” ⓘ → “Options…” → tick this user and type its password. (Apple calls it “Windows File Sharing”; it’s also what the iPhone uses.)")
-                                .font(.caption).foregroundStyle(.orange)
-                            Spacer()
-                            Button("Open…") { SMBServer.openSystemSharing() }.controlSize(.small)
+                    HStack {
+                        Text(user.canUseSMB ? "Can log in from iPhone, Android and Windows." : "Can’t log in from iPhone, Android or Windows yet.")
+                            .font(.caption).foregroundStyle(user.canUseSMB ? Color.secondary : Color.orange)
+                        Spacer()
+                        Button(user.canUseSMB ? "Remove Access" : "Allow from iPhone/Windows") {
+                            accessUser = user.name; accessOn = !user.canUseSMB; accessPassword = ""; accessError = nil
                         }
+                        .controlSize(.small)
                     }
                 }
             }

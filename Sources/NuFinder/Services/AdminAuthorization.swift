@@ -60,11 +60,20 @@ enum AdminAuthorization {
     static let rememberKey = "admin.remember"
     static let sudoersPath = "/etc/sudoers.d/explorer"
     static var wantsRemember: Bool { UserDefaults.standard.object(forKey: rememberKey) as? Bool ?? true }
-    static var isRemembered: Bool { FileManager.default.fileExists(atPath: sudoersPath) }
+    /// Versión de la regla: si se añaden órdenes, las instalaciones antiguas se renuevan solas
+    /// (la próxima vez que haga falta se pide Touch ID una vez y se reinstala).
+    static let ruleVersion = 2
+    static let ruleVersionKey = "admin.ruleVersion"
+    static var isRemembered: Bool {
+        FileManager.default.fileExists(atPath: sudoersPath)
+            && UserDefaults.standard.integer(forKey: ruleVersionKey) >= ruleVersion
+    }
 
     /// Solo estas órdenes, solo para este usuario, sin contraseña. Nada más.
     static func sudoersRule(user: String = NSUserName()) -> String {
-        let commands = ["/usr/sbin/sharing *"] + SMBServer.launchctlCommands + ["/bin/rm -f \(sudoersPath)"]
+        let commands = ["/usr/sbin/sharing *"] + SMBServer.launchctlCommands
+            + ["/usr/bin/pwpolicy -u * -sethashtypes SMB-NT on", "/usr/bin/pwpolicy -u * -sethashtypes SMB-NT off", // acceso desde iPhone/Windows
+               "/bin/rm -f \(sudoersPath)"]
         let escaped = commands.map { $0.replacingOccurrences(of: ":", with: "\\:").replacingOccurrences(of: ",", with: "\\,") }
         return "# Explorer: servidor SMB sin volver a pedir permiso (se quita en Ajustes → Red → SMB)\n"
             + "\(user) ALL=(root) NOPASSWD: " + escaped.joined(separator: ", ") + "\n"
@@ -78,7 +87,11 @@ enum AdminAuthorization {
     }
 
     /// Pedir el permiso ahora (Touch ID) y recordarlo, sin esperar a un cambio.
-    static func rememberNow() -> String? { runPrivileged(installRuleScript()) }
+    static func rememberNow() -> String? {
+        let error = runPrivileged(installRuleScript())
+        if error == nil { UserDefaults.standard.set(ruleVersion, forKey: ruleVersionKey) }
+        return error
+    }
 
     /// Olvidar el permiso recordado.
     static func forget() -> String? {
@@ -110,8 +123,13 @@ enum AdminAuthorization {
             }
             // La regla ya no vale (p. ej. cambió el usuario): se pide de nuevo.
         }
-        let body = "SUDO=''; " + script + (wantsRemember && !isRemembered ? "; " + installRuleScript() : "")
-        return runPrivileged(body)
+        let installing = wantsRemember && !isRemembered
+        let body = "SUDO=''; " + script + (installing ? "; " + installRuleScript() : "")
+        let error = runPrivileged(body)
+        if installing && FileManager.default.fileExists(atPath: sudoersPath) {
+            UserDefaults.standard.set(ruleVersion, forKey: ruleVersionKey)
+        }
+        return error
     }
 
     /// ¿Touch ID activado para `sudo`? (`auth sufficient pam_tid.so` sin comentar en sudo_local o sudo).

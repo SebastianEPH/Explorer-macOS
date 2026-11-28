@@ -153,4 +153,19 @@ struct SMBTests {
         #expect(SMBShare.guestsCanRead(openDir.path))
         #expect(!SMBShare(name: "p", path: privateDir.path, readOnly: false, guest: true).guestsCanRead)
     }
+
+    // La regla recordada incluye activar/quitar el acceso desde iPhone/Windows y sigue siendo válida para sudo.
+    @Test func sudoRuleIncludesSMBAccessAndIsValid() throws {
+        let rule = AdminAuthorization.sudoersRule(user: "ana")
+        #expect(rule.contains("/usr/bin/pwpolicy -u * -sethashtypes SMB-NT on"))
+        #expect(rule.contains("/usr/bin/pwpolicy -u * -sethashtypes SMB-NT off"))
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("regla-\(UUID().uuidString)")
+        try rule.write(to: file, atomically: true, encoding: .utf8)
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/visudo")
+        process.arguments = ["-cf", file.path]
+        process.standardOutput = FileHandle.nullDevice; process.standardError = FileHandle.nullDevice
+        try process.run(); process.waitUntilExit()
+        #expect(process.terminationStatus == 0)
+    }
 }

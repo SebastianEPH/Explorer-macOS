@@ -1145,3 +1145,13 @@
 
 "Can’t log in from the iPhone yet. Fix: Open… → “File Sharing” ⓘ → “Options…” → tick this user and type its password. (Apple calls it “Windows File Sharing”; it’s also what the iPhone uses.)" = "Aún no puede entrar desde el iPhone. Solución: Abrir… → «Compartir archivos» ⓘ → «Opciones…» → marca este usuario y escribe su contraseña. (Apple lo llama «Compartir archivos Windows»; es lo mismo que usa el iPhone.)";
 "Can log in from iPhone, Android and Windows." = "Puede entrar desde el iPhone (y Windows/Android).";
+
+"Can’t log in from iPhone, Android or Windows yet." = "Aún no puede entrar desde iPhone, Android ni Windows.";
+"Remove Access" = "Quitar acceso";
+"Allow from iPhone/Windows" = "Permitir desde iPhone/Windows";
+"Allow “%@” from iPhone, Android and Windows" = "Permitir que «%@» entre desde iPhone, Android y Windows";
+"Remove access for “%@”" = "Quitar el acceso de «%@»";
+"Type the password of this Mac account. It’s used once to apply the change and isn’t saved." = "Escribe la contraseña de esta cuenta del Mac. Se usa una vez para aplicar el cambio y no se guarda.";
+"Allow" = "Permitir";
+"Wrong password." = "Contraseña incorrecta.";
+"macOS didn’t apply the change." = "macOS no aplicó el cambio.";

@@ -1,4 +1,5 @@
 import AppKit
+import OpenDirectory
 import SystemConfiguration
 import SwiftUI
 
@@ -270,6 +271,26 @@ enum SMBUsers {
     /// iPhone, Android y Windows no pueden entrar con ese usuario (solo como invitado).
     struct User: Sendable { let name: String; let fullName: String; let isAdmin: Bool; let canUseSMB: Bool }
 
+    /// Permitir (o quitar) que un usuario entre desde iPhone, Android o Windows: lo mismo que la casilla
+    /// «Compartir Archivos Windows» de Ajustes del Sistema. Pide su contraseña una vez (no se guarda):
+    /// 1) se comprueba, 2) se activa el formato SMB-NT (administrador, ya recordado),
+    /// 3) se vuelve a poner la misma contraseña con Open Directory (como el propio usuario, así no se
+    /// desajustan el llavero ni FileVault) para que macOS genere ese formato.
+    static func setSMBAccess(_ on: Bool, user: String, password: String) -> String? {
+        do {
+            let node = try ODNode(session: ODSession.default(), type: ODNodeType(kODNodeTypeLocalNodes))
+            let record = try node.record(withRecordType: kODRecordTypeUsers, name: user, attributes: nil)
+            do { try record.verifyPassword(password) } catch { return String(localized: "Wrong password.") }
+            let quoted = SMBServer.quoted(user)
+            if let error = SMBServer.runner.runAsAdmin("$SUDO /usr/bin/pwpolicy -u \(quoted) -sethashtypes SMB-NT \(on ? "on" : "off")") {
+                return error
+            }
+            try record.changePassword(password, toPassword: password)
+        } catch { return error.localizedDescription }
+        cache = nil
+        return list().first { $0.name == user }?.canUseSMB == on ? nil : String(localized: "macOS didn’t apply the change.")
+    }
+
     /// Se lee una vez (dscl tarda); al volver a Ajustes se vuelve a leer.
     nonisolated(unsafe) private static var cache: (date: Date, users: [User])?
     static func list() -> [User] {
@@ -288,9 +309,9 @@ enum SMBUsers {
             let name = String(parts[0])
             let full = output("/usr/bin/dscl", [".", "-read", "/Users/\(name)", "RealName"])
                 .replacingOccurrences(of: "RealName:", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-            let authority = output("/usr/bin/dscl", [".", "-read", "/Users/\(name)", "AuthenticationAuthority"])
+            let hashes = output("/usr/bin/pwpolicy", ["-u", name, "-gethashtypes"])
             return User(name: name, fullName: full.isEmpty ? name : full, isAdmin: admins.contains(name),
-                        canUseSMB: authority.contains("SMBNT"))
+                        canUseSMB: hashes.contains("SMB-NT"))
         }
     }
 
