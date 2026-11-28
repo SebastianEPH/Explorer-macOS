@@ -87,10 +87,22 @@ enum PermissionsService {
                 ? .granted : .denied
         case .accessibility:
             return AXIsProcessTrusted() ? .granted : .denied
-        case .folders, .volumes:
-            return state(of: .fullDisk) == .granted ? .granted : .unknown
+        case .folders:
+            if state(of: .fullDisk) == .granted { return .granted }
+            // Leer las tres carpetas no muestra avisos si ya se respondió; si alguna falla, falta permiso.
+            let home = FileManager.default.homeDirectoryForCurrentUser
+            let readable = ["Desktop", "Documents", "Downloads"].allSatisfy {
+                (try? FileManager.default.contentsOfDirectory(atPath: home.appendingPathComponent($0).path)) != nil
+            }
+            return readable ? .granted : .denied
+        case .volumes:
+            if state(of: .fullDisk) == .granted { return .granted }
+            let volumes = (FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: nil, options: [.skipHiddenVolumes]) ?? [])
+                .filter { $0.path != "/" }
+            guard !volumes.isEmpty else { return .unknown } // no hay discos conectados para comprobarlo
+            return volumes.allSatisfy { (try? FileManager.default.contentsOfDirectory(atPath: $0.path)) != nil } ? .granted : .denied
         case .appManagement:
-            return .unknown // macOS no deja consultarlo
+            return appManagementState()
         case .finder, .systemEvents, .iTerm:
             return automationState(bundleIDs[kind]!, ask: false)
         }
@@ -150,6 +162,17 @@ enum PermissionsService {
         }
     }
 
+    /// Gestión de apps: macOS impide cambiar paquetes de apps sin ese permiso. Se prueba poniendo y
+    /// quitando un atributo extendido propio en Explorer.app (no toca la firma ni el contenido).
+    static func appManagementState() -> PermissionState {
+        let path = Bundle.main.bundlePath
+        guard path.hasPrefix("/Applications/") else { return .unknown } // pruebas / swift run
+        let name = "com.explorer.permission-check"
+        let ok = setxattr(path, name, "1", 1, 0, 0) == 0
+        if ok { removexattr(path, name, 0) }
+        return ok ? .granted : .denied
+    }
+
     /// Para el botón «+» de Ajustes del Sistema cuando Explorer no aparece en la lista.
     static func copyAppPath() {
         NSPasteboard.general.clearContents()
@@ -176,6 +199,8 @@ enum PermissionsService {
 /// Sección «Permissions» de Ajustes.
 struct PermissionsSection: View {
     @State private var states: [PermissionKind: PermissionState] = [:]
+    /// Qué pasó al pulsar «Solicitar» en cada fila (antes no se decía nada y parecía no funcionar).
+    @State private var results: [PermissionKind: String] = [:]
 
     var body: some View {
         Section("Permissions") {
@@ -186,14 +211,31 @@ struct PermissionsSection: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(kind.title)
                         Text(kind.detail).font(.caption).foregroundStyle(.secondary)
+                        if kind == .volumes, states[kind] == .unknown, results[kind] == nil {
+                            Text("Connect an external or network drive to check it.").font(.caption).foregroundStyle(.secondary)
+                        }
+                        if let result = results[kind] {
+                            Text(result).font(.caption).foregroundStyle(states[kind] == .granted ? Color.green : Color.orange)
+                        }
                     }
                     Spacer()
                     if states[kind] != .granted {
                         Button("Request") {
+                            results[kind] = String(localized: "Asking macOS…")
                             DispatchQueue.global(qos: .userInitiated).async {
                                 PermissionsService.request(kind)
                                 Thread.sleep(forTimeInterval: 0.5)
-                                refresh()
+                                let state = PermissionsService.state(of: kind)
+                                DispatchQueue.main.async {
+                                    states[kind] = state
+                                    results[kind] = state == .granted
+                                        ? String(localized: "Granted.")
+                                        : kind == .volumes && state == .unknown
+                                            ? String(localized: "No external or network drive is connected right now.")
+                                        : [.fullDisk, .accessibility, .appManagement, .finder, .systemEvents, .iTerm].contains(kind)
+                                            ? String(localized: "Turn on Explorer in System Settings (it’s open now).")
+                                            : String(localized: "macOS didn’t grant it. Check System Settings → Privacy & Security.")
+                                }
                             }
                         }
                     }
@@ -240,25 +282,27 @@ struct PermissionsSection: View {
     }
 }
 
-/// Fork: ventanita flotante con el icono de Explorer para arrastrarlo a la lista de Ajustes del Sistema
-/// (Acceso total al disco, Accesibilidad, Gestión de apps), porque macOS a veces no lo muestra en ella.
+/// Fork: ventanita con el icono de Explorer para arrastrarlo a la lista de Ajustes del Sistema
+/// (Acceso total al disco, Accesibilidad, Gestión de apps), porque macOS a veces no lo muestra.
+/// Comprueba el permiso cada segundo y se cierra sola, con ✓, en cuanto queda concedido.
 @MainActor
 enum PermissionDragHelper {
     private static var panel: NSPanel?
 
     static func show(for kind: PermissionKind) {
         panel?.close()
-        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 300, height: 250),
+        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 340, height: 320),
                             styleMask: [.titled, .closable, .utilityWindow, .nonactivatingPanel],
                             backing: .buffered, defer: false)
-        panel.title = String(localized: "Add Explorer")
+        panel.title = String(localized: "Give Explorer permission")
         panel.level = .floating
         panel.isReleasedWhenClosed = false
         panel.hidesOnDeactivate = false
         panel.contentView = NSHostingView(rootView: PermissionDragView(kind: kind) { panel.close() })
+        // A la izquierda de la pantalla: Ajustes del Sistema suele abrirse en el centro.
         if let screen = NSScreen.main {
             let frame = screen.visibleFrame
-            panel.setFrameOrigin(NSPoint(x: frame.maxX - 330, y: frame.minY + 40))
+            panel.setFrameOrigin(NSPoint(x: frame.minX + 40, y: frame.midY - 160))
         }
         panel.orderFrontRegardless()
         self.panel = panel
@@ -268,27 +312,58 @@ enum PermissionDragHelper {
 private struct PermissionDragView: View {
     let kind: PermissionKind
     let close: () -> Void
+    @State private var granted = false
     @State private var copied = false
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        VStack(spacing: 10) {
-            Text("Drag Explorer into the “\(Text(kind.title))” list")
-                .font(.headline).multilineTextAlignment(.center)
-            Image(nsImage: NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath))
-                .resizable().frame(width: 64, height: 64)
-                .onDrag { NSItemProvider(object: Bundle.main.bundleURL as NSURL) }
-                .help(Text("Drag to the list in System Settings"))
-            Text("Then turn on its switch. If it asks, reopen Explorer.")
-                .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
-            HStack {
-                Button(copied ? "Copied" : "Copy Path") {
-                    PermissionsService.copyAppPath(); copied = true
+        VStack(alignment: .leading, spacing: 12) {
+            if granted {
+                Label("Permission granted", systemImage: "checkmark.circle.fill")
+                    .font(.headline).foregroundStyle(.green)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            } else {
+                Text(kind.title).font(.headline)
+                step(1, "System Settings is open on “\(Text(kind.title))”.")
+                step(2, "If Explorer is in the list, turn on its switch. If not, drag this icon into the list:")
+                HStack {
+                    Spacer()
+                    Image(nsImage: NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath))
+                        .resizable().frame(width: 64, height: 64)
+                        .onDrag { NSItemProvider(object: Bundle.main.bundleURL as NSURL) }
+                        .help(Text("Drag to the list in System Settings"))
+                    Spacer()
                 }
-                Spacer()
-                Button("Done", action: close).keyboardShortcut(.defaultAction)
+                step(3, "This window checks by itself and closes when it’s done.")
+                HStack {
+                    Button("Open System Settings") { if let url = kind.settingsURL { NSWorkspace.shared.open(url) } }
+                    Button(copied ? "Copied" : "Copy Path") { PermissionsService.copyAppPath(); copied = true }
+                    Spacer()
+                    Button("Close", action: close)
+                }
             }
         }
         .padding(16)
-        .frame(width: 300)
+        .frame(width: 340)
+        .onReceive(timer) { _ in
+            guard !granted else { return }
+            DispatchQueue.global(qos: .utility).async {
+                let ok = PermissionsService.state(of: kind) == .granted
+                DispatchQueue.main.async {
+                    if ok {
+                        granted = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { close() }
+                    }
+                }
+            }
+        }
+    }
+
+    private func step(_ number: Int, _ text: LocalizedStringKey) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text("\(number)").font(.caption.bold()).frame(width: 18, height: 18)
+                .background(Circle().fill(Color.accentColor.opacity(0.2)))
+            Text(text).font(.callout).fixedSize(horizontal: false, vertical: true)
+        }
     }
 }

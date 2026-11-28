@@ -1105,3 +1105,16 @@
 
 "Network passwords" = "Contraseñas de Red";
 "%lld saved, encrypted in ~/.explorer and readable only by your user. Explorer doesn’t use the Keychain, so it never asks for it." = "%lld guardadas, cifradas en ~/.explorer y solo legibles por tu usuario. Explorer no usa el Llavero, así que nunca lo pide.";
+
+"Give Explorer permission" = "Dar permiso a Explorer";
+"Permission granted" = "Permiso concedido";
+"System Settings is open on “%@”." = "Ajustes del Sistema está abierto en «%@».";
+"If Explorer is in the list, turn on its switch. If not, drag this icon into the list:" = "Si Explorer está en la lista, activa su interruptor. Si no, arrastra este icono a la lista:";
+"This window checks by itself and closes when it’s done." = "Esta ventana lo comprueba sola y se cierra cuando esté listo.";
+"Asking macOS…" = "Preguntando a macOS…";
+"Granted." = "Concedido.";
+"Turn on Explorer in System Settings (it’s open now)." = "Activa Explorer en Ajustes del Sistema (ya está abierto).";
+"macOS didn’t grant it. Check System Settings → Privacy & Security." = "macOS no lo concedió. Revisa Ajustes del Sistema → Privacidad y seguridad.";
+
+"Connect an external or network drive to check it." = "Conecta un disco externo o de red para comprobarlo.";
+"No external or network drive is connected right now." = "Ahora mismo no hay ningún disco externo ni de red conectado.";
