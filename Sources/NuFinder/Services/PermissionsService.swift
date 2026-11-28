@@ -6,7 +6,7 @@ import SwiftUI
 /// macOS no deja concederlos desde la app: «Solicitar» muestra el aviso del sistema
 /// o abre el panel correspondiente de Ajustes del Sistema para que el usuario los active.
 enum PermissionKind: String, CaseIterable, Identifiable {
-    case fullDisk, accessibility, folders, volumes, appManagement, finder, systemEvents, iTerm
+    case fullDisk, accessibility, folders, volumes, localNetwork, appManagement, finder, systemEvents, iTerm
 
     var id: String { rawValue }
 
@@ -16,6 +16,7 @@ enum PermissionKind: String, CaseIterable, Identifiable {
         case .accessibility: "Accessibility"
         case .folders: "Desktop, Documents and Downloads"
         case .volumes: "External and Network Drives"
+        case .localNetwork: "Local Network"
         case .appManagement: "App Management"
         case .finder: "Automation: Finder"
         case .systemEvents: "Automation: System Events"
@@ -29,6 +30,7 @@ enum PermissionKind: String, CaseIterable, Identifiable {
         case .accessibility: "Bring the new iTerm window to the front and take it out of full screen."
         case .folders: "Open your personal folders. Not needed if Full Disk Access is on."
         case .volumes: "Open USB drives, disks and network shares without being asked each time."
+        case .localNetwork: "Connect to computers on your Wi‑Fi (SMB and FTP servers) and test your own server."
         case .appManagement: "Let Explorer replace itself in Applications when it updates."
         case .finder: "Close Finder and ask it for things when Explorer replaces it."
         case .systemEvents: "Control windows through System Events."
@@ -43,6 +45,7 @@ enum PermissionKind: String, CaseIterable, Identifiable {
         case .accessibility: return URL(string: base + "Privacy_Accessibility")
         case .folders: return URL(string: base + "Privacy_FilesAndFolders")
         case .volumes: return URL(string: base + "Privacy_FilesAndFolders")
+        case .localNetwork: return URL(string: base + "Privacy_LocalNetwork")
         case .appManagement: return URL(string: base + "Privacy_AppBundles")
         case .finder, .systemEvents, .iTerm: return URL(string: base + "Privacy_Automation")
         }
@@ -99,6 +102,8 @@ enum PermissionsService {
             return volumes.allSatisfy { (try? FileManager.default.contentsOfDirectory(atPath: $0.path)) != nil } ? .granted : .denied
         case .appManagement:
             return appManagementState()
+        case .localNetwork:
+            return localNetworkState()
         case .finder, .systemEvents, .iTerm:
             return automationState(bundleIDs[kind]!, ask: false)
         }
@@ -109,6 +114,10 @@ enum PermissionsService {
         switch kind {
         case .fullDisk, .appManagement:
             open(kind)
+        case .localNetwork:
+            // Intentar conectar a un equipo de la red hace que macOS pregunte la primera vez.
+            if localNetworkState() != .granted { Thread.sleep(forTimeInterval: 2) }
+            if localNetworkState() != .granted { open(kind) }
         case .volumes:
             // Leer cada volumen hace que macOS muestre su aviso (externos y de red).
             let volumes = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: nil, options: [.skipHiddenVolumes]) ?? []
@@ -179,6 +188,68 @@ enum PermissionsService {
             if readable { return .granted }
         }
         return sawExisting ? .denied : .unknown
+    }
+
+    /// Red local: conectar a la IP de red de este Mac (o al router). Sin permiso, macOS responde
+    /// «No route to host» (EHOSTUNREACH) aunque el equipo esté ahí.
+    static func localNetworkState() -> PermissionState {
+        let targets = FTPSettings.localAddresses() + [defaultGateway()].compactMap { $0 }
+        guard !targets.isEmpty else { return .unknown }
+        var sawBlocked = false
+        for host in targets {
+            for port: UInt16 in [445, 80, 53, 22] {
+                switch tcpProbe(host, port) {
+                case .connected, .refused: return .granted // llegó al equipo (abierto o cerrado, da igual)
+                case .unreachable: sawBlocked = true
+                case .timeout: continue
+                }
+            }
+        }
+        return sawBlocked ? .denied : .unknown
+    }
+
+    private enum Probe { case connected, refused, unreachable, timeout }
+
+    private static func tcpProbe(_ host: String, _ port: UInt16) -> Probe {
+        let fd = socket(AF_INET, SOCK_STREAM, 0)
+        guard fd >= 0 else { return .timeout }
+        defer { close(fd) }
+        _ = fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)
+        var address = sockaddr_in()
+        address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        address.sin_family = sa_family_t(AF_INET)
+        address.sin_port = port.bigEndian
+        address.sin_addr.s_addr = inet_addr(host)
+        let result = withUnsafePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) }
+        }
+        if result == 0 { return .connected }
+        if errno == EHOSTUNREACH || errno == ENETUNREACH { return .unreachable }
+        if errno == ECONNREFUSED { return .refused }
+        guard errno == EINPROGRESS else { return .timeout }
+        var pfd = pollfd(fd: fd, events: Int16(POLLOUT), revents: 0)
+        guard poll(&pfd, 1, 800) > 0 else { return .timeout }
+        var error: Int32 = 0
+        var length = socklen_t(MemoryLayout<Int32>.size)
+        getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &length)
+        switch error {
+        case 0: return .connected
+        case ECONNREFUSED: return .refused
+        case EHOSTUNREACH, ENETUNREACH: return .unreachable
+        default: return .timeout
+        }
+    }
+
+    private static func defaultGateway() -> String? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/sbin/route")
+        process.arguments = ["-n", "get", "default"]
+        let pipe = Pipe(); process.standardOutput = pipe; process.standardError = FileHandle.nullDevice
+        guard (try? process.run()) != nil else { return nil }
+        let text = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        process.waitUntilExit()
+        return text.split(separator: "\n").first { $0.contains("gateway:") }?
+            .split(separator: ":").last.map { $0.trimmingCharacters(in: .whitespaces) }
     }
 
     /// Gestión de apps: macOS impide cambiar paquetes de apps sin ese permiso. Se prueba poniendo y

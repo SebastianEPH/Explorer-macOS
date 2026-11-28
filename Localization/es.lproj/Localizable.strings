@@ -1166,3 +1166,7 @@
 "Couldn’t reach this Mac on the network (no route to host)." = "No se pudo llegar a este Mac por la red (no route to host).";
 "The server didn’t answer." = "El servidor no respondió.";
 "Logged in, but the folder isn’t shared with this user." = "Entró, pero la carpeta no está compartida con este usuario.";
+
+"Local Network" = "Red local";
+"Connect to computers on your Wi‑Fi (SMB and FTP servers) and test your own server." = "Conectarse a equipos de tu Wi‑Fi (servidores SMB y FTP) y probar tu propio servidor.";
+"Explorer doesn’t have the Local Network permission. Settings → System → Permissions → Local Network → Request." = "Explorer no tiene el permiso de Red local. Ajustes → Sistema → Permisos → Red local → Solicitar.";

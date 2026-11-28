@@ -2,59 +2,61 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
-    <key>CFBundleLocalizations</key>
-    <array>
-        <string>en</string>
-        <string>es</string>
-    </array>
-    <key>NSDesktopFolderUsageDescription</key>
-    <string>Explorer muestra y gestiona los archivos de tu Escritorio.</string>
-    <key>NSDocumentsFolderUsageDescription</key>
-    <string>Explorer muestra y gestiona los archivos de Documentos.</string>
-    <key>NSDownloadsFolderUsageDescription</key>
-    <string>Explorer muestra y gestiona los archivos de Descargas.</string>
-    <key>NSRemovableVolumesUsageDescription</key>
-    <string>Explorer muestra y gestiona los archivos de discos externos y USB.</string>
-    <key>NSNetworkVolumesUsageDescription</key>
-    <string>Explorer muestra y gestiona los archivos de unidades de red.</string>
-    <key>NSAppleEventsUsageDescription</key>
-    <string>Explorer controla iTerm para abrir una ventana nueva en la carpeta elegida.</string>
-    <key>CFBundleDisplayName</key>
-    <string>Explorer</string>
-    <key>CFBundleName</key>
-    <string>Explorer</string>
-    <key>CFBundleIdentifier</key>
-    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>0.3.2</string>
-    <key>CFBundleVersion</key>
-    <string>15</string>
-    <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2026 Freeloader contributors. MIT licensed.</string>
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleURLName</key>
-            <string>com.miguelrodriguez.NuFinder</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>freeloader</string>
-            </array>
-        </dict>
-    </array>
-    <key>LSApplicationCategoryType</key>
-    <string>public.app-category.utilities</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
-    <key>NSHighResolutionCapable</key>
-    <true/>
-    <key>NSSupportsAutomaticGraphicsSwitching</key>
-    <true/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Explorer</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>es</string>
+	</array>
+	<key>CFBundleName</key>
+	<string>Explorer</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.3.2</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.miguelrodriguez.NuFinder</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>freeloader</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>15</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Explorer controla iTerm para abrir una ventana nueva en la carpeta elegida.</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>Explorer muestra y gestiona los archivos de tu Escritorio.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Explorer muestra y gestiona los archivos de Documentos.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>Explorer muestra y gestiona los archivos de Descargas.</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2026 Freeloader contributors. MIT licensed.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Explorer se conecta a equipos de tu red (servidores SMB y FTP) y comprueba tu propio servidor.</string>
+	<key>NSNetworkVolumesUsageDescription</key>
+	<string>Explorer muestra y gestiona los archivos de unidades de red.</string>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>Explorer muestra y gestiona los archivos de discos externos y USB.</string>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
 </dict>
 </plist>

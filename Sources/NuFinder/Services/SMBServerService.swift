@@ -314,6 +314,9 @@ enum SMBUsers {
         if group.wait(timeout: deadline) == .timedOut { process.terminate(); return String(localized: "The server didn’t answer.") }
         process.waitUntilExit()
         if text.localizedCaseInsensitiveContains("authentication") { return String(localized: "The server refused the user or password.") }
+        if text.localizedCaseInsensitiveContains("no route to host") {
+            return String(localized: "Explorer doesn’t have the Local Network permission. Settings → System → Permissions → Local Network → Request.")
+        }
         guard process.terminationStatus == 0 else { return text.replacingOccurrences(of: "smbutil: ", with: "").trimmingCharacters(in: .whitespacesAndNewlines) }
         return text.contains(share) ? nil : String(localized: "Logged in, but the folder isn’t shared with this user.")
     }
