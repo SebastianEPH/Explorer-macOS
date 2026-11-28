@@ -144,10 +144,6 @@ enum PermissionsService {
     static func open(_ kind: PermissionKind) {
         if kind == .fullDisk { touchProtectedFiles() }
         if let url = kind.settingsURL { NSWorkspace.shared.open(url) }
-        // En las listas que no muestran a Explorer hasta que lo añades a mano, ayuda a arrastrarlo.
-        if [.fullDisk, .accessibility, .appManagement].contains(kind) {
-            DispatchQueue.main.async { PermissionDragHelper.show(for: kind) }
-        }
     }
 
     /// macOS solo pone una app en la lista de «Acceso total al disco» cuando ha intentado
@@ -260,7 +256,7 @@ struct PermissionsSection: View {
                 Button("Copy Explorer Path") { PermissionsService.copyAppPath() }
                     .help(Text(Bundle.main.bundlePath))
             }
-            Text("If Explorer is not in the list, drag its icon from the small window that appears into the list in System Settings.")
+            Text("If Explorer is not in the list in System Settings, press + there and choose Explorer in Applications.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text("macOS only lets you grant these yourself: accept the prompt or turn Explorer on in System Settings. Some changes need Explorer to restart.")
@@ -278,92 +274,6 @@ struct PermissionsSection: View {
             var result: [PermissionKind: PermissionState] = [:]
             for kind in PermissionKind.allCases { result[kind] = PermissionsService.state(of: kind) }
             DispatchQueue.main.async { states = result }
-        }
-    }
-}
-
-/// Fork: ventanita con el icono de Explorer para arrastrarlo a la lista de Ajustes del Sistema
-/// (Acceso total al disco, Accesibilidad, Gestión de apps), porque macOS a veces no lo muestra.
-/// Comprueba el permiso cada segundo y se cierra sola, con ✓, en cuanto queda concedido.
-@MainActor
-enum PermissionDragHelper {
-    private static var panel: NSPanel?
-
-    static func show(for kind: PermissionKind) {
-        panel?.close()
-        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 340, height: 320),
-                            styleMask: [.titled, .closable, .utilityWindow, .nonactivatingPanel],
-                            backing: .buffered, defer: false)
-        panel.title = String(localized: "Give Explorer permission")
-        panel.level = .floating
-        panel.isReleasedWhenClosed = false
-        panel.hidesOnDeactivate = false
-        panel.contentView = NSHostingView(rootView: PermissionDragView(kind: kind) { panel.close() })
-        // A la izquierda de la pantalla: Ajustes del Sistema suele abrirse en el centro.
-        if let screen = NSScreen.main {
-            let frame = screen.visibleFrame
-            panel.setFrameOrigin(NSPoint(x: frame.minX + 40, y: frame.midY - 160))
-        }
-        panel.orderFrontRegardless()
-        self.panel = panel
-    }
-}
-
-private struct PermissionDragView: View {
-    let kind: PermissionKind
-    let close: () -> Void
-    @State private var granted = false
-    @State private var copied = false
-    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if granted {
-                Label("Permission granted", systemImage: "checkmark.circle.fill")
-                    .font(.headline).foregroundStyle(.green)
-                    .frame(maxWidth: .infinity, alignment: .center)
-            } else {
-                Text(kind.title).font(.headline)
-                step(1, "System Settings is open on “\(Text(kind.title))”.")
-                step(2, "If Explorer is in the list, turn on its switch. If not, drag this icon into the list:")
-                HStack {
-                    Spacer()
-                    Image(nsImage: NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath))
-                        .resizable().frame(width: 64, height: 64)
-                        .onDrag { NSItemProvider(object: Bundle.main.bundleURL as NSURL) }
-                        .help(Text("Drag to the list in System Settings"))
-                    Spacer()
-                }
-                step(3, "This window checks by itself and closes when it’s done.")
-                HStack {
-                    Button("Open System Settings") { if let url = kind.settingsURL { NSWorkspace.shared.open(url) } }
-                    Button(copied ? "Copied" : "Copy Path") { PermissionsService.copyAppPath(); copied = true }
-                    Spacer()
-                    Button("Close", action: close)
-                }
-            }
-        }
-        .padding(16)
-        .frame(width: 340)
-        .onReceive(timer) { _ in
-            guard !granted else { return }
-            DispatchQueue.global(qos: .utility).async {
-                let ok = PermissionsService.state(of: kind) == .granted
-                DispatchQueue.main.async {
-                    if ok {
-                        granted = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { close() }
-                    }
-                }
-            }
-        }
-    }
-
-    private func step(_ number: Int, _ text: LocalizedStringKey) -> some View {
-        HStack(alignment: .top, spacing: 8) {
-            Text("\(number)").font(.caption.bold()).frame(width: 18, height: 18)
-                .background(Circle().fill(Color.accentColor.opacity(0.2)))
-            Text(text).font(.callout).fixedSize(horizontal: false, vertical: true)
         }
     }
 }
