@@ -1142,3 +1142,6 @@
 
 "To log in from iPhone, Android or Windows this user needs one more step (macOS asks for its password): System Settings → General → Sharing → “File Sharing” ⓘ → “Options…” → under “Windows File Sharing:” tick this user." = "Para entrar desde iPhone, Android o Windows, este usuario necesita un paso más (macOS pide su contraseña): Ajustes del Sistema → General → Compartir → «Compartir archivos» ⓘ → «Opciones…» → en «Compartir archivos Windows:» marca este usuario.";
 "Only devices on your Wi‑Fi or network can connect, not the internet." = "Solo pueden conectarse los dispositivos de tu Wi‑Fi o tu red, no desde internet.";
+
+"Can’t log in from the iPhone yet. Fix: Open… → “File Sharing” ⓘ → “Options…” → tick this user and type its password. (Apple calls it “Windows File Sharing”; it’s also what the iPhone uses.)" = "Aún no puede entrar desde el iPhone. Solución: Abrir… → «Compartir archivos» ⓘ → «Opciones…» → marca este usuario y escribe su contraseña. (Apple lo llama «Compartir archivos Windows»; es lo mismo que usa el iPhone.)";
+"Can log in from iPhone, Android and Windows." = "Puede entrar desde el iPhone (y Windows/Android).";

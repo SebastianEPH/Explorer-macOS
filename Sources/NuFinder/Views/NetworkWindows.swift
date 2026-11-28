@@ -495,7 +495,7 @@ struct ProtocolPage: View {
                         Text("Can log in from iPhone, Android and Windows.").font(.caption).foregroundStyle(.secondary)
                     } else {
                         HStack {
-                            Text("To log in from iPhone, Android or Windows this user needs one more step (macOS asks for its password): System Settings → General → Sharing → “File Sharing” ⓘ → “Options…” → under “Windows File Sharing:” tick this user.")
+                            Text("Can’t log in from the iPhone yet. Fix: Open… → “File Sharing” ⓘ → “Options…” → tick this user and type its password. (Apple calls it “Windows File Sharing”; it’s also what the iPhone uses.)")
                                 .font(.caption).foregroundStyle(.orange)
                             Spacer()
                             Button("Open…") { SMBServer.openSystemSharing() }.controlSize(.small)
