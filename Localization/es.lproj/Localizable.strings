@@ -1170,3 +1170,6 @@
 "Local Network" = "Red local";
 "Connect to computers on your Wi‑Fi (SMB and FTP servers) and test your own server." = "Conectarse a equipos de tu Wi‑Fi (servidores SMB y FTP) y probar tu propio servidor.";
 "Explorer doesn’t have the Local Network permission. Settings → System → Permissions → Local Network → Request." = "Explorer no tiene el permiso de Red local. Ajustes → Sistema → Permisos → Red local → Solicitar.";
+"iPhone, iPad, Mac" = "iPhone, iPad, Mac";
+"On the iPhone: Files → ⋯ → Connect to Server → this address (without the folder name) → Registered User." = "En el iPhone: Archivos → ⋯ → Conectarse al servidor → esta dirección (sin el nombre de la carpeta) → Usuario registrado.";
+"Android, Mac (folder)" = "Android, Mac (carpeta)";

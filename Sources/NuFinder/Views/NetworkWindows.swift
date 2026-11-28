@@ -439,12 +439,17 @@ struct ProtocolPage: View {
         let ip = FTPSettings.localAddresses().first ?? "127.0.0.1"
         Section {
             AccessLine(label: "Your IP on the network", value: ip)
+            // iPhone (Archivos): con la carpeta en la dirección da «Argumento no válido»; sin ella funciona
+            // y luego se elige la carpeta (comprobado con el iPhone del usuario).
+            AccessLine(label: "iPhone, iPad, Mac", value: "smb://\(ip)")
+            Text("On the iPhone: Files → ⋯ → Connect to Server → this address (without the folder name) → Registered User.")
+                .font(.caption).foregroundStyle(.secondary)
             ForEach(smb.shares) { item in
                 let encoded = item.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? item.name
                 VStack(alignment: .leading, spacing: 4) {
                     Label(item.name, systemImage: "folder.fill").font(.callout.weight(.medium))
                     AccessLine(label: "Windows (File Explorer)", value: "\\\\\(ip)\\\(item.name)")
-                    AccessLine(label: "Mac, iPhone, Android (smb://)", value: "smb://\(ip)/\(encoded)")
+                    AccessLine(label: "Android, Mac (folder)", value: "smb://\(ip)/\(encoded)")
                     Text(item.guest && item.guestsCanRead ? "Anyone on your network can enter without a password (guests on)."
                                     : "Log in with your Mac user “\(NSUserName())” and its password.")
                         .font(.caption).foregroundStyle(item.guest && item.guestsCanRead ? Color.orange : Color.secondary)
