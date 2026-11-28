@@ -1122,3 +1122,14 @@
 
 "macOS didn’t start the SMB server." = "macOS no encendió el servidor SMB.";
 "macOS didn’t stop the SMB server." = "macOS no apagó el servidor SMB.";
+
+"Your IP on the network" = "Tu IP en la red";
+"Windows (File Explorer)" = "Windows (Explorador de archivos)";
+"Mac, iPhone, Android (smb://)" = "Mac, iPhone, Android (smb://)";
+"Anyone on your network can enter without a password (guests on)." = "Cualquiera en tu red puede entrar sin contraseña (invitados activado).";
+"Log in with your Mac user “%@” and its password." = "Entra con tu usuario del Mac «%@» y su contraseña.";
+"How to connect" = "Cómo conectarse";
+"Only devices on your same network (Wi‑Fi or cable) can reach it. From the internet it’s not reachable unless you open port %lld on your router — don’t." = "Solo pueden llegar los dispositivos de tu misma red (Wi‑Fi o cable). Desde internet no se puede, salvo que abras el puerto %lld en tu router (no lo hagas).";
+"macOS firewall is on." = "El cortafuegos de macOS está activado.";
+"macOS firewall is off: any device on your network can try to connect." = "El cortafuegos de macOS está desactivado: cualquier dispositivo de tu red puede intentar conectarse.";
+"Firewall…" = "Cortafuegos…";

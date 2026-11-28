@@ -282,6 +282,7 @@ struct ProtocolPage: View {
             TextField("Port", value: share.port, format: .number.grouping(.never))
             Toggle("Only this Mac (127.0.0.1)", isOn: share.localOnly)
             if let address = ftp.addresses.first { AccessLine(label: "Address to connect", value: address) }
+            if ftp.isRunning && !store.config.share.localOnly { NetworkExposureNote(port: UInt16(store.config.share.port)) }
             Text("FTP doesn’t encrypt: use it only on networks you trust.").font(.caption).foregroundStyle(.secondary)
         }
         usersSection
@@ -421,10 +422,6 @@ struct ProtocolPage: View {
                 .padding(.vertical, 2)
             }
 
-            if smb.running, let host = SMBServer.addresses().first?.replacingOccurrences(of: "smb://", with: "") {
-                AccessLine(label: "Windows", value: "\\\\" + host)
-                AccessLine(label: "Mac", value: "smb://" + host)
-            }
             HStack {
                 Text("To log in from Windows, turn on “Windows File Sharing” for your user in System Settings → Sharing → File Sharing → Options.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -432,6 +429,27 @@ struct ProtocolPage: View {
             }
         }
         smbNewShareSection
+        if smb.running { smbHowToConnect }
+    }
+
+    /// «Cómo conectarse»: IP, dirección de cada carpeta, usuario y quién puede entrar.
+    @ViewBuilder private var smbHowToConnect: some View {
+        let ip = FTPSettings.localAddresses().first ?? "127.0.0.1"
+        Section {
+            AccessLine(label: "Your IP on the network", value: ip)
+            ForEach(smb.shares) { item in
+                let encoded = item.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? item.name
+                VStack(alignment: .leading, spacing: 4) {
+                    Label(item.name, systemImage: "folder.fill").font(.callout.weight(.medium))
+                    AccessLine(label: "Windows (File Explorer)", value: "\\\\\(ip)\\\(item.name)")
+                    AccessLine(label: "Mac, iPhone, Android (smb://)", value: "smb://\(ip)/\(encoded)")
+                    Text(item.guest ? "Anyone on your network can enter without a password (guests on)."
+                                    : "Log in with your Mac user “\(NSUserName())” and its password.")
+                        .font(.caption).foregroundStyle(item.guest ? Color.orange : Color.secondary)
+                }
+            }
+            NetworkExposureNote(port: 445)
+        } header: { Text("How to connect") }
     }
 
     /// «Compartir otra carpeta»: opciones en filas propias y el botón al final.
@@ -589,6 +607,46 @@ struct NetworkSettingsSection: View {
                 Label(store.file.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"), systemImage: "doc.text")
                 Text("Saved servers and the shared folder, as readable text you can copy or back up. Passwords are kept in the macOS Keychain, never in this file.")
             }
+        }
+    }
+}
+
+/// Quién puede llegar a mi servidor: solo mi red (IP privada), no internet salvo que se abra el
+/// puerto en el router; y si el cortafuegos de macOS está activo.
+struct NetworkExposureNote: View {
+    let port: UInt16
+    @State private var firewallOn: Bool?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label("Only devices on your same network (Wi‑Fi or cable) can reach it. From the internet it’s not reachable unless you open port \(Int(port)) on your router — don’t.",
+                  systemImage: "wifi")
+                .font(.caption).foregroundStyle(.secondary)
+            if let firewallOn {
+                HStack {
+                    Label(firewallOn ? "macOS firewall is on." : "macOS firewall is off: any device on your network can try to connect.",
+                          systemImage: firewallOn ? "checkmark.shield" : "exclamationmark.shield")
+                        .font(.caption).foregroundStyle(firewallOn ? Color.secondary : Color.orange)
+                    Spacer()
+                    Button("Firewall…") {
+                        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Network-Settings.extension?Firewall")!)
+                    }
+                    .controlSize(.small)
+                }
+            }
+        }
+        .task {
+            let on = await Task.detached { () -> Bool in
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/libexec/ApplicationFirewall/socketfilterfw")
+                process.arguments = ["--getglobalstate"]
+                let pipe = Pipe(); process.standardOutput = pipe; process.standardInput = FileHandle.nullDevice
+                guard (try? process.run()) != nil else { return false }
+                let text = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+                process.waitUntilExit()
+                return text.contains("enabled") || text.contains("State = 1") || text.contains("State = 2")
+            }.value
+            firewallOn = on
         }
     }
 }
