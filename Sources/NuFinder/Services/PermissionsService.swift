@@ -80,11 +80,7 @@ enum PermissionsService {
     static func state(of kind: PermissionKind) -> PermissionState {
         switch kind {
         case .fullDisk:
-            let tcc = FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent("Library/Application Support/com.apple.TCC/TCC.db")
-            return FileManager.default.isReadableFile(atPath: tcc.path)
-                && (try? FileHandle(forReadingFrom: tcc))?.readData(ofLength: 1).isEmpty == false
-                ? .granted : .denied
+            return fullDiskState(probes: fullDiskProbes)
         case .accessibility:
             return AXIsProcessTrusted() ? .granted : .denied
         case .folders:
@@ -156,6 +152,33 @@ enum PermissionsService {
             _ = try? FileHandle(forReadingFrom: url).readData(ofLength: 1)
             _ = try? FileManager.default.contentsOfDirectory(atPath: url.path)
         }
+    }
+
+    /// Sitios que solo se pueden leer con Acceso total al disco. Antes se miraba solo el TCC.db del
+    /// usuario, que en macOS 27 ya no existe (salía «sin permiso» aunque estuviera concedido).
+    static var fullDiskProbes: [URL] {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        return [URL(fileURLWithPath: "/Library/Application Support/com.apple.TCC/TCC.db"),
+                home.appendingPathComponent("Library/Application Support/com.apple.TCC/TCC.db"),
+                home.appendingPathComponent("Library/Safari"),
+                home.appendingPathComponent("Library/Mail"),
+                home.appendingPathComponent("Library/Messages")]
+    }
+
+    /// Concedido si se puede leer alguno de los que existen; denegado si ninguno; no se sabe si no existe ninguno.
+    static func fullDiskState(probes: [URL]) -> PermissionState {
+        let fm = FileManager.default
+        var sawExisting = false
+        for url in probes {
+            var isDirectory: ObjCBool = false
+            guard fm.fileExists(atPath: url.path, isDirectory: &isDirectory) else { continue }
+            sawExisting = true
+            let readable = isDirectory.boolValue
+                ? (try? fm.contentsOfDirectory(atPath: url.path)) != nil
+                : (try? FileHandle(forReadingFrom: url))?.readData(ofLength: 1).isEmpty == false
+            if readable { return .granted }
+        }
+        return sawExisting ? .denied : .unknown
     }
 
     /// Gestión de apps: macOS impide cambiar paquetes de apps sin ese permiso. Se prueba poniendo y

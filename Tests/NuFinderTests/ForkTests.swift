@@ -565,3 +565,30 @@ struct ForkTests {
         #expect(SmoothScrolling.isEnabled || UserDefaults.standard.object(forKey: SmoothScrolling.enabledKey) != nil)
     }
 }
+
+/// Acceso total al disco: en macOS 27 ya no existe el TCC.db del usuario, que era lo único que se miraba
+/// (salía «sin permiso» aunque estuviera concedido).
+@Suite struct FullDiskAccessTests {
+    private func temp(_ name: String) throws -> URL {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("FDA-\(name)-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+
+    // El primer sitio no existe (como el TCC.db del usuario en macOS 27) pero otro protegido sí se lee: concedido.
+    @Test func grantedWhenAnyExistingProtectedPlaceIsReadable() throws {
+        let missing = FileManager.default.temporaryDirectory.appendingPathComponent("no-existe-\(UUID().uuidString)/TCC.db")
+        let readable = try temp("ok")
+        try Data("x".utf8).write(to: readable.appendingPathComponent("Bookmarks.plist"))
+        #expect(PermissionsService.fullDiskState(probes: [missing, readable]) == .granted)
+    }
+
+    // Todo lo que existe está bloqueado: no concedido. Nada existe: no se sabe.
+    @Test func deniedWhenEveryExistingPlaceIsBlocked() throws {
+        let blocked = try temp("blocked")
+        chmod(blocked.path, 0o000); defer { chmod(blocked.path, 0o755) }
+        let missing = FileManager.default.temporaryDirectory.appendingPathComponent("no-\(UUID().uuidString)")
+        #expect(PermissionsService.fullDiskState(probes: [missing, blocked]) == .denied)
+        #expect(PermissionsService.fullDiskState(probes: [missing]) == .unknown)
+    }
+}
