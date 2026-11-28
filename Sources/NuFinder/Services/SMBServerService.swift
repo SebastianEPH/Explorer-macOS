@@ -136,6 +136,11 @@ enum SMBServer {
 
     static func removeScript(name: String) -> String { "$SUDO /usr/sbin/sharing -r \(quoted(name))" }
 
+    /// Cambiar permisos de una carpeta ya compartida (sin dejar de compartirla).
+    static func editScript(name: String, readOnly: Bool, guest: Bool) -> String {
+        "$SUDO /usr/sbin/sharing -e \(quoted(name)) -s 001 -g \(guest ? "001" : "000") -R \(readOnly ? 1 : 0)"
+    }
+
     static func setEnabled(_ on: Bool) -> String? { runner.runAsAdmin(on ? enableScript() : disableScript()) }
 
     /// Comparte una carpeta (y enciende el servidor si estaba apagado) con una sola contraseña.
@@ -220,6 +225,11 @@ final class SMBServerController: ObservableObject {
     }
 
     func unshare(_ share: SMBShare) async { await change { SMBServer.unshare(share) } }
+
+    func update(_ share: SMBShare, readOnly: Bool, guest: Bool) async {
+        let script = SMBServer.editScript(name: share.name, readOnly: readOnly, guest: guest)
+        await change { SMBServer.runner.runAsAdmin(script) }
+    }
 }
 
 struct SMBServerPreview: View {

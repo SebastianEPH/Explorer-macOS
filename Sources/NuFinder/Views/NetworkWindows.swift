@@ -399,12 +399,26 @@ struct ProtocolPage: View {
             }
             if let message = smb.message { DisabledReason("\(message)") }
             ForEach(smb.shares) { item in
-                LabeledContent {
-                    Button("Stop Sharing") { Task { await smb.unshare(item) } }.disabled(smb.busy)
-                } label: {
-                    Label(item.name, systemImage: "folder.fill")
-                    Text(verbatim: "\(item.path) · \(item.readOnly ? String(localized: "Read only") : String(localized: "Read and write"))\(item.guest ? " · " + String(localized: "Guests") : "")")
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Label(item.name, systemImage: "folder.fill")
+                        Spacer()
+                        Button("Stop Sharing") { Task { await smb.unshare(item) } }.disabled(smb.busy)
+                    }
+                    Text(verbatim: item.path).font(.caption).foregroundStyle(.secondary)
+                    // Permisos de la carpeta ya compartida, cambiables en cualquier momento.
+                    HStack(spacing: 20) {
+                        Toggle("Read only", isOn: Binding(get: { item.readOnly }, set: { value in
+                            Task { await smb.update(item, readOnly: value, guest: item.guest) }
+                        }))
+                        Toggle("Guests", isOn: Binding(get: { item.guest }, set: { value in
+                            Task { await smb.update(item, readOnly: item.readOnly, guest: value) }
+                        }))
+                    }
+                    .toggleStyle(.checkbox)
+                    .disabled(smb.busy)
                 }
+                .padding(.vertical, 2)
             }
 
             if smb.running, let host = SMBServer.addresses().first?.replacingOccurrences(of: "smb://", with: "") {

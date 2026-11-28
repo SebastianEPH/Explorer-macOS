@@ -133,4 +133,12 @@ struct SMBTests {
         for text in ["Menu(\"FTP\")", "Menu(\"SMB (Windows, NAS, Mac)\")", "Connect to an FTP Server…", "Connect to an SMB Server…",
                      "Share a Folder by FTP…", "Share a Folder by SMB…", "Network Settings…"] { #expect(menu.contains(text), "\(text)") }
     }
+
+    // Cambiar permisos de una carpeta ya compartida (antes solo se podía dejar de compartir).
+    @Test func editScriptChangesPermissionsInPlace() {
+        #expect(SMBServer.editScript(name: "Mis Fotos", readOnly: false, guest: true)
+                == "$SUDO /usr/sbin/sharing -e 'Mis Fotos' -s 001 -g 001 -R 0")
+        #expect(AdminAuthorization.sudoersRule(user: "ana").contains("/usr/sbin/sharing *")) // la regla recordada lo permite
+        #expect(!FTPUser(name: "nuevo").readOnly) // lo nuevo empieza en lectura y escritura
+    }
 }

@@ -62,12 +62,12 @@ struct SavedServer: Codable, Hashable, Identifiable, Sendable {
 struct FTPUser: Codable, Equatable, Identifiable, Sendable {
     var key = "ftpuser." + UUID().uuidString
     var name: String
-    var readOnly = true
+    var readOnly = false // lectura y escritura salvo que la persona marque «Solo lectura»
     /// Carpeta propia ("" = la carpeta compartida del servidor).
     var folder = ""
     var id: String { key }
 
-    init(key: String = "ftpuser." + UUID().uuidString, name: String, readOnly: Bool = true, folder: String = "") {
+    init(key: String = "ftpuser." + UUID().uuidString, name: String, readOnly: Bool = false, folder: String = "") {
         self.key = key; self.name = name; self.readOnly = readOnly; self.folder = folder
     }
     init(from decoder: Decoder) throws {
