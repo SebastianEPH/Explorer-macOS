@@ -1102,3 +1102,6 @@
 "To add someone, create a user in System Settings → Users & Groups; they log in with that user and password." = "Para añadir a alguien, crea un usuario en Ajustes del Sistema → Usuarios y grupos; entra con ese usuario y su contraseña.";
 "Users & Groups…" = "Usuarios y grupos…";
 "SMB uses the user accounts of this Mac. Guests (if allowed on a folder) enter without a user." = "SMB usa las cuentas de usuario de este Mac. Los invitados (si se permiten en una carpeta) entran sin usuario.";
+
+"Network passwords" = "Contraseñas de Red";
+"%lld saved, encrypted in ~/.explorer and readable only by your user. Explorer doesn’t use the Keychain, so it never asks for it." = "%lld guardadas, cifradas en ~/.explorer y solo legibles por tu usuario. Explorer no usa el Llavero, así que nunca lo pide.";

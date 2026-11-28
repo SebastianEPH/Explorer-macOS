@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import Security
 
@@ -132,82 +133,74 @@ struct FTPClient: Sendable {
     }
 }
 
-/// Contraseñas FTP en el Llavero (nunca en UserDefaults). En pruebas se usa un almacén en memoria.
+/// Contraseñas de Red (conexiones FTP y usuarios de mi servidor FTP), cifradas con AES-GCM en
+/// `~/.explorer/secretos` con la clave en `~/.explorer/.clave`, ambos solo legibles por tu usuario
+/// (0600), como las claves de `~/.ssh`. **No se usa el Llavero**: su ventana no admite Touch ID,
+/// salía sola y volvía tras cada actualización. En pruebas, `memory`.
 enum FTPSecrets {
     nonisolated(unsafe) static var memory: [String: String]? // pruebas
-    private static let service = "Explorer FTP"
-
-    /// Lee sin mostrar avisos de macOS (si hace falta permiso, devuelve nil y lo apunta en
-    /// `needsPermission`; se concede en Ajustes → Sistema → Permisos → Llavero).
-    static func password(for account: String, interactive: Bool = false) -> String? {
-        if let memory { return memory[account] }
-        var query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
-                                    kSecAttrAccount as String: account, kSecReturnData as String: true]
-        if !interactive { query[kSecUseAuthenticationUI as String] = kSecUseAuthenticationUIFail }
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-        if status == errSecInteractionNotAllowed || status == errSecAuthFailed || status == errSecInteractionRequired {
-            needsPermission = true; return nil
-        }
-        guard status == errSecSuccess, let data = result as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
-    }
-
+    nonisolated(unsafe) static var directory: URL = {
+        DefaultSettings.isInstalledApp ? NetworkStore.defaultFile.deletingLastPathComponent()
+            : FileManager.default.temporaryDirectory.appendingPathComponent("explorer-tests-\(ProcessInfo.processInfo.processIdentifier)")
+    }()
+    private static let lock = NSLock()
+    /// Ya no hay permisos que pedir (se queda por compatibilidad con la fila de Permisos).
     nonisolated(unsafe) static var needsPermission = false
 
-    /// El Llavero clásico (donde están estas contraseñas) ignora `kSecUseAuthenticationUIFail`:
-    /// la única forma de que macOS nunca muestre «Explorer quiere usar…» es desactivar los avisos
-    /// del proceso. Se llama al arrancar; solo «Solicitar» (Sistema → Permisos) los reactiva un momento.
-    static func silenceKeychainPrompts() {
-        SecKeychainSetUserInteractionAllowed(false)
+    static var secretsFile: URL { directory.appendingPathComponent("secretos") }
+    private static var keyFile: URL { directory.appendingPathComponent(".clave") }
+
+    private static func key() -> SymmetricKey? {
+        let fm = FileManager.default
+        if let data = try? Data(contentsOf: keyFile), data.count == 32 { return SymmetricKey(data: data) }
+        let key = SymmetricKey(size: .bits256)
+        try? fm.createDirectory(at: directory, withIntermediateDirectories: true)
+        let data = key.withUnsafeBytes { Data($0) }
+        guard fm.createFile(atPath: keyFile.path, contents: data, attributes: [.posixPermissions: 0o600]) else { return nil }
+        return key
     }
 
-    /// Cuentas guardadas de Explorer en el Llavero (solo nombres, sin leer contraseñas: no avisa).
-    static func accounts() -> [String] {
-        if let memory { return Array(memory.keys) }
-        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
-                                    kSecReturnAttributes as String: true, kSecMatchLimit as String: kSecMatchLimitAll]
-        var result: AnyObject?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess, let items = result as? [[String: Any]] else { return [] }
-        return items.compactMap { $0[kSecAttrAccount as String] as? String }
+    private static func load() -> [String: String] {
+        guard let sealed = try? Data(contentsOf: secretsFile), let key = key(),
+              let box = try? AES.GCM.SealedBox(combined: sealed),
+              let plain = try? AES.GCM.open(box, using: key),
+              let dict = try? JSONDecoder().decode([String: String].self, from: plain) else { return [:] }
+        return dict
     }
 
-    /// ¿Explorer puede leer todas sus contraseñas sin que macOS pregunte?
-    static func hasPermission() -> Bool {
-        needsPermission = false
-        for account in accounts() { _ = password(for: account) }
-        return !needsPermission
+    private static func save(_ dict: [String: String]) {
+        guard let key = key(), let plain = try? JSONEncoder().encode(dict),
+              let sealed = try? AES.GCM.seal(plain, using: key).combined else { return }
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try? sealed.write(to: secretsFile, options: .atomic)
+        try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: secretsFile.path)
     }
 
-    /// Pide el permiso ahora: macOS pregunta por cada contraseña que no puede leer
-    /// (pulsar «Permitir siempre» y no vuelve a salir).
-    static func requestPermission() {
-        SecKeychainSetUserInteractionAllowed(true)
-        defer { SecKeychainSetUserInteractionAllowed(false) }
-        for account in accounts() { _ = password(for: account, interactive: true) }
+    static func password(for account: String, interactive: Bool = false) -> String? {
+        if let memory { return memory[account] }
+        lock.lock(); defer { lock.unlock() }
+        return load()[account]
     }
 
-    /// Guarda o borra sin mostrar nunca avisos de macOS. Si la contraseña existente no se puede
-    /// tocar sin permiso, no se hace nada y queda marcado para Sistema → Permisos → Llavero.
     static func setPassword(_ password: String?, for account: String) {
         if memory != nil { memory?[account] = password; return }
-        let base: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service,
-                                   kSecAttrAccount as String: account]
-        var quiet = base
-        quiet[kSecUseAuthenticationUI as String] = kSecUseAuthenticationUIFail
-        guard let password, !password.isEmpty else {
-            let status = SecItemDelete(quiet as CFDictionary)
-            if status == errSecInteractionNotAllowed || status == errSecAuthFailed || status == errSecInteractionRequired { needsPermission = true }
-            return
-        }
-        let data = Data(password.utf8)
-        let status = SecItemUpdate(quiet as CFDictionary, [kSecValueData as String: data] as CFDictionary)
-        if status == errSecItemNotFound {
-            var add = base
-            add[kSecValueData as String] = data
-            SecItemAdd(add as CFDictionary, nil)
-        } else if status == errSecInteractionNotAllowed || status == errSecAuthFailed || status == errSecInteractionRequired {
-            needsPermission = true
+        lock.lock(); defer { lock.unlock() }
+        var dict = load()
+        if let password, !password.isEmpty { dict[account] = password } else { dict[account] = nil }
+        save(dict)
+    }
+
+    static func accounts() -> [String] {
+        if let memory { return Array(memory.keys) }
+        lock.lock(); defer { lock.unlock() }
+        return Array(load().keys)
+    }
+
+    /// ¿Los archivos solo los puede leer tu usuario? (para la fila de Permisos)
+    static func filesArePrivate() -> Bool {
+        [secretsFile, keyFile].allSatisfy { url in
+            guard let perms = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.posixPermissions] as? Int else { return true }
+            return perms & 0o077 == 0
         }
     }
 }

@@ -213,40 +213,28 @@ struct AdminPermissionRow: View {
     }
 }
 
-/// Fila «Llavero» de Ajustes → Sistema → Permisos: las contraseñas de FTP guardadas por Explorer.
-/// Explorer nunca provoca avisos al leerlas; si macOS pide permiso, se concede desde aquí.
+/// Fila «Contraseñas de Red» de Ajustes → Sistema → Permisos: dónde están y que solo tu usuario
+/// puede leerlas. No usa el Llavero (su ventana no admite Touch ID), así que no hay nada que conceder.
 struct KeychainPermissionRow: View {
-    @State private var ok = true
     @State private var count = 0
+    @State private var isPrivate = true
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            Image(systemName: ok ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                .foregroundStyle(ok ? Color.green : Color.orange)
+            Image(systemName: isPrivate ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                .foregroundStyle(isPrivate ? Color.green : Color.orange)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Keychain (FTP passwords)")
-                Text(ok ? (count == 0 ? "No saved passwords yet." : "Explorer can read its \(count) saved passwords without asking.")
-                        : "macOS asks before Explorer reads some saved passwords. Press Request and choose “Always Allow”.")
+                Text("Network passwords")
+                Text("\(count) saved, encrypted in ~/.explorer and readable only by your user. Explorer doesn’t use the Keychain, so it never asks for it.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            if !ok {
-                Button("Request") {
-                    DispatchQueue.global(qos: .userInitiated).async {
-                        FTPSecrets.requestPermission()
-                        refresh()
-                    }
-                }
-            }
+            Button { WindowService.open(at: FTPSecrets.directory) } label: { Image(systemName: "folder") }
+                .buttonStyle(.borderless).help(Text("Show in Explorer"))
         }
-        .onAppear(perform: refresh)
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in refresh() }
-    }
-
-    private func refresh() {
-        DispatchQueue.global(qos: .utility).async {
-            let granted = FTPSecrets.hasPermission(), total = FTPSecrets.accounts().count
-            DispatchQueue.main.async { ok = granted; count = total }
+        .onAppear {
+            count = FTPSecrets.accounts().count
+            isPrivate = FTPSecrets.filesArePrivate()
         }
     }
 }
