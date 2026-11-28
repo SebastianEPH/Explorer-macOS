@@ -1,4 +1,5 @@
 import AppKit
+import NetFS
 import OpenDirectory
 import SystemConfiguration
 import SwiftUI
@@ -289,6 +290,32 @@ enum SMBUsers {
         } catch { return error.localizedDescription }
         cache = nil
         return list().first { $0.name == user }?.canUseSMB == on ? nil : String(localized: "macOS didn’t apply the change.")
+    }
+
+    /// Prueba de verdad: se conecta a este Mac por SMB con ese usuario y contraseña (como un iPhone),
+    /// abre la carpeta compartida, la lista y se desconecta. nil = entra; si no, el motivo.
+    static func testLogin(user: String, password: String, share: String) -> String? {
+        var components = URLComponents()
+        components.scheme = "smb"; components.host = "127.0.0.1"; components.path = "/" + share
+        guard let url = components.url else { return "URL" }
+        let open = NSMutableDictionary(object: "NoUI", forKey: "UIOption" as NSString)
+        let mountOptions = NSMutableDictionary(object: true, forKey: "MountInDirectory" as NSString)
+        let mountPoint = FileManager.default.temporaryDirectory.appendingPathComponent("explorer-smb-test-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: mountPoint, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: mountPoint) }
+        var mounts: Unmanaged<CFArray>?
+        let status = NetFSMountURLSync(url as CFURL, mountPoint as CFURL, user as CFString, password as CFString,
+                                       open, mountOptions, &mounts)
+        guard status == 0 else {
+            if status == Int32(EAUTH) || status == 80 || status == -6600 { return String(localized: "The server refused the user or password.") }
+            return SMBMount.Failure(status: status).localizedDescription
+        }
+        let points = (mounts?.takeRetainedValue() as? [String]) ?? []
+        defer { for point in points { unmount(point, MNT_FORCE) } }
+        guard let point = points.first, (try? FileManager.default.contentsOfDirectory(atPath: point)) != nil else {
+            return String(localized: "Logged in, but the folder can’t be opened.")
+        }
+        return nil
     }
 
     /// Se lee una vez (dscl tarda); al volver a Ajustes se vuelve a leer.

@@ -491,21 +491,30 @@ struct ProtocolPage: View {
     @State private var accessError: String?
     @State private var accessBusy = false
     @State private var usersVersion = 0
+    enum AccessMode { case change, test }
+    @State private var accessMode = AccessMode.change
+    @State private var accessOK: String?
 
     /// Pide la contraseña del usuario (una vez, no se guarda) y activa o quita el acceso desde iPhone/Windows.
     private var accessSheet: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(accessOn ? "Allow “\(accessUser ?? "")” from iPhone, Android and Windows" : "Remove access for “\(accessUser ?? "")”")
+            Text(accessMode == .test ? "Test access for “\(accessUser ?? "")”"
+                 : accessOn ? "Allow “\(accessUser ?? "")” from iPhone, Android and Windows" : "Remove access for “\(accessUser ?? "")”")
                 .font(.headline)
+            if accessMode == .test {
+                Text("Explorer connects to this Mac by SMB with this user, like an iPhone would, and tells you if it gets in.")
+                    .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
             Text("Type the password of this Mac account. It’s used once to apply the change and isn’t saved.")
                 .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             SecureField("Password", text: $accessPassword).onSubmit(applyAccess)
             if let accessError { DisabledReason("\(accessError)") }
+            if let accessOK { Label(accessOK, systemImage: "checkmark.circle.fill").foregroundStyle(.green) }
             HStack {
                 Spacer()
                 if accessBusy { ProgressView().controlSize(.small) }
                 Button("Cancel") { accessUser = nil }.keyboardShortcut(.cancelAction)
-                Button(accessOn ? "Allow" : "Remove Access", action: applyAccess)
+                Button(accessMode == .test ? "Test" : accessOn ? "Allow" : "Remove Access", action: applyAccess)
                     .keyboardShortcut(.defaultAction).buttonStyle(.borderedProminent)
                     .disabled(accessPassword.isEmpty || accessBusy)
             }
@@ -515,8 +524,18 @@ struct ProtocolPage: View {
 
     private func applyAccess() {
         guard let user = accessUser, !accessPassword.isEmpty, !accessBusy else { return }
-        let on = accessOn, password = accessPassword
-        accessBusy = true; accessError = nil
+        let on = accessOn, password = accessPassword, mode = accessMode, share = smb.shares.first?.name ?? ""
+        accessBusy = true; accessError = nil; accessOK = nil
+        if mode == .test {
+            Task.detached {
+                let error = SMBUsers.testLogin(user: user, password: password, share: share)
+                await MainActor.run {
+                    accessBusy = false
+                    if let error { accessError = error } else { accessOK = String(localized: "It works: “\(user)” logged in and opened “\(share)”. Use the same user and password on the iPhone.") }
+                }
+            }
+            return
+        }
         Task.detached {
             let error = SMBUsers.setSMBAccess(on, user: user, password: password)
             await MainActor.run {
@@ -538,8 +557,15 @@ struct ProtocolPage: View {
                         Text(user.canUseSMB ? "Can log in from iPhone, Android and Windows." : "Can’t log in from iPhone, Android or Windows yet.")
                             .font(.caption).foregroundStyle(user.canUseSMB ? Color.secondary : Color.orange)
                         Spacer()
+                        if user.canUseSMB, !smb.shares.isEmpty {
+                            Button("Test Access") {
+                                accessUser = user.name; accessMode = .test; accessPassword = ""; accessError = nil; accessOK = nil
+                            }
+                            .controlSize(.small)
+                        }
                         Button(user.canUseSMB ? "Remove Access" : "Allow from iPhone/Windows") {
-                            accessUser = user.name; accessOn = !user.canUseSMB; accessPassword = ""; accessError = nil
+                            accessUser = user.name; accessOn = !user.canUseSMB; accessMode = .change
+                            accessPassword = ""; accessError = nil; accessOK = nil
                         }
                         .controlSize(.small)
                     }

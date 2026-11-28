@@ -1155,3 +1155,11 @@
 "Allow" = "Permitir";
 "Wrong password." = "Contraseña incorrecta.";
 "macOS didn’t apply the change." = "macOS no aplicó el cambio.";
+
+"Test Access" = "Probar acceso";
+"Test access for “%@”" = "Probar el acceso de «%@»";
+"Explorer connects to this Mac by SMB with this user, like an iPhone would, and tells you if it gets in." = "Explorer se conecta a este Mac por SMB con este usuario, como lo haría un iPhone, y te dice si entra.";
+"Test" = "Probar";
+"The server refused the user or password." = "El servidor rechazó el usuario o la contraseña.";
+"Logged in, but the folder can’t be opened." = "Entró, pero no puede abrir la carpeta.";
+"It works: “%@” logged in and opened “%@”. Use the same user and password on the iPhone." = "Funciona: «%@» entró y abrió «%@». Usa el mismo usuario y contraseña en el iPhone.";
