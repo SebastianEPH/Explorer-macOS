@@ -1141,3 +1141,4 @@
 "Shared without guests: this folder doesn’t allow them (on the disk only your user can open it). To enter you must be a registered user." = "Compartida sin invitados: esta carpeta no los permite (en el disco solo tu usuario puede abrirla). Para entrar tiene que ser un usuario registrado.";
 
 "To log in from iPhone, Android or Windows this user needs one more step (macOS asks for its password): System Settings → General → Sharing → “File Sharing” ⓘ → “Options…” → under “Windows File Sharing:” tick this user." = "Para entrar desde iPhone, Android o Windows, este usuario necesita un paso más (macOS pide su contraseña): Ajustes del Sistema → General → Compartir → «Compartir archivos» ⓘ → «Opciones…» → en «Compartir archivos Windows:» marca este usuario.";
+"Only devices on your Wi‑Fi or network can connect, not the internet." = "Solo pueden conectarse los dispositivos de tu Wi‑Fi o tu red, no desde internet.";

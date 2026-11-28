@@ -629,42 +629,11 @@ struct NetworkSettingsSection: View {
     }
 }
 
-/// Quién puede llegar a mi servidor: solo mi red (IP privada), no internet salvo que se abra el
-/// puerto en el router; y si el cortafuegos de macOS está activo.
+/// Una línea: quién puede llegar (solo tu red). Sin avisos que no piden hacer nada (el usuario quitó el del cortafuegos).
 struct NetworkExposureNote: View {
     let port: UInt16
-    @State private var firewallOn: Bool?
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Label("Only devices on your same network (Wi‑Fi or cable) can reach it. From the internet it’s not reachable unless you open port \(Int(port)) on your router — don’t.",
-                  systemImage: "wifi")
-                .font(.caption).foregroundStyle(.secondary)
-            if let firewallOn {
-                HStack {
-                    Label(firewallOn ? "macOS firewall is on." : "macOS firewall is off: any device on your network can try to connect.",
-                          systemImage: firewallOn ? "checkmark.shield" : "exclamationmark.shield")
-                        .font(.caption).foregroundStyle(firewallOn ? Color.secondary : Color.orange)
-                    Spacer()
-                    Button("Firewall…") {
-                        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Network-Settings.extension?Firewall")!)
-                    }
-                    .controlSize(.small)
-                }
-            }
-        }
-        .task {
-            let on = await Task.detached { () -> Bool in
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/usr/libexec/ApplicationFirewall/socketfilterfw")
-                process.arguments = ["--getglobalstate"]
-                let pipe = Pipe(); process.standardOutput = pipe; process.standardInput = FileHandle.nullDevice
-                guard (try? process.run()) != nil else { return false }
-                let text = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-                process.waitUntilExit()
-                return text.contains("enabled") || text.contains("State = 1") || text.contains("State = 2")
-            }.value
-            firewallOn = on
-        }
+        Label("Only devices on your Wi‑Fi or network can connect, not the internet.", systemImage: "wifi")
+            .font(.caption).foregroundStyle(.secondary)
     }
 }
