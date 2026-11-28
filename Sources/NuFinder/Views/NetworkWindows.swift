@@ -446,6 +446,10 @@ struct ProtocolPage: View {
                     Text(item.guest ? "Anyone on your network can enter without a password (guests on)."
                                     : "Log in with your Mac user “\(NSUserName())” and its password.")
                         .font(.caption).foregroundStyle(item.guest ? Color.orange : Color.secondary)
+                    if item.guest && !item.guestsCanRead {
+                        Text("Guests will see “content unavailable”: on the disk only your user can open this folder. Log in with your user instead.")
+                            .font(.caption).foregroundStyle(.orange)
+                    }
                 }
             }
             NetworkExposureNote(port: 445)
@@ -481,9 +485,21 @@ struct ProtocolPage: View {
     @ViewBuilder private var smbUsersSection: some View {
         Section {
             ForEach(SMBUsers.list(), id: \.name) { user in
-                ItemRow(symbol: user.isAdmin ? "person.badge.key.fill" : "person.fill", title: user.fullName,
-                        detail: user.name + (user.isAdmin ? " · " + String(localized: "Administrator") : ""),
-                        selected: false) {}
+                VStack(alignment: .leading, spacing: 4) {
+                    ItemRow(symbol: user.isAdmin ? "person.badge.key.fill" : "person.fill", title: user.fullName,
+                            detail: user.name + (user.isAdmin ? " · " + String(localized: "Administrator") : ""),
+                            selected: false, dot: user.canUseSMB) {}
+                    if user.canUseSMB {
+                        Text("Can log in from iPhone, Android and Windows.").font(.caption).foregroundStyle(.secondary)
+                    } else {
+                        HStack {
+                            Text("Can’t log in from iPhone, Android or Windows yet: turn on “Windows File Sharing” for this user (System Settings → General → Sharing → File Sharing ⓘ → Options). macOS asks for its password.")
+                                .font(.caption).foregroundStyle(.orange)
+                            Spacer()
+                            Button("Open…") { SMBServer.openSystemSharing() }.controlSize(.small)
+                        }
+                    }
+                }
             }
             HStack {
                 Text("To add someone, create a user in System Settings → Users & Groups; they log in with that user and password.")

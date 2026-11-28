@@ -256,7 +256,9 @@ struct SMBServerPreview: View {
 
 /// Cuentas de este Mac que pueden entrar por SMB (las de personas: UID ≥ 501, no ocultas).
 enum SMBUsers {
-    struct User: Sendable { let name: String; let fullName: String; let isAdmin: Bool }
+    /// `canUseSMB`: tiene activado «Compartir archivos de Windows» (contraseña SMB/NTLM). Sin eso,
+    /// iPhone, Android y Windows no pueden entrar con ese usuario (solo como invitado).
+    struct User: Sendable { let name: String; let fullName: String; let isAdmin: Bool; let canUseSMB: Bool }
 
     /// Se lee una vez (dscl tarda); al volver a Ajustes se vuelve a leer.
     nonisolated(unsafe) private static var cache: (date: Date, users: [User])?
@@ -276,7 +278,9 @@ enum SMBUsers {
             let name = String(parts[0])
             let full = output("/usr/bin/dscl", [".", "-read", "/Users/\(name)", "RealName"])
                 .replacingOccurrences(of: "RealName:", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-            return User(name: name, fullName: full.isEmpty ? name : full, isAdmin: admins.contains(name))
+            let authority = output("/usr/bin/dscl", [".", "-read", "/Users/\(name)", "AuthenticationAuthority"])
+            return User(name: name, fullName: full.isEmpty ? name : full, isAdmin: admins.contains(name),
+                        canUseSMB: authority.contains("SMBNT"))
         }
     }
 
@@ -292,5 +296,13 @@ enum SMBUsers {
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
         return String(decoding: data, as: UTF8.self)
+    }
+}
+
+extension SMBShare {
+    /// ¿Un invitado (usuario «nobody») puede leer la carpeta en el disco? Si no, verá «contenido no disponible».
+    var guestsCanRead: Bool {
+        guard let mode = (try? FileManager.default.attributesOfItem(atPath: path))?[.posixPermissions] as? Int else { return false }
+        return mode & 0o005 == 0o005
     }
 }

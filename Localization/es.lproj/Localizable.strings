@@ -1133,3 +1133,7 @@
 "macOS firewall is on." = "El cortafuegos de macOS está activado.";
 "macOS firewall is off: any device on your network can try to connect." = "El cortafuegos de macOS está desactivado: cualquier dispositivo de tu red puede intentar conectarse.";
 "Firewall…" = "Cortafuegos…";
+
+"Can log in from iPhone, Android and Windows." = "Puede entrar desde iPhone, Android y Windows.";
+"Can’t log in from iPhone, Android or Windows yet: turn on “Windows File Sharing” for this user (System Settings → General → Sharing → File Sharing ⓘ → Options). macOS asks for its password." = "Aún no puede entrar desde iPhone, Android ni Windows: activa «Compartir archivos de Windows» para este usuario (Ajustes del Sistema → General → Compartir → Compartir archivos ⓘ → Opciones). macOS pide su contraseña.";
+"Guests will see “content unavailable”: on the disk only your user can open this folder. Log in with your user instead." = "Los invitados verán «contenido no disponible»: en el disco solo tu usuario puede abrir esta carpeta. Entra con tu usuario.";
