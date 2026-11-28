@@ -296,7 +296,8 @@ enum SMBUsers {
     /// abre la carpeta compartida, la lista y se desconecta. nil = entra; si no, el motivo.
     static func testLogin(user: String, password: String, share: String) -> String? {
         var components = URLComponents()
-        components.scheme = "smb"; components.host = "127.0.0.1"; components.path = "/" + share
+        // Por la IP de la red, como el iPhone: montar el propio Mac por 127.0.0.1 da «No route to host».
+        components.scheme = "smb"; components.host = FTPSettings.localAddresses().first ?? "127.0.0.1"; components.path = "/" + share
         guard let url = components.url else { return "URL" }
         let open = NSMutableDictionary(object: "NoUI", forKey: "UIOption" as NSString)
         let mountOptions = NSMutableDictionary(object: true, forKey: "MountInDirectory" as NSString)
@@ -308,6 +309,7 @@ enum SMBUsers {
                                        open, mountOptions, &mounts)
         guard status == 0 else {
             if status == Int32(EAUTH) || status == 80 || status == -6600 { return String(localized: "The server refused the user or password.") }
+            if status == Int32(EHOSTUNREACH) { return String(localized: "Couldn’t reach this Mac on the network (no route to host).") }
             return SMBMount.Failure(status: status).localizedDescription
         }
         let points = (mounts?.takeRetainedValue() as? [String]) ?? []
