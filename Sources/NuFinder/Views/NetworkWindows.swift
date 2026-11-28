@@ -427,11 +427,6 @@ struct ProtocolPage: View {
                 .padding(.vertical, 2)
             }
 
-            HStack {
-                Text("To log in from Windows, turn on “Windows File Sharing” for your user in System Settings → Sharing → File Sharing → Options.")
-                    .font(.caption).foregroundStyle(.secondary)
-                Button("Open…") { SMBServer.openSystemSharing() }
-            }
         }
         smbNewShareSection
         if smb.running { smbHowToConnect }
@@ -500,7 +495,7 @@ struct ProtocolPage: View {
                         Text("Can log in from iPhone, Android and Windows.").font(.caption).foregroundStyle(.secondary)
                     } else {
                         HStack {
-                            Text("Can’t log in from iPhone, Android or Windows yet: turn on “Windows File Sharing” for this user (System Settings → General → Sharing → File Sharing ⓘ → Options). macOS asks for its password.")
+                            Text("To log in from iPhone, Android or Windows this user needs one more step (macOS asks for its password): System Settings → General → Sharing → “File Sharing” ⓘ → “Options…” → under “Windows File Sharing:” tick this user.")
                                 .font(.caption).foregroundStyle(.orange)
                             Spacer()
                             Button("Open…") { SMBServer.openSystemSharing() }.controlSize(.small)
