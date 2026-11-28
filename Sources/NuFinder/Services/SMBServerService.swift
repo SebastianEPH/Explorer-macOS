@@ -183,6 +183,8 @@ final class SMBServerController: ObservableObject {
     /// Solo publica si algo cambió (publicar siempre rehacía los menús en bucle y colgaba la app)
     /// y como mucho una vez cada 2 s, salvo `force` (tras encender, apagar o compartir).
     func refresh(force: Bool = false) async {
+        // Una comprobación pedida tras un cambio nunca se salta: espera a la que esté en marcha.
+        while force && refreshing { try? await Task.sleep(for: .milliseconds(100)) }
         guard !refreshing, force || Date().timeIntervalSince(lastRefresh) > 2 else { return }
         refreshing = true; defer { refreshing = false; lastRefresh = Date() }
         let (isRunning, list) = await Task.detached { (SMBServer.isRunning(), SMBServer.shares()) }.value
@@ -198,7 +200,19 @@ final class SMBServerController: ObservableObject {
         await refresh(force: true)
     }
 
-    func setRunning(_ on: Bool) async { await change { SMBServer.setEnabled(on) } }
+    /// Enciende o apaga y espera a ver el cambio (macOS tarda un poco en abrir/cerrar el puerto).
+    func setRunning(_ on: Bool) async {
+        await change { SMBServer.setEnabled(on) }
+        guard message == nil else { return }
+        busy = true; defer { busy = false } // los botones siguen bloqueados mientras se espera el cambio
+        for _ in 0..<16 where running != on {
+            try? await Task.sleep(for: .milliseconds(500))
+            await refresh(force: true)
+        }
+        if running != on {
+            message = on ? String(localized: "macOS didn’t start the SMB server.") : String(localized: "macOS didn’t stop the SMB server.")
+        }
+    }
 
     func share(_ url: URL, readOnly: Bool = false, guest: Bool = false) async {
         let name = url.lastPathComponent, start = !running

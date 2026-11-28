@@ -1119,3 +1119,6 @@
 "Connect an external or network drive to check it." = "Conecta un disco externo o de red para comprobarlo.";
 "No external or network drive is connected right now." = "Ahora mismo no hay ningún disco externo ni de red conectado.";
 "If Explorer is not in the list in System Settings, press + there and choose Explorer in Applications." = "Si Explorer no aparece en la lista de Ajustes del Sistema, pulsa + allí y elige Explorer en Aplicaciones.";
+
+"macOS didn’t start the SMB server." = "macOS no encendió el servidor SMB.";
+"macOS didn’t stop the SMB server." = "macOS no apagó el servidor SMB.";
