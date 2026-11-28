@@ -248,6 +248,7 @@ struct ContentView: View {
                 .buttonStyle(.plain)
                 .help("Open in Terminal")
             }
+            RefreshToolbarButton(browser: activeBrowser) // Fork: volver a leer y recalcular tamaños
             NewWindowToolbarButton(browser: activeBrowser) // Fork: abrir otra ventana aquí
             if toolbarShowsOperations {
                 Button {

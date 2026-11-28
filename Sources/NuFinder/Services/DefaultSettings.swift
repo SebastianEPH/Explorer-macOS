@@ -35,6 +35,7 @@ enum DefaultSettings {
             "middleClick.closesTab": true,
             "middleClick.folder": "newTab",
             "toolbar.showsNewWindow": true,
+            "toolbar.showsRefresh": true,
             "layout.roundedTabs": true,
             "view.iconSize": 40.0,
             "shortcut.commandPalette": "p",

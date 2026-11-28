@@ -1173,3 +1173,6 @@
 "iPhone, iPad, Mac" = "iPhone, iPad, Mac";
 "On the iPhone: Files → ⋯ → Connect to Server → this address (without the folder name) → Registered User." = "En el iPhone: Archivos → ⋯ → Conectarse al servidor → esta dirección (sin el nombre de la carpeta) → Usuario registrado.";
 "Android, Mac (folder)" = "Android, Mac (carpeta)";
+"Refresh" = "Actualizar";
+"Refresh Folder and Folder Sizes" = "Volver a leer la carpeta y recalcular el tamaño de las carpetas";
+"Reads the folder again and recalculates the size of every folder in it." = "Vuelve a leer la carpeta y recalcula el tamaño de cada carpeta que contiene.";

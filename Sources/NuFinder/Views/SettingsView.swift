@@ -7,6 +7,7 @@ struct SettingsView: View {
     @AppStorage("toolbar.showsTerminal") private var toolbarShowsTerminal = true
     @AppStorage("toolbar.showsOperations") private var toolbarShowsOperations = true
     @AppStorage(NewWindowButton.key) private var toolbarShowsNewWindow = false // Fork
+    @AppStorage(RefreshButton.key) private var toolbarShowsRefresh = false // Fork
     @AppStorage("shortcut.commandPalette") private var commandPaletteKey = "p"
     @AppStorage("shortcut.terminal") private var terminalKey = "t"
     @AppStorage("gitStatusEnabled") private var gitStatusEnabled = false
@@ -77,9 +78,10 @@ struct SettingsView: View {
 
     private var toolbarSection: some View {
         Section("Toolbar") {
-            ToolbarPreview(split: toolbarShowsSplit, terminal: toolbarShowsTerminal, newWindow: toolbarShowsNewWindow, operations: toolbarShowsOperations) // Fork
+            ToolbarPreview(split: toolbarShowsSplit, terminal: toolbarShowsTerminal, newWindow: toolbarShowsNewWindow, refresh: toolbarShowsRefresh, operations: toolbarShowsOperations) // Fork
             Toggle(isOn: $toolbarShowsSplit) { Label("Split Pane", systemImage: "rectangle.split.2x1"); Text("Shows two folders side by side.") }
             Toggle(isOn: $toolbarShowsTerminal) { Label("Terminal", systemImage: "terminal"); Text("Opens the current folder in the terminal.") }
+            Toggle(isOn: $toolbarShowsRefresh) { Label("Refresh", systemImage: "arrow.clockwise"); Text("Reads the folder again and recalculates the size of every folder in it.") } // Fork
             Toggle(isOn: $toolbarShowsNewWindow) { Label("New Window", systemImage: "macwindow.badge.plus"); Text("Opens another Explorer window in the current folder.") } // Fork
             Toggle(isOn: $toolbarShowsOperations) { Label("File Operations", systemImage: "arrow.left.arrow.right.circle"); Text("Progress of copies and moves in progress.") }
         }

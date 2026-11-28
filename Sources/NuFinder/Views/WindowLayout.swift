@@ -46,6 +46,7 @@ struct CompactTabs: View {
     @AppStorage("toolbar.showsSplit") private var showsSplit = true
     @AppStorage("toolbar.showsTerminal") private var showsTerminal = true
     @AppStorage(NewWindowButton.key) private var showsNewWindow = false
+    @AppStorage(RefreshButton.key) private var showsRefresh = false
     @AppStorage("toolbar.showsOperations") private var showsOperations = true
     @AppStorage(LayoutSettings.roundedTabsKey) private var roundedTabs = false
 
@@ -53,7 +54,7 @@ struct CompactTabs: View {
     static func buttonsWidth(visible: Int) -> CGFloat { 22 + 40 * CGFloat(visible) }
 
     private var buttonsWidth: CGFloat {
-        Self.buttonsWidth(visible: [showsSplit, showsTerminal, showsNewWindow, showsOperations].filter { $0 }.count)
+        Self.buttonsWidth(visible: [showsSplit, showsTerminal, showsNewWindow, showsRefresh, showsOperations].filter { $0 }.count)
     }
 
     var body: some View {

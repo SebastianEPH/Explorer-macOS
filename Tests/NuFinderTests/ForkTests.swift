@@ -592,3 +592,10 @@ struct ForkTests {
         #expect(PermissionsService.fullDiskState(probes: [missing]) == .unknown)
     }
 }
+
+@Suite struct RefreshButtonTests {
+    @Test func refreshButtonIsOffByDefaultAndOnInMine() {
+        #expect(UserDefaults(suiteName: "refresh.test")?.bool(forKey: RefreshButton.key) == false)
+        #expect(DefaultSettings.mine[RefreshButton.key] as? Bool == true)
+    }
+}
